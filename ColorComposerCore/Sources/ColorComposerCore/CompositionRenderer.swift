@@ -1,0 +1,118 @@
+import Foundation
+
+/// A raw RGBA8 raster buffer (row-major, 4 bytes per pixel, unpremultiplied).
+public struct RGBAImage: Sendable, Equatable {
+    public let width: Int
+    public let height: Int
+    public let rgba: [UInt8]
+
+    public init(width: Int, height: Int, rgba: [UInt8]) {
+        precondition(rgba.count == width * height * 4)
+        self.width = width
+        self.height = height
+        self.rgba = rgba
+    }
+}
+
+public extension BrightnessGrid {
+    /// Nearest-neighbor upsample by an integer block factor (each cell becomes a
+    /// `factor × factor` block). Used to render the logical solution to a larger
+    /// export/print raster without introducing new colors.
+    func upsampled(by factor: Int) -> BrightnessGrid {
+        guard factor > 1 else { return self }
+        let outW = width * factor
+        let outH = height * factor
+        var out = [Double](repeating: 0, count: outW * outH)
+        for y in 0..<height {
+            for x in 0..<width {
+                let v = values[y * width + x]
+                for dy in 0..<factor {
+                    for dx in 0..<factor {
+                        out[(y * factor + dy) * outW + (x * factor + dx)] = v
+                    }
+                }
+            }
+        }
+        return BrightnessGrid(width: outW, height: outH, values: out)
+    }
+}
+
+/// Renders a solved composition into raster outputs:
+/// the printable color composite, a normalized error map, and per-condition
+/// predicted lighting previews.
+public enum CompositionRenderer {
+
+    /// The printable color composite: each cell is its selected palette color.
+    /// Unmatched cells are fully transparent.
+    public static func composite(_ result: CompositionResult) -> RGBAImage {
+        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
+        for cell in 0..<result.cellCount {
+            guard let index = result.colorIndices[cell] else {
+                // Transparent marker — no palette color was eligible.
+                rgba[cell * 4 + 3] = 0
+                continue
+            }
+            let color = result.palette[index].rgb
+            rgba[cell * 4 + 0] = color.red
+            rgba[cell * 4 + 1] = color.green
+            rgba[cell * 4 + 2] = color.blue
+            rgba[cell * 4 + 3] = 255
+        }
+        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+    }
+
+    /// Normalized error map. Brighter means larger matching error; unmatched
+    /// cells are the brightest.
+    public static func errorMap(_ result: CompositionResult) -> BrightnessGrid {
+        let finite = result.errors.filter { $0.isFinite }
+        let maxError = max(finite.max() ?? 0, 1e-9)
+
+        let values = result.errors.map { error -> Double in
+            guard error.isFinite else { return 1.0 }
+            return min(error / maxError, 1.0)
+        }
+        return BrightnessGrid(width: result.gridWidth, height: result.gridHeight, values: values)
+    }
+
+    /// Predicted grayscale appearance under one lighting condition: each cell
+    /// shows the selected palette color's measured brightness for that
+    /// condition. Colors without that measurement render as black.
+    public static func lightingPreview(
+        _ result: CompositionResult,
+        for condition: LightingCondition
+    ) -> BrightnessGrid {
+        let values = (0..<result.cellCount).map { cell -> Double in
+            guard let index = result.colorIndices[cell] else { return 0 }
+            return result.palette[index].brightness(for: condition) ?? 0
+        }
+        return BrightnessGrid(width: result.gridWidth, height: result.gridHeight, values: values)
+    }
+
+    /// Predicted appearance under one lighting condition, tinted by the
+    /// condition's representative color (`LightingCondition.displayTint`) so the
+    /// preview reads like the image viewed under that colored light. Each cell
+    /// maps from black to the tint by the selected color's measured brightness.
+    public static func lightingPreviewTinted(
+        _ result: CompositionResult,
+        for condition: LightingCondition
+    ) -> RGBAImage {
+        let tint = condition.displayTint
+        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
+
+        for cell in 0..<result.cellCount {
+            let base = cell * 4
+            let brightness: Double
+            if let index = result.colorIndices[cell] {
+                brightness = result.palette[index].brightness(for: condition) ?? 0
+            } else {
+                brightness = 0
+            }
+            let scaled = max(0, min(1, brightness))
+            rgba[base] = UInt8((scaled * tint.red) * 255)
+            rgba[base + 1] = UInt8((scaled * tint.green) * 255)
+            rgba[base + 2] = UInt8((scaled * tint.blue) * 255)
+            rgba[base + 3] = 255
+        }
+        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+    }
+}

@@ -1,0 +1,37 @@
+name: ColorMatching
+options:
+  bundleIdPrefix: com.viamin.colormatching
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  ColorComposerCore:
+    path: ColorComposerCore
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+
+targets:
+  ColorMatching:
+    type: application
+    platform: macOS
+    sources:
+      - path: ColorMatching
+        excludes:
+          - "Info.plist"
+          - "ColorMatching.entitlements"
+    dependencies:
+      - package: ColorComposerCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.viamin.colormatching.composer
+        INFOPLIST_FILE: ColorMatching/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ColorMatching/ColorMatching.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: NO
