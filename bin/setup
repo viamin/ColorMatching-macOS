@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# Generates the Xcode project from project.yml.
+#
+# The .xcodeproj is generated (and gitignored): run this after cloning or
+# whenever project.yml changes. xcodegen is the only extra tool required.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if ! command -v xcodegen >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "xcodegen not found; installing via Homebrew..." >&2
+    brew install xcodegen
+  else
+    echo "xcodegen is required to open the project." >&2
+    echo "  brew install xcodegen" >&2
+    echo "  # or: mise install xcodegen && mise use xcodegen" >&2
+    exit 1
+  fi
+fi
+
+echo "Generating Xcode project..."
+xcodegen generate
+
+echo
+echo "Done. Open ColorMatching.xcodeproj in Xcode."
