@@ -11,7 +11,7 @@ struct ColorMatchingApp: App {
             ContentView()
                 .environment(model)
                 .frame(minWidth: 1100, minHeight: 720)
-                .task { model.palette.configure(baseURL: URL(string: model.serverBaseURL), token: model.serverToken) }
+                .task { model.catalog.configure(baseURL: URL(string: model.serverBaseURL), token: model.serverToken) }
         }
         .commands {
             CommandGroup(replacing: .newItem) {

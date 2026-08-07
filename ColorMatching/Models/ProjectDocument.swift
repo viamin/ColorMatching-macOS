@@ -6,9 +6,7 @@ struct ProjectDocument: Codable {
     var serverBaseURL: String
     var apiToken: String
     var printerProfileID: Int?
-    var paletteID: Int?
-    var paletteName: String?
-    var paletteSnapshot: [PaletteColorSnapshot]
+    var colorSnapshot: [ColorSnapshot]
     var weights: ChannelWeights
     var logicalWidth: Int
     var logicalHeight: Int
@@ -26,9 +24,10 @@ struct LayerSnapshot: Codable {
     var scalingMode: ImageScalingMode
 }
 
-/// Codable mirror of `PaletteColor` with String-keyed responses, so the palette
-/// used at generation time is recorded with the project.
-struct PaletteColorSnapshot: Codable {
+/// Codable mirror of `PaletteColor` with String-keyed responses, recording the
+/// measured colors used at generation time with the project. (Named for the
+/// color it wraps; the "palette" grouping is not part of the project format.)
+struct ColorSnapshot: Codable {
     var id: Int
     var name: String?
     var hex: String
@@ -45,7 +44,7 @@ struct PaletteColorSnapshot: Codable {
         }
     }
 
-    func toPaletteColor() -> PaletteColor {
+    func toColor() -> PaletteColor {
         var responses: [LightingCondition: IlluminationResponse] = [:]
         for (key, value) in self.responses {
             if let condition = LightingCondition(rawValue: key) {

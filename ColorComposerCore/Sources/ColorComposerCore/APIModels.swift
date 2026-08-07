@@ -10,13 +10,6 @@ public struct PrinterProfileDTO: Codable, Identifiable, Sendable, Equatable {
     public let inkType: String?
 }
 
-/// Wire representation of a palette summary.
-public struct PaletteSummaryDTO: Codable, Identifiable, Sendable, Equatable {
-    public let id: Int
-    public let name: String
-    public let isPreset: Bool
-    public let colorCount: Int
-}
 
 /// Wire representation of one measured illuminant response.
 public struct ColorResponseDTO: Codable, Sendable, Equatable {
@@ -54,9 +47,6 @@ struct ColorsResponse: Codable {
     let printerProfile: PrinterProfileDTO?
 }
 
-struct PalettesResponse: Codable {
-    let palettes: [PaletteSummaryDTO]
-}
 
 struct PrinterProfilesResponse: Codable {
     let printerProfiles: [PrinterProfileDTO]

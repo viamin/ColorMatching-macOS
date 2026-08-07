@@ -81,13 +81,7 @@ final class APIDecodingTests: XCTestCase {
         XCTAssertEqual(domain.rgb, RGBColor(hex: "#112233"))
     }
 
-    func testDecodesPalettesAndProfiles() throws {
-        let palettes = try decode(
-            #"{"palettes":[{"id":1,"name":"A","is_preset":false,"color_count":42}]}"#,
-            as: PalettesResponse.self
-        )
-        XCTAssertEqual(palettes.palettes.first?.colorCount, 42)
-
+    func testDecodesPrinterProfiles() throws {
         let profiles = try decode(
             #"{"printer_profiles":[{"id":1,"printer_make_model":"Epson","paper_type":"Matte","ink_type":"Dye"}]}"#,
             as: PrinterProfilesResponse.self

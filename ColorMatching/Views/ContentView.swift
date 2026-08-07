@@ -27,7 +27,7 @@ struct ContentView: View {
                 } label: {
                     Label("Generate", systemImage: "wand.and.stars")
                 }
-                .disabled(model.palette.colors.isEmpty)
+                .disabled(model.catalog.colors.isEmpty)
                 .keyboardShortcut(.return, modifiers: [.command])
 
                 Button {
@@ -59,7 +59,7 @@ struct SidebarView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 ServerConfigurationSection()
-                PaletteSection()
+                ProfileSection()
                 SourceImagesSection()
                 CompositionSettingsSection()
             }

@@ -62,7 +62,7 @@ struct PreviewPaneView: View {
             ContentUnavailableView(
                 "No cells could be matched",
                 systemImage: "exclamationmark.triangle",
-                description: Text("The loaded palette has no measurements for the active channels, so every color was excluded. Choose a palette/profile with measurements (e.g. “Cool” on “Generic Inkjet”), or reduce the active channel weights.")
+                description: Text("The selected profile has no colors with measurements for the active channels, so every color was excluded. Pick a profile whose colors are measured for those channels, or reduce the active channel weights.")
             )
         } else {
             switch mode {
