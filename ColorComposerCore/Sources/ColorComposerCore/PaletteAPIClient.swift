@@ -42,27 +42,16 @@ public struct PaletteAPIClient: Sendable {
         return envelope.printerProfiles
     }
 
-    /// `GET /api/v1/palettes`
-    public func fetchPalettes() async throws -> [PaletteSummaryDTO] {
-        let url = endpoint(path: "palettes")
-        let envelope: PalettesResponse = try await get(url)
-        return envelope.palettes
-    }
-
-    /// `GET /api/v1/colors?printer_profile_id=N&palette_id=M`
+    /// `GET /api/v1/colors?printer_profile_id=N`
     ///
-    /// `paletteID` is optional: when `nil`, every color across all palettes is
-    /// returned.
+    /// Returns every measured color for the profile (the palette grouping is
+    /// irrelevant to composition); colors with no measurement for the profile
+    /// come back response-less and are excluded by the solver.
     public func fetchColors(
-        printerProfileID: Int,
-        paletteID: Int? = nil
+        printerProfileID: Int
     ) async throws -> (colors: [PaletteColorDTO], profile: PrinterProfileDTO?) {
         var components = URLComponents(url: endpoint(path: "colors"), resolvingAgainstBaseURL: false)
-        var query: [URLQueryItem] = [URLQueryItem(name: "printer_profile_id", value: String(printerProfileID))]
-        if let paletteID {
-            query.append(URLQueryItem(name: "palette_id", value: String(paletteID)))
-        }
-        components?.queryItems = query
+        components?.queryItems = [URLQueryItem(name: "printer_profile_id", value: String(printerProfileID))]
         guard let url = components?.url else { throw PaletteAPIError.invalidURL }
 
         let envelope: ColorsResponse = try await get(url)

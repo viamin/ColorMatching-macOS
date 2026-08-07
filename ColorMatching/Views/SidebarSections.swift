@@ -8,7 +8,7 @@ struct ServerConfigurationSection: View {
 
     var body: some View {
         @Bindable var model = model
-        @Bindable var palette = model.palette
+        @Bindable var catalog = model.catalog
         VStack(alignment: .leading, spacing: 8) {
             Text("Server").font(.headline)
             TextField("Base URL", text: $model.serverBaseURL)
@@ -17,48 +17,38 @@ struct ServerConfigurationSection: View {
                 .textFieldStyle(.roundedBorder)
 
             HStack {
-                Button("Test") { Task { await palette.testConnection() } }
-                    .disabled(palette.isWorking)
-                Button("Refresh") { Task { await palette.refreshAll() } }
-                    .disabled(palette.isWorking)
+                Button("Test") { Task { await catalog.testConnection() } }
+                    .disabled(catalog.isWorking)
+                Button("Refresh") { Task { await catalog.refreshAll() } }
+                    .disabled(catalog.isWorking)
             }
-            if let message = palette.connectionMessage {
+            if let message = catalog.connectionMessage {
                 Text(message).font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 }
 
-// MARK: - Palette
+// MARK: - Profile & colors
 
-struct PaletteSection: View {
+struct ProfileSection: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        @Bindable var palette = model.palette
+        @Bindable var catalog = model.catalog
         VStack(alignment: .leading, spacing: 8) {
-            Text("Palette").font(.headline)
+            Text("Profile & colors").font(.headline)
 
-            Picker("Printer profile", selection: $palette.selectedPrinterProfileID) {
+            Picker("Printer profile", selection: $catalog.selectedPrinterProfileID) {
                 Text("None").tag(Int?.none)
-                ForEach(palette.printerProfiles) { profile in
+                ForEach(catalog.printerProfiles) { profile in
                     Text(profileLabel(profile)).tag(Int?.some(profile.id))
                 }
             }
 
-            Picker("Palette", selection: $palette.selectedPaletteID) {
-                Text("All colors").tag(Int?.none)
-                ForEach(palette.palettes) { p in
-                    Text("\(p.name) (\(p.colorCount))").tag(Int?.some(p.id))
-                }
-            }
-            .onChange(of: palette.selectedPaletteID) { _, _ in
-                Task { await palette.refreshAll() }
-            }
-
-            LabeledContent("Colors loaded", value: "\(palette.colors.count)")
-            LabeledContent("Eligible for current weights", value: "\(model.eligiblePaletteCount)")
-            if let refreshed = palette.lastRefresh {
+            LabeledContent("Colors loaded", value: "\(catalog.colors.count)")
+            LabeledContent("Eligible for current weights", value: "\(model.eligibleColorCount)")
+            if let refreshed = catalog.lastRefresh {
                 LabeledContent("Last refreshed", value: refreshed.formatted(.dateTime.month().day().hour().minute()))
             }
         }
@@ -204,9 +194,9 @@ struct CompositionSettingsSection: View {
             WeightSlider("Blue", value: weightBinding(\.blue))
             WeightSlider("LPS", value: weightBinding(\.lps))
 
-            if model.palette.colors.count > 0 && model.eligiblePaletteCount == 0 {
+            if model.catalog.colors.count > 0 && model.eligibleColorCount == 0 {
                 Label(
-                    "No loaded colors have measurements for all active channels. Generate will produce no output — pick a palette/profile with measurements (e.g. “Cool” on “Generic Inkjet”) or lower the active weights.",
+                    "No loaded colors have measurements for all active channels. Generate will produce no output — pick a profile whose colors have measurements, or lower the active weights.",
                     systemImage: "exclamationmark.triangle"
                 )
                 .font(.caption)

@@ -1,19 +1,24 @@
 import Foundation
 import ColorComposerCore
 
-/// Coordinates fetching palette data from the `color_matching` server and holds
-/// the decoded results. UI observes this via `@Observable`.
+/// Fetches printer profiles and their measured printable colors from the
+/// `color_matching` server.
+///
+/// Colors are **profile-scoped**. The palette grouping that `color_matching`
+/// uses to discover LPS metamer pairs is a search construct, not a composition
+/// input — so this catalog exposes colors per profile only. Once a profile is
+/// selected it fetches every measured color for that profile; colors with no
+/// measurement for the profile come back response-less and are excluded by the
+/// solver.
 @Observable
-final class PaletteService {
+final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
-    var palettes: [PaletteSummaryDTO] = []
-    var colors: [PaletteColor] = []          // domain models
+    var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
 
     var selectedPrinterProfileID: Int? {
         didSet { Task { await fetchColorsIfPossible() } }
     }
-    var selectedPaletteID: Int?
 
     var lastRefresh: Date?
     var connectionMessage: String?
@@ -58,13 +63,10 @@ final class PaletteService {
         isWorking = true
         defer { isWorking = false }
         do {
-            async let profiles = client.fetchPrinterProfiles()
-            async let pals = client.fetchPalettes()
-            let (fetchedProfiles, fetchedPalettes) = try await (profiles, pals)
+            let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
-            palettes = fetchedPalettes
             if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
-            connectionMessage = "Loaded \(fetchedProfiles.count) profile(s) and \(fetchedPalettes.count) palette(s)."
+            connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
         } catch let error as PaletteAPIError {
             connectionMessage = error.errorDescription
@@ -78,11 +80,11 @@ final class PaletteService {
         isWorking = true
         defer { isWorking = false }
         do {
-            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID, paletteID: selectedPaletteID)
+            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             colors = dtos.compactMap { $0.toDomain() }
             colorsForProfile = profile
             lastRefresh = Date()
-            connectionMessage = "Loaded \(colors.count) color(s)."
+            connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         } catch let error as PaletteAPIError {
             connectionMessage = error.errorDescription
         } catch {
@@ -90,7 +92,7 @@ final class PaletteService {
         }
     }
 
-    /// Palette colors eligible for the solver given the currently active channels.
+    /// Colors eligible for the solver given the currently active channels.
     /// Colors missing measurements for any active channel are excluded, matching
     /// the solver's policy; the UI surfaces the excluded count.
     func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {

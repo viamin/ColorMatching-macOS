@@ -2,20 +2,20 @@ import Foundation
 import AppKit
 import ColorComposerCore
 
-/// The root application state: server/palette sync, source layers, composition
+/// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
 @Observable
 final class AppModel {
 
-    // MARK: - Palette / server
+    // MARK: - Catalog / server
 
-    let palette = PaletteService()
+    let catalog = ColorCatalog()
 
     var serverBaseURL: String {
         get { UserDefaults.standard.string(forKey: "serverBaseURL") ?? "http://localhost:4000" }
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
-            palette.configure(baseURL: URL(string: newValue), token: serverToken)
+            catalog.configure(baseURL: URL(string: newValue), token: serverToken)
         }
     }
 
@@ -23,7 +23,7 @@ final class AppModel {
         get { UserDefaults.standard.string(forKey: "serverToken") ?? "" }
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
-            palette.configure(baseURL: URL(string: serverBaseURL), token: newValue)
+            catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
         }
     }
 
@@ -97,8 +97,8 @@ final class AppModel {
 
     var hasResult: Bool { result != nil }
 
-    var eligiblePaletteCount: Int {
-        palette.eligibleColors(activeConditions: weights.activeConditions).count
+    var eligibleColorCount: Int {
+        catalog.eligibleColors(activeConditions: weights.activeConditions).count
     }
 
     // MARK: - Generation
@@ -110,8 +110,8 @@ final class AppModel {
             lastError = "Set at least one channel weight above zero."
             return
         }
-        guard !palette.colors.isEmpty else {
-            lastError = "Load a palette from the server first."
+        guard !catalog.colors.isEmpty else {
+            lastError = "Load colors from the server first."
             return
         }
 
@@ -126,7 +126,7 @@ final class AppModel {
             grids[condition] = grid
         }
 
-        let paletteColors = palette.colors
+        let candidateColors = catalog.colors
         let weights = self.weights
         let solver = CompositionSolver()
         isSolving = true
@@ -134,7 +134,7 @@ final class AppModel {
 
         let solved: Result<CompositionResult, Error>
         do {
-            let r = try solver.solve(palette: paletteColors, sourceGrids: grids, weights: weights)
+            let r = try solver.solve(palette: candidateColors, sourceGrids: grids, weights: weights)
             solved = .success(r)
         } catch {
             solved = .failure(error)
@@ -278,10 +278,8 @@ final class AppModel {
         return ProjectDocument(
             serverBaseURL: serverBaseURL,
             apiToken: serverToken,
-            printerProfileID: palette.selectedPrinterProfileID,
-            paletteID: palette.selectedPaletteID,
-            paletteName: palette.palettes.first(where: { $0.id == palette.selectedPaletteID })?.name,
-            paletteSnapshot: palette.colors.map { PaletteColorSnapshot($0) },
+            printerProfileID: catalog.selectedPrinterProfileID,
+            colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
@@ -295,11 +293,10 @@ final class AppModel {
     private func applySnapshot(_ s: ProjectDocument) {
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        palette.selectedPrinterProfileID = s.printerProfileID
-        palette.selectedPaletteID = s.paletteID
-        palette.colors = s.paletteSnapshot.map { $0.toPaletteColor() }
-        palette.lastRefresh = Date()
-        palette.connectionMessage = "Loaded \(s.paletteSnapshot.count) color(s) from project."
+        catalog.selectedPrinterProfileID = s.printerProfileID
+        catalog.colors = s.colorSnapshot.map { $0.toColor() }
+        catalog.lastRefresh = Date()
+        catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
 
         weights = s.weights
         logicalWidth = s.logicalWidth
