@@ -23,7 +23,7 @@ struct ContentView: View {
                 }
 
                 Button {
-                    Task { await model.generate() }
+                    model.runSolve()
                 } label: {
                     Label("Generate", systemImage: "wand.and.stars")
                 }

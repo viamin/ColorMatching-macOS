@@ -89,13 +89,54 @@ final class AppModel {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
     }
 
+
+    // MARK: - Auto-regenerate
+
+    /// When enabled, composition settings changes trigger a debounced background solve.
+    var autoRegenerate: Bool {
+        get { UserDefaults.standard.bool(forKey: "autoRegenerate") }
+        set { UserDefaults.standard.set(newValue, forKey: "autoRegenerate") }
+    }
+
+    private var solveTask: Task<Void, Never>?
+    private var debounceTask: Task<Void, Never>?
+
+    /// Schedules a debounced background solve. Safe to call on every settings
+    /// change — earlier pending solves are canceled, so only the latest input
+    /// produces a result.
+    func scheduleAutoRegenerate() {
+        guard autoRegenerate, hasResult, !catalog.colors.isEmpty else { return }
+
+        debounceTask?.cancel()
+        debounceTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+            } catch { return }
+            runSolve()
+        }
+    }
+
+    /// Cancels any in-flight solve and starts a new one. Both the manual
+    /// Generate action and the debounced auto-regenerate pipeline go through
+    /// here so the prior task is always canceled *before* the new task is
+    /// launched — and so `solveTask` never points to the task currently
+    /// executing `generate()` (which would cancel itself).
+    func runSolve() {
+        solveTask?.cancel()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.generate()
+        }
+        solveTask = task
+    }
+
     // MARK: - Result
 
     private(set) var result: CompositionResult?
     private(set) var errorStatistics: ErrorStatistics?
     private(set) var isSolving = false
     private(set) var lastError: String?
-
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
@@ -120,6 +161,15 @@ final class AppModel {
 
     /// Builds source grids from layers and solves the composition.
     func generate() async {
+        // Cancel any pending debounce; a manual Generate overrides it.
+        // We intentionally do not cancel `solveTask` here: `runSolve` already
+        // cancels the prior task before launching this one, and when
+        // `generate()` is invoked via `runSolve`, `solveTask` IS the task
+        // currently executing this method — cancelling it would cancel
+        // ourselves, the solver would bail at the cancellation guard below,
+        // and the result would never reach the UI.
+        debounceTask?.cancel()
+
         let active = weights.activeConditions
         guard !active.isEmpty else {
             lastError = "Set at least one channel weight above zero."
@@ -140,11 +190,19 @@ final class AppModel {
         let solved: Result<CompositionResult, Error>
         do {
             let r = try solver.solve(palette: candidateColors, sourceGrids: grids, weights: weights)
+            guard !Task.isCancelled else {
+                isSolving = false
+                return
+            }
             solved = .success(r)
         } catch {
             solved = .failure(error)
         }
 
+        guard !Task.isCancelled else {
+            isSolving = false
+            return
+        }
         isSolving = false
         switch solved {
         case .success(let r):
