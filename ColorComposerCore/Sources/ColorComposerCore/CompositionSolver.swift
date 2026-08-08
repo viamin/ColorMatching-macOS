@@ -175,6 +175,7 @@ public struct CompositionSolver: Sendable {
             gridHeight: gridHeight,
             palette: palette,
             weights: weights,
+            sourceGrids: sourceGrids,
             colorIndices: colorIndices,
             errors: errors,
             excludedCandidateCount: excludedCandidateCount
@@ -238,6 +239,7 @@ public struct CompositionSolver: Sendable {
             gridHeight: gridHeight,
             palette: palette,
             weights: weights,
+            sourceGrids: sourceGrids,
             colorIndices: colorIndices,
             errors: errors,
             excludedCandidateCount: excludedCandidateCount

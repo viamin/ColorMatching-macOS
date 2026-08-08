@@ -115,4 +115,90 @@ public enum CompositionRenderer {
         }
         return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
     }
+
+    /// Signed per-cell difference between the source brightness for a condition
+    /// and the predicted brightness of the selected color: `source − predicted`.
+    ///
+    /// Positive values mean the palette under-shoots (source brighter than the
+    /// achievable prediction); negative values mean it over-shoots. When no
+    /// source grid exists for the condition the difference is `0` everywhere.
+    public static func lightingDifference(
+        _ result: CompositionResult,
+        for condition: LightingCondition
+    ) -> DifferenceGrid {
+        let predicted = lightingPreview(result, for: condition)
+        guard let source = result.sourceGrids[condition] else {
+            return DifferenceGrid(
+                width: result.gridWidth,
+                height: result.gridHeight,
+                values: [Double](repeating: 0, count: result.cellCount)
+            )
+        }
+        let values = (0..<result.cellCount).map { source.values[$0] - predicted.values[$0] }
+        return DifferenceGrid(width: result.gridWidth, height: result.gridHeight, values: values)
+    }
+
+    /// The source-vs-prediction difference for one condition, rendered with a
+    /// diverging colormap so the direction and magnitude of each cell's error
+    /// are readable at a glance:
+    /// - under-shoots (source brighter, positive difference) trend **blue**;
+    /// - over-shoots (predicted brighter, negative difference) trend **red**;
+    /// - near-zero stays dark.
+    ///
+    /// Cells with no selected color (unmatched) render as a neutral gray marker.
+    public static func lightingDifferenceTinted(
+        _ result: CompositionResult,
+        for condition: LightingCondition
+    ) -> RGBAImage {
+        let difference = lightingDifference(result, for: condition)
+        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
+        for cell in 0..<result.cellCount {
+            let base = cell * 4
+            let rgb = divergingColor(for: difference.values[cell], matched: result.colorIndices[cell] != nil)
+            rgba[base] = rgb.red
+            rgba[base + 1] = rgb.green
+            rgba[base + 2] = rgb.blue
+            rgba[base + 3] = 255
+        }
+        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+    }
+
+    /// The source brightness grid for a condition, tinted by the condition's
+    /// representative color — the counterpart to `lightingPreviewTinted`, so
+    /// source and prediction render in the same style for side-by-side
+    /// comparison. Returns transparent black when no source grid exists.
+    public static func sourcePreviewTinted(
+        _ result: CompositionResult,
+        for condition: LightingCondition
+    ) -> RGBAImage {
+        guard let source = result.sourceGrids[condition] else {
+            return RGBAImage(width: result.gridWidth, height: result.gridHeight,
+                             rgba: [UInt8](repeating: 0, count: result.cellCount * 4))
+        }
+        let tint = condition.displayTint
+        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
+        for cell in 0..<result.cellCount {
+            let base = cell * 4
+            let scaled = max(0, min(1, source.values[cell]))
+            rgba[base] = UInt8((scaled * tint.red) * 255)
+            rgba[base + 1] = UInt8((scaled * tint.green) * 255)
+            rgba[base + 2] = UInt8((scaled * tint.blue) * 255)
+            rgba[base + 3] = 255
+        }
+        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+    }
+
+    /// Maps a signed difference to a diverging RGBA-free RGB triple: under-shoots
+    /// (positive) trend blue, over-shoots (negative) trend red, zero is black.
+    /// Unmatched cells get a neutral gray so they read as "no prediction".
+    private static func divergingColor(for difference: Double, matched: Bool) -> (red: UInt8, green: UInt8, blue: UInt8) {
+        guard matched else { return (64, 64, 64) }
+        let clamped = max(-1, min(1, difference))
+        let magnitude = abs(clamped)
+        if clamped >= 0 {
+            return (0, UInt8(magnitude * 120), UInt8(magnitude * 255))
+        } else {
+            return (UInt8(magnitude * 255), UInt8(magnitude * 60), 0)
+        }
+    }
 }

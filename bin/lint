@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# Project quality gate: run the pure-Swift ColorComposerCore test suite.
+#
+# ColorMatching is a macOS app (SwiftUI/AppKit), so the unit-testable surface is
+# the ColorComposerCore package. The pre-commit hook invokes this as
+# `bin/lint --staged`; the flag is accepted for interface compatibility since
+# the suite always covers the whole module.
+#
+set -euo pipefail
+
+# Drop the optional hook flag; the suite runs over the full module either way.
+[[ "${1:-}" == "--staged" ]] && shift || true
+
+cd "$(dirname "$0")/../ColorComposerCore"
+exec swift test "$@"

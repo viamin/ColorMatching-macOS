@@ -21,9 +21,29 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
     }
 }
 
+/// Per-channel comparison options, shown when a lighting preview is selected so
+/// the predicted appearance can be switched against the source it came from and
+/// their signed difference.
+enum LightingCompareMode: Hashable, CaseIterable, Identifiable {
+    case predicted
+    case source
+    case difference
+
+    var id: Self { self }
+
+    var label: String {
+        switch self {
+        case .predicted: return "Predicted"
+        case .source: return "Source"
+        case .difference: return "Difference"
+        }
+    }
+}
+
 struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
     @State private var mode: PreviewMode = .composite
+    @State private var compareMode: LightingCompareMode = .predicted
 
     var body: some View {
         VStack(spacing: 0) {
@@ -71,9 +91,46 @@ struct PreviewPaneView: View {
             case .errorMap:
                 PreviewImage(image: model.errorMapGrid.flatMap { ImageUtilities.nsImage(from: $0) })
             case .lighting(let condition):
-                PreviewImage(image: model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) })
+                lightingCompareView(for: condition)
             }
         }
+    }
+
+    /// Per-channel comparison: a switch between Predicted, Source, and
+    /// Difference when a source grid exists for the channel; otherwise the
+    /// predicted preview alone (no comparison is possible without a source).
+    @ViewBuilder
+    private func lightingCompareView(for condition: LightingCondition) -> some View {
+        if model.hasSource(for: condition) {
+            VStack(spacing: 0) {
+                Picker("Compare", selection: $compareMode) {
+                    ForEach(LightingCompareMode.allCases) { m in
+                        Text(m.label).tag(m)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(8)
+                Divider()
+                compareImage(for: condition)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        } else {
+            PreviewImage(image: model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) })
+        }
+    }
+
+    @ViewBuilder
+    private func compareImage(for condition: LightingCondition) -> some View {
+        let image: NSImage?
+        switch compareMode {
+        case .predicted:
+            image = model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+        case .source:
+            image = model.sourcePreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+        case .difference:
+            image = model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+        }
+        PreviewImage(image: image)
     }
 }
 
