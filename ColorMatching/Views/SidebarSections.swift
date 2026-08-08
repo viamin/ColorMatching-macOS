@@ -195,6 +195,13 @@ struct CompositionSettingsSection: View {
             }
 
             Divider()
+            Picker("Scorer", selection: $model.scorerKind) {
+                ForEach(ScorerKind.allCases, id: \.self) { kind in
+                    Text(kind.displayName).tag(kind)
+                }
+            }
+
+            Divider()
             Text("Channel weights").font(.subheadline)
             WeightSlider("White", value: weightBinding(\.white))
             WeightSlider("Red", value: weightBinding(\.red))

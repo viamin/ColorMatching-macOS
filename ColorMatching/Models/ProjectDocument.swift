@@ -8,12 +8,66 @@ struct ProjectDocument: Codable {
     var printerProfileID: Int?
     var colorSnapshot: [ColorSnapshot]
     var weights: ChannelWeights
+    var scorerKind: ScorerKind
     var logicalWidth: Int
     var logicalHeight: Int
     var pixelsPerCell: Int
     var physicalWidthMM: Double
     var physicalHeightMM: Double
     var layers: [LayerSnapshot]
+
+    private enum CodingKeys: String, CodingKey {
+        case serverBaseURL, apiToken, printerProfileID, colorSnapshot
+        case weights, scorerKind
+        case logicalWidth, logicalHeight, pixelsPerCell
+        case physicalWidthMM, physicalHeightMM, layers
+    }
+
+    init(
+        serverBaseURL: String,
+        apiToken: String,
+        printerProfileID: Int?,
+        colorSnapshot: [ColorSnapshot],
+        weights: ChannelWeights,
+        scorerKind: ScorerKind,
+        logicalWidth: Int,
+        logicalHeight: Int,
+        pixelsPerCell: Int,
+        physicalWidthMM: Double,
+        physicalHeightMM: Double,
+        layers: [LayerSnapshot]
+    ) {
+        self.serverBaseURL = serverBaseURL
+        self.apiToken = apiToken
+        self.printerProfileID = printerProfileID
+        self.colorSnapshot = colorSnapshot
+        self.weights = weights
+        self.scorerKind = scorerKind
+        self.logicalWidth = logicalWidth
+        self.logicalHeight = logicalHeight
+        self.pixelsPerCell = pixelsPerCell
+        self.physicalWidthMM = physicalWidthMM
+        self.physicalHeightMM = physicalHeightMM
+        self.layers = layers
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        serverBaseURL = try c.decode(String.self, forKey: .serverBaseURL)
+        apiToken = try c.decode(String.self, forKey: .apiToken)
+        printerProfileID = try c.decodeIfPresent(Int.self, forKey: .printerProfileID)
+        colorSnapshot = try c.decode([ColorSnapshot].self, forKey: .colorSnapshot)
+        weights = try c.decode(ChannelWeights.self, forKey: .weights)
+        // Older projects predate scorer choice; default to the v1 scorer so
+        // they round-trip identically to how they were originally solved.
+        scorerKind = try c.decodeIfPresent(ScorerKind.self, forKey: .scorerKind) ?? .weightedSquaredError
+        logicalWidth = try c.decode(Int.self, forKey: .logicalWidth)
+        logicalHeight = try c.decode(Int.self, forKey: .logicalHeight)
+        pixelsPerCell = try c.decode(Int.self, forKey: .pixelsPerCell)
+        physicalWidthMM = try c.decode(Double.self, forKey: .physicalWidthMM)
+        physicalHeightMM = try c.decode(Double.self, forKey: .physicalHeightMM)
+        layers = try c.decode([LayerSnapshot].self, forKey: .layers)
+    }
 }
 
 struct LayerSnapshot: Codable {

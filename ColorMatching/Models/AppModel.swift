@@ -78,6 +78,7 @@ final class AppModel {
     // MARK: - Composition settings
 
     var weights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1)
+    var scorerKind: ScorerKind = .weightedSquaredError
     var logicalWidth = 200
     var logicalHeight = 200
     var pixelsPerCell = 4
@@ -132,7 +133,7 @@ final class AppModel {
 
         let candidateColors = catalog.colors
         let weights = self.weights
-        let solver = CompositionSolver()
+        let solver = CompositionSolver(scorer: scorerKind.makeScorer())
         isSolving = true
         lastError = nil
 
@@ -326,6 +327,7 @@ final class AppModel {
             printerProfileID: catalog.selectedPrinterProfileID,
             colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
+            scorerKind: scorerKind,
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
@@ -344,6 +346,7 @@ final class AppModel {
         catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
 
         weights = s.weights
+        scorerKind = s.scorerKind
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
