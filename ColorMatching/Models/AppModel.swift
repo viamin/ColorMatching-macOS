@@ -113,15 +113,22 @@ final class AppModel {
             do {
                 try await Task.sleep(for: .milliseconds(300))
             } catch { return }
-
-            solveTask?.cancel()
-            let task = Task { [weak self] in
-                guard let self else { return }
-                await self.generate()
-            }
-            solveTask = task
-            _ = await task.value
+            runSolve()
         }
+    }
+
+    /// Cancels any in-flight solve and starts a new one. Both the manual
+    /// Generate action and the debounced auto-regenerate pipeline go through
+    /// here so the prior task is always canceled *before* the new task is
+    /// launched — and so `solveTask` never points to the task currently
+    /// executing `generate()` (which would cancel itself).
+    func runSolve() {
+        solveTask?.cancel()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.generate()
+        }
+        solveTask = task
     }
 
     // MARK: - Result
@@ -154,9 +161,14 @@ final class AppModel {
 
     /// Builds source grids from layers and solves the composition.
     func generate() async {
-        // Cancel any pending auto-regenerate; a manual Generate overrides it.
+        // Cancel any pending debounce; a manual Generate overrides it.
+        // We intentionally do not cancel `solveTask` here: `runSolve` already
+        // cancels the prior task before launching this one, and when
+        // `generate()` is invoked via `runSolve`, `solveTask` IS the task
+        // currently executing this method — cancelling it would cancel
+        // ourselves, the solver would bail at the cancellation guard below,
+        // and the result would never reach the UI.
         debounceTask?.cancel()
-        solveTask?.cancel()
 
         let active = weights.activeConditions
         guard !active.isEmpty else {
