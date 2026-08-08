@@ -224,6 +224,26 @@ final class AppModel {
         return CompositionRenderer.lightingPreviewTinted(result, for: condition)
     }
 
+    /// True when the solved result carries a source grid for this condition, so
+    /// the comparison view can show source / difference for that channel.
+    func hasSource(for condition: LightingCondition) -> Bool {
+        result?.sourceGrids[condition] != nil
+    }
+
+    /// Source brightness for a condition, tinted by the channel's color — the
+    /// counterpart to `lightingPreviewTinted`, for side-by-side comparison.
+    func sourcePreviewTinted(for condition: LightingCondition) -> RGBAImage? {
+        guard let result, result.sourceGrids[condition] != nil else { return nil }
+        return CompositionRenderer.sourcePreviewTinted(result, for: condition)
+    }
+
+    /// Source-vs-prediction difference for a condition, rendered with a
+    /// diverging colormap (blue = palette under-shoots, red = over-shoots).
+    func lightingDifferenceTinted(for condition: LightingCondition) -> RGBAImage? {
+        guard let result, result.sourceGrids[condition] != nil else { return nil }
+        return CompositionRenderer.lightingDifferenceTinted(result, for: condition)
+    }
+
     /// The upscaled composite raster (logical size × pixelsPerCell), suitable
     /// for export and printing.
     var exportRaster: RGBAImage? {

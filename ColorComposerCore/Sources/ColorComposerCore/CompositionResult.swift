@@ -8,6 +8,11 @@ public struct CompositionResult: Sendable {
     public let palette: [PaletteColor]
     public let weights: ChannelWeights
 
+    /// The per-channel source brightness grids the solver matched against, kept
+    /// alongside the result so the source-vs-prediction comparison view can
+    /// compute `source − predicted` without re-resampling the input images.
+    public let sourceGrids: [LightingCondition: BrightnessGrid]
+
     /// Index into `palette` for each cell (row-major), or `nil` when no eligible
     /// candidate existed for that cell.
     public let colorIndices: [Int?]
@@ -25,6 +30,7 @@ public struct CompositionResult: Sendable {
         gridHeight: Int,
         palette: [PaletteColor],
         weights: ChannelWeights,
+        sourceGrids: [LightingCondition: BrightnessGrid],
         colorIndices: [Int?],
         errors: [Double],
         excludedCandidateCount: Int
@@ -33,6 +39,7 @@ public struct CompositionResult: Sendable {
         self.gridHeight = gridHeight
         self.palette = palette
         self.weights = weights
+        self.sourceGrids = sourceGrids
         self.colorIndices = colorIndices
         self.errors = errors
         self.excludedCandidateCount = excludedCandidateCount

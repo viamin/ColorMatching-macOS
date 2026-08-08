@@ -1,46 +1,47 @@
 #!/usr/bin/env bash
 #
-# Lint entry point, used by the pre-commit hook.
+# Swift quality gate for the ColorComposerCore package: build + unit tests.
+# Invoked by the pre-commit hook as `bin/lint --staged`; that argument is
+# accepted but ignored — Swift Package Manager builds and tests the whole
+# package rather than individual staged files.
 #
-# This is a Swift project: there is no bundler or rubocop to run. SwiftLint is
-# used when the repo opts into it (a .swiftlint.yml plus the tool installed);
-# otherwise this falls back to a compiler parse check, so a commit is always
-# verified without imposing unconfigured style rules on existing code.
-#
-# Usage: bin/lint [--staged]
+# On Apple platforms the entire package compiles natively (including the Core
+# Graphics image sampler). On other hosts (Linux CI/agents without Apple
+# frameworks) two source files cannot compile, so the portable pure-Foundation
+# subset — solver, scorer, renderer, and dithering logic — is built and tested
+# there instead via a throwaway package that symlinks the real sources.
 
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+CORE="$(cd "$(dirname "$0")/../ColorComposerCore" && pwd)"
 
-if [[ "${1:-}" == "--staged" ]]; then
-  list_files() { git diff --cached --name-only --diff-filter=ACM -- '*.swift'; }
-else
-  list_files() { git ls-files -- '*.swift'; }
+if [ "$(uname -s)" = "Darwin" ]; then
+    cd "$CORE"
+    swift test
+    exit 0
 fi
 
-# Read into an array without mapfile, which macOS's bash 3.2 lacks.
-files=()
-while IFS= read -r file; do
-  [[ -n "$file" && -f "$file" ]] && files+=("$file")
-done < <(list_files)
+HARNESS="$(mktemp -d)"
+trap 'rm -rf "$HARNESS"' EXIT
+mkdir -p "$HARNESS/Sources" "$HARNESS/Tests"
+ln -s "$CORE/Sources/ColorComposerCore" "$HARNESS/Sources/ColorComposerCore"
+ln -s "$CORE/Tests/ColorComposerCoreTests" "$HARNESS/Tests/ColorComposerCoreTests"
+cat > "$HARNESS/Package.swift" <<'SWIFT'
+// swift-tools-version: 5.9
+import PackageDescription
+let package = Package(name: "LintHarness", targets: [
+    .target(
+        name: "ColorComposerCore",
+        exclude: ["BrightnessGridSampler.swift", "PaletteAPIClient.swift"]
+    ),
+    .testTarget(
+        name: "ColorComposerCoreTests",
+        dependencies: ["ColorComposerCore"]
+    )
+])
+SWIFT
 
-if [[ ${#files[@]} -eq 0 ]]; then
-  echo "No Swift files to lint."
-  exit 0
-fi
-
-if [[ -f .swiftlint.yml ]] && command -v swiftlint >/dev/null 2>&1; then
-  echo "Running swiftlint on ${#files[@]} Swift file(s)..."
-  swiftlint lint --strict --quiet "${files[@]}"
-elif command -v swiftc >/dev/null 2>&1; then
-  echo "Parse-checking ${#files[@]} Swift file(s)..."
-  for file in "${files[@]}"; do
-    if ! swiftc -parse "$file" >/dev/null; then
-      echo "Parse check failed for: $file" >&2
-      exit 1
-    fi
-  done
-else
-  echo "No Swift toolchain on PATH; skipping lint." >&2
-fi
+echo "bin/lint: non-Apple host — building/testing the portable Foundation subset"
+echo "(BrightnessGridSampler and PaletteAPIClient require Apple frameworks)"
+cd "$HARNESS"
+swift test

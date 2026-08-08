@@ -1,4 +1,5 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
 import ImageIO
 
@@ -111,3 +112,4 @@ public enum BrightnessGridSampler {
         return CGRect(x: x, y: y, width: width, height: height)
     }
 }
+#endif

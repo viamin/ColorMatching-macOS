@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Errors produced by `PaletteAPIClient`.
 public enum PaletteAPIError: Error, LocalizedError, Equatable {
