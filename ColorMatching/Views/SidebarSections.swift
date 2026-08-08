@@ -135,6 +135,14 @@ struct SourceLayerRow: View {
                 .labelsHidden()
                 .disabled(!layer.hasImage)
 
+                Picker("Color", selection: $layer.colorSpace) {
+                    ForEach(BrightnessColorSpace.allCases, id: \.self) { space in
+                        Text(space.rawValue.capitalized).tag(space)
+                    }
+                }
+                .labelsHidden()
+                .disabled(!layer.hasImage)
+
                 Toggle("Invert", isOn: $layer.inverted)
                     .toggleStyle(.checkbox)
                     .disabled(!layer.hasImage)

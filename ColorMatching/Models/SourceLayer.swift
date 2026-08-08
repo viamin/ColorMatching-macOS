@@ -15,6 +15,7 @@ final class SourceLayer: Identifiable {
     var assignedCondition: LightingCondition?
     var inverted: Bool = false
     var scalingMode: ImageScalingMode = .fit
+    var colorSpace: BrightnessColorSpace = .gamma
 
     private var cachedCGImage: CGImage?
 
@@ -36,7 +37,8 @@ final class SourceLayer: Identifiable {
             targetWidth: width,
             targetHeight: height,
             scalingMode: scalingMode,
-            invert: inverted
+            invert: inverted,
+            colorSpace: colorSpace
         )
     }
 }
