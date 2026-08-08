@@ -4,12 +4,14 @@ import CoreGraphics
 import ImageIO
 
 /// Samples a `CGImage` into a normalized brightness grid (`0.0 ... 1.0`) at the
-/// logical output resolution, applying a scaling mode and optional inversion.
+/// logical output resolution, applying a scaling mode, optional inversion, and a
+/// color space for interpreting the sampled brightness.
 ///
 /// Brightness is computed by drawing the image into an 8-bit grayscale Core
-/// Graphics context and normalizing the raw channel value by 255 — matching the
-/// gamma-space convention used by the `color_matching` mapper (no linear-
-/// luminance conversion in v1).
+/// Graphics context and normalizing the raw channel value by 255. By default
+/// this stays in gamma space — matching the `color_matching` mapper — but pass
+/// `colorSpace: .linear` to decode each value to linear luminance via the sRGB
+/// transfer function for physically-correct matching under colored light.
 public enum BrightnessGridSampler {
 
     public static func sample(
@@ -17,11 +19,12 @@ public enum BrightnessGridSampler {
         targetWidth: Int,
         targetHeight: Int,
         scalingMode: ImageScalingMode,
-        invert: Bool = false
+        invert: Bool = false,
+        colorSpace: BrightnessColorSpace = .gamma
     ) -> BrightnessGrid {
         precondition(targetWidth > 0 && targetHeight > 0)
 
-        let colorSpace = CGColorSpaceCreateDeviceGray()
+        let grayColorSpace = CGColorSpaceCreateDeviceGray()
         let bytesPerRow = targetWidth
         var bytes = [UInt8](repeating: 0, count: targetWidth * targetHeight)
 
@@ -31,7 +34,7 @@ public enum BrightnessGridSampler {
             height: targetHeight,
             bitsPerComponent: 8,
             bytesPerRow: bytesPerRow,
-            space: colorSpace,
+            space: grayColorSpace,
             bitmapInfo: CGImageAlphaInfo.none.rawValue
         ) else {
             return BrightnessGrid(width: targetWidth, height: targetHeight, fill: 0)
@@ -58,7 +61,7 @@ public enum BrightnessGridSampler {
             let srcRow = (targetHeight - 1 - y)
             for x in 0..<targetWidth {
                 let raw = bytes[srcRow * bytesPerRow + x]
-                var brightness = Double(raw) / 255.0
+                var brightness = colorSpace.decode(Double(raw) / 255.0)
                 if invert { brightness = 1.0 - brightness }
                 values[y * targetWidth + x] = brightness
             }

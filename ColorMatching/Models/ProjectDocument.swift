@@ -22,6 +22,39 @@ struct LayerSnapshot: Codable {
     var assignedCondition: LightingCondition?
     var inverted: Bool
     var scalingMode: ImageScalingMode
+    var colorSpace: BrightnessColorSpace = .gamma
+
+    init(
+        imageData: Data,
+        filename: String?,
+        assignedCondition: LightingCondition?,
+        inverted: Bool,
+        scalingMode: ImageScalingMode,
+        colorSpace: BrightnessColorSpace = .gamma
+    ) {
+        self.imageData = imageData
+        self.filename = filename
+        self.assignedCondition = assignedCondition
+        self.inverted = inverted
+        self.scalingMode = scalingMode
+        self.colorSpace = colorSpace
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case imageData, filename, assignedCondition, inverted, scalingMode, colorSpace
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        imageData = try c.decode(Data.self, forKey: .imageData)
+        filename = try c.decodeIfPresent(String.self, forKey: .filename)
+        assignedCondition = try c.decodeIfPresent(LightingCondition.self, forKey: .assignedCondition)
+        inverted = try c.decode(Bool.self, forKey: .inverted)
+        scalingMode = try c.decode(ImageScalingMode.self, forKey: .scalingMode)
+        // Older projects predate the color-space option; default to gamma so
+        // they round-trip identically to how they were originally authored.
+        colorSpace = try c.decodeIfPresent(BrightnessColorSpace.self, forKey: .colorSpace) ?? .gamma
+    }
 }
 
 /// Codable mirror of `PaletteColor` with String-keyed responses, recording the

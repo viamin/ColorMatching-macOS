@@ -292,7 +292,8 @@ final class AppModel {
                 filename: layer.filename,
                 assignedCondition: layer.assignedCondition,
                 inverted: layer.inverted,
-                scalingMode: layer.scalingMode
+                scalingMode: layer.scalingMode,
+                colorSpace: layer.colorSpace
             )
         }
         return ProjectDocument(
@@ -332,6 +333,7 @@ final class AppModel {
             layer.assignedCondition = snap.assignedCondition
             layer.inverted = snap.inverted
             layer.scalingMode = snap.scalingMode
+            layer.colorSpace = snap.colorSpace
             return layer
         }
         while layers.count < Self.maxLayers { layers.append(SourceLayer()) }
