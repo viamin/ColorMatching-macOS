@@ -49,10 +49,15 @@ public struct CompositionSolver: Sendable {
     ///     scaled to the common output dimensions and inverted if requested.
     ///   - weights: Per-channel weights. Conditions with weight `> 0` are
     ///     required and must have a grid in `sourceGrids`.
+    ///   - dithering: Optional post-solve error-diffusion pass. The default
+    ///     (`.off`) leaves plain nearest-neighbor behavior unchanged; pass
+    ///     `.floydSteinberg` to de-posterize palettes that cannot reproduce a
+    ///     target tone exactly. See ``Dithering``.
     public func solve(
         palette: [PaletteColor],
         sourceGrids: [LightingCondition: BrightnessGrid],
-        weights: ChannelWeights
+        weights: ChannelWeights,
+        dithering: Dithering = .off
     ) throws -> CompositionResult {
         guard !palette.isEmpty else { throw CompositionSolverError.emptyPalette }
 
@@ -72,6 +77,17 @@ public struct CompositionSolver: Sendable {
             } else if grid.width != gridWidth || grid.height != gridHeight {
                 throw CompositionSolverError.mismatchedGridDimensions
             }
+        }
+
+        if dithering == .floydSteinberg {
+            return solveDithered(
+                palette: palette,
+                sourceGrids: sourceGrids,
+                weights: weights,
+                active: active,
+                gridWidth: gridWidth,
+                gridHeight: gridHeight
+            )
         }
 
         if scorer is WeightedSquaredErrorScorer {
@@ -244,5 +260,128 @@ public struct CompositionSolver: Sendable {
             errors: errors,
             excludedCandidateCount: excludedCandidateCount
         )
+    }
+
+    // MARK: - Error diffusion (vector Floyd–Steinberg)
+
+    /// Vector Floyd–Steinberg error diffusion. Walks the grid once in raster
+    /// order, matching each cell against a working target that absorbs diffused
+    /// error from already-visited neighbors, then pushes the cell's signed
+    /// per-channel error forward. Per-cell `errors` are recorded against the
+    /// *original* target so the field stays comparable with the nearest-neighbor
+    /// result; diffusion improves local (block) averages rather than per-cell
+    /// scores. Kept as one cohesive pass — splitting the raster walk would only
+    /// redistribute the sequential coupling without reducing complexity.
+    private func solveDithered(
+        palette: [PaletteColor],
+        sourceGrids: [LightingCondition: BrightnessGrid],
+        weights: ChannelWeights,
+        active: [(condition: LightingCondition, weight: Double)],
+        gridWidth: Int,
+        gridHeight: Int
+    ) -> CompositionResult {
+        let activeConditions = active.map(\.condition)
+        let cellCount = gridWidth * gridHeight
+
+        let originals: [[Double]] = activeConditions.map { sourceGrids[$0]!.values }
+        var adjusted: [[Double]] = originals.map { $0 }
+
+        var colorIndices = [Int?](repeating: nil, count: cellCount)
+        var errors = [Double](repeating: .infinity, count: cellCount)
+
+        // Captures the mutable working buffers so the four Floyd–Steinberg
+        // pushes read cleanly at each call site.
+        let diffuse: (Double, Int, Int, Int) -> Void = { delta, channel, x, y in
+            func push(_ nx: Int, _ ny: Int, _ fraction: Double) {
+                guard (0..<gridWidth).contains(nx), (0..<gridHeight).contains(ny) else { return }
+                adjusted[channel][ny * gridWidth + nx] += delta * fraction
+            }
+            push(x + 1, y, 7.0 / 16.0)
+            push(x - 1, y + 1, 3.0 / 16.0)
+            push(x, y + 1, 5.0 / 16.0)
+            push(x + 1, y + 1, 1.0 / 16.0)
+        }
+
+        for y in 0..<gridHeight {
+            for x in 0..<gridWidth {
+                let cell = y * gridWidth + x
+                let target = Self.targetVector(at: cell, from: adjusted, conditions: activeConditions)
+                guard let chosen = bestCandidate(in: palette, for: target, weights: weights) else {
+                    continue
+                }
+                colorIndices[cell] = chosen
+                let original = Self.targetVector(at: cell, from: originals, conditions: activeConditions)
+                errors[cell] = recordedError(for: chosen, in: palette, versus: original, weights: weights)
+
+                for (channel, condition) in activeConditions.enumerated() {
+                    let candidate = palette[chosen].brightness(for: condition) ?? 0
+                    diffuse(adjusted[channel][cell] - candidate, channel, x, y)
+                }
+            }
+        }
+
+        let excludedCandidateCount = palette.filter {
+            !$0.hasMeasurements(for: Set(activeConditions))
+        }.count
+
+        return CompositionResult(
+            gridWidth: gridWidth,
+            gridHeight: gridHeight,
+            palette: palette,
+            weights: weights,
+            sourceGrids: sourceGrids,
+            colorIndices: colorIndices,
+            errors: errors,
+            excludedCandidateCount: excludedCandidateCount
+        )
+    }
+
+    /// Assembles the per-channel vector stored in `buffers` for one cell into a
+    /// target the scorer can consume.
+    private static func targetVector(
+        at cell: Int,
+        from buffers: [[Double]],
+        conditions: [LightingCondition]
+    ) -> TargetResponseVector {
+        var brightness: [LightingCondition: Double] = [:]
+        for (index, condition) in conditions.enumerated() {
+            brightness[condition] = buffers[index][cell]
+        }
+        return TargetResponseVector(brightness)
+    }
+
+    /// Lowest-error eligible palette index for `target`, earliest-wins on ties;
+    /// `nil` when every candidate is excluded.
+    private func bestCandidate(
+        in palette: [PaletteColor],
+        for target: TargetResponseVector,
+        weights: ChannelWeights
+    ) -> Int? {
+        var bestIndex: Int?
+        var bestScore = Double.infinity
+        for (index, color) in palette.enumerated() {
+            guard case .score(let score) = scorer.score(candidate: color, target: target, weights: weights) else {
+                continue
+            }
+            if score < bestScore {
+                bestScore = score
+                bestIndex = index
+            }
+        }
+        return bestIndex
+    }
+
+    /// Weighted error of `palette[index]` against `target`, or `.infinity` when
+    /// the candidate is excluded (only possible if `target` lacks a condition).
+    private func recordedError(
+        for index: Int,
+        in palette: [PaletteColor],
+        versus target: TargetResponseVector,
+        weights: ChannelWeights
+    ) -> Double {
+        guard case .score(let score) = scorer.score(candidate: palette[index], target: target, weights: weights) else {
+            return .infinity
+        }
+        return score
     }
 }

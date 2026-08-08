@@ -1,16 +1,47 @@
 #!/usr/bin/env bash
 #
-# Project quality gate: run the pure-Swift ColorComposerCore test suite.
+# Swift quality gate for the ColorComposerCore package: build + unit tests.
+# Invoked by the pre-commit hook as `bin/lint --staged`; that argument is
+# accepted but ignored — Swift Package Manager builds and tests the whole
+# package rather than individual staged files.
 #
-# ColorMatching is a macOS app (SwiftUI/AppKit), so the unit-testable surface is
-# the ColorComposerCore package. The pre-commit hook invokes this as
-# `bin/lint --staged`; the flag is accepted for interface compatibility since
-# the suite always covers the whole module.
-#
+# On Apple platforms the entire package compiles natively (including the Core
+# Graphics image sampler). On other hosts (Linux CI/agents without Apple
+# frameworks) two source files cannot compile, so the portable pure-Foundation
+# subset — solver, scorer, renderer, and dithering logic — is built and tested
+# there instead via a throwaway package that symlinks the real sources.
+
 set -euo pipefail
 
-# Drop the optional hook flag; the suite runs over the full module either way.
-[[ "${1:-}" == "--staged" ]] && shift || true
+CORE="$(cd "$(dirname "$0")/../ColorComposerCore" && pwd)"
 
-cd "$(dirname "$0")/../ColorComposerCore"
-exec swift test "$@"
+if [ "$(uname -s)" = "Darwin" ]; then
+    cd "$CORE"
+    swift test
+    exit 0
+fi
+
+HARNESS="$(mktemp -d)"
+trap 'rm -rf "$HARNESS"' EXIT
+mkdir -p "$HARNESS/Sources" "$HARNESS/Tests"
+ln -s "$CORE/Sources/ColorComposerCore" "$HARNESS/Sources/ColorComposerCore"
+ln -s "$CORE/Tests/ColorComposerCoreTests" "$HARNESS/Tests/ColorComposerCoreTests"
+cat > "$HARNESS/Package.swift" <<'SWIFT'
+// swift-tools-version: 5.9
+import PackageDescription
+let package = Package(name: "LintHarness", targets: [
+    .target(
+        name: "ColorComposerCore",
+        exclude: ["BrightnessGridSampler.swift", "PaletteAPIClient.swift"]
+    ),
+    .testTarget(
+        name: "ColorComposerCoreTests",
+        dependencies: ["ColorComposerCore"]
+    )
+])
+SWIFT
+
+echo "bin/lint: non-Apple host — building/testing the portable Foundation subset"
+echo "(BrightnessGridSampler and PaletteAPIClient require Apple frameworks)"
+cd "$HARNESS"
+swift test
