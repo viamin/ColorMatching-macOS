@@ -36,7 +36,10 @@ if [[ -f .swiftlint.yml ]] && command -v swiftlint >/dev/null 2>&1; then
 elif command -v swiftc >/dev/null 2>&1; then
   echo "Parse-checking ${#files[@]} Swift file(s)..."
   for file in "${files[@]}"; do
-    swiftc -parse "$file" >/dev/null
+    if ! swiftc -parse "$file" >/dev/null; then
+      echo "Parse check failed for: $file" >&2
+      exit 1
+    fi
   done
 else
   echo "No Swift toolchain on PATH; skipping lint." >&2
