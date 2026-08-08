@@ -150,6 +150,10 @@ struct SourceLayerRow: View {
         }
         .padding(6)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
+        .onChange(of: layer.inverted) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.scalingMode) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.assignedCondition) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.colorSpace) { model.scheduleAutoRegenerate() }
     }
 }
 
@@ -201,6 +205,9 @@ struct CompositionSettingsSection: View {
                 }
             }
 
+            Toggle("Auto-regenerate on settings change", isOn: $model.autoRegenerate)
+                .font(.subheadline)
+
             Divider()
             Text("Channel weights").font(.subheadline)
             WeightSlider("White", value: weightBinding(\.white))
@@ -221,6 +228,10 @@ struct CompositionSettingsSection: View {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
         }
+        .onChange(of: model.weights) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.logicalWidth) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.logicalHeight) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.scorerKind) { model.scheduleAutoRegenerate() }
     }
 
     private func weightBinding(_ keyPath: WritableKeyPath<ChannelWeights, Double>) -> Binding<Double> {
