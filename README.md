@@ -43,6 +43,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 5. **Generate** — solve, then explore:
    - **Composite** — the printable color image (exact palette RGBs; export/print use this).
    - **Error map** — where the palette can't represent the targets well.
+   - **Gamut** — parallel-coordinates plot of the loaded colors' response vectors against the target vectors the source images ask for, highlighting targets no color can reach and naming the channel that runs out.
    - **Preview · Red / Green / Blue / LPS / White** — predicted appearance under each light, tinted by channel color.
    - **Statistics** — mean / median / max error, and % of cells below a quality threshold.
 6. **Export** PNG/TIFF, **Print** via the native macOS print dialog at a controlled physical size, or **Save Project** (`.cmpj`) with embedded images + palette snapshot.
@@ -61,6 +62,7 @@ bin/setup                 generates the Xcode project
   - `CompositionSolver` — nearest-neighbor with an optimized contiguous fast path, deterministic earliest-wins tie-breaking, parallelized across rows (~25ms for 500×500 × 256 colors in release)
   - `BrightnessGridSampler` — Core Graphics grayscale sampling with Fit/Fill/Stretch + inversion
   - `CompositionRenderer` — composite, error map, and tinted lighting previews
+  - `ResponseGamutAnalyzer` — palette reach vs. target demand; quantizes targets into bins so cost scales with the number of *distinct* target vectors, not the cell count
   - `PaletteAPIClient` — async `URLSession` client for the `color_matching` API
 
 - **`ColorMatching`** (app) wraps the package in a SwiftUI interface: an `@Observable` app model, native file panels, `NSPrintOperation` printing, ImageIO export, and Codable `.cmpj` project persistence.

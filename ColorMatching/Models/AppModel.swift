@@ -95,10 +95,24 @@ final class AppModel {
     private(set) var isSolving = false
     private(set) var lastError: String?
 
+    private var solvedGamut: ResponseGamut?
+
     var hasResult: Bool { result != nil }
 
     var eligibleColorCount: Int {
         catalog.eligibleColors(activeConditions: weights.activeConditions).count
+    }
+
+    /// Response-vector gamut to visualize: the solved one once a composition
+    /// exists, otherwise the loaded colors alone. The palette-only form is what
+    /// guides data entry before Generate has ever run, and it is cheap enough
+    /// (no target grids to bin) to rebuild whenever the weights change.
+    var responseGamut: ResponseGamut {
+        solvedGamut ?? ResponseGamutAnalyzer().analyze(
+            palette: catalog.colors,
+            sourceGrids: [:],
+            weights: weights
+        )
     }
 
     // MARK: - Generation
@@ -114,17 +128,7 @@ final class AppModel {
             lastError = "Load colors from the server first."
             return
         }
-
-        // Resolve a source grid for every active condition.
-        var grids: [LightingCondition: BrightnessGrid] = [:]
-        for condition in active {
-            guard let layer = layers.first(where: { $0.hasImage && $0.assignedCondition == condition }),
-                  let grid = layer.brightnessGrid(width: logicalWidth, height: logicalHeight) else {
-                lastError = "No source image is assigned to the active “\(condition.displayName)” channel."
-                return
-            }
-            grids[condition] = grid
-        }
+        guard let grids = sourceGrids(for: active) else { return }
 
         let candidateColors = catalog.colors
         let weights = self.weights
@@ -145,9 +149,29 @@ final class AppModel {
         case .success(let r):
             result = r
             errorStatistics = ErrorStatistics(result: r)
+            solvedGamut = ResponseGamutAnalyzer().analyze(
+                palette: candidateColors,
+                sourceGrids: grids,
+                weights: weights
+            )
         case .failure(let error):
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// One brightness grid per active condition, or `nil` (having set
+    /// `lastError`) when an active channel has no assigned source image.
+    private func sourceGrids(for active: [LightingCondition]) -> [LightingCondition: BrightnessGrid]? {
+        var grids: [LightingCondition: BrightnessGrid] = [:]
+        for condition in active {
+            guard let layer = layers.first(where: { $0.hasImage && $0.assignedCondition == condition }),
+                  let grid = layer.brightnessGrid(width: logicalWidth, height: logicalHeight) else {
+                lastError = "No source image is assigned to the active “\(condition.displayName)” channel."
+                return nil
+            }
+            grids[condition] = grid
+        }
+        return grids
     }
 
     // MARK: - Derived images

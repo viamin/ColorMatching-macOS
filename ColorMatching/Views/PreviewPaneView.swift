@@ -4,6 +4,7 @@ import ColorComposerCore
 enum PreviewMode: Hashable, CaseIterable, Identifiable {
     case composite
     case errorMap
+    case gamut
     case lighting(LightingCondition)
 
     var id: Self { self }
@@ -12,12 +13,13 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
         switch self {
         case .composite: return "Composite"
         case .errorMap: return "Error Map"
+        case .gamut: return "Gamut"
         case .lighting(let condition): return "Preview · \(condition.displayName)"
         }
     }
 
     static var allCases: [PreviewMode] {
-        [.composite, .errorMap] + LightingCondition.all.map { .lighting($0) }
+        [.composite, .errorMap, .gamut] + LightingCondition.all.map { .lighting($0) }
     }
 }
 
@@ -72,7 +74,11 @@ struct PreviewPaneView: View {
 
     @ViewBuilder
     private var content: some View {
-        if !model.hasResult {
+        if mode == .gamut {
+            // The gamut explains why a solve will struggle, so it stays useful
+            // before Generate and when nothing could be matched at all.
+            ResponseGamutView()
+        } else if !model.hasResult {
             ContentUnavailableView(
                 "No composition yet",
                 systemImage: "wand.and.stars",
@@ -90,6 +96,8 @@ struct PreviewPaneView: View {
                 PreviewImage(image: model.compositePreviewRGBA.flatMap { ImageUtilities.nsImage(from: $0) })
             case .errorMap:
                 PreviewImage(image: model.errorMapGrid.flatMap { ImageUtilities.nsImage(from: $0) })
+            case .gamut:
+                ResponseGamutView()
             case .lighting(let condition):
                 lightingCompareView(for: condition)
             }
