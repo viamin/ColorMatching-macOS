@@ -81,6 +81,7 @@ final class AppModel {
     var logicalWidth = 200
     var logicalHeight = 200
     var pixelsPerCell = 4
+    var rasterMode: RasterMode = .flat
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
 
@@ -244,32 +245,18 @@ final class AppModel {
         return CompositionRenderer.lightingDifferenceTinted(result, for: condition)
     }
 
-    /// The upscaled composite raster (logical size × pixelsPerCell), suitable
-    /// for export and printing.
+    /// The export/print raster: the solved composition rendered in the
+    /// selected `rasterMode` at `pixelsPerCell` resolution. Flat mode is the
+    /// v1 one-color-per-cell baseline; halftone and two-color turn each cell
+    /// into a sub-cell pattern that better matches targets no single color
+    /// can hit.
     var exportRaster: RGBAImage? {
         guard let result else { return nil }
-        let base = CompositionRenderer.composite(result)
-        guard pixelsPerCell > 1 else { return base }
-        return upscale(base, by: pixelsPerCell)
-    }
-
-    private func upscale(_ image: RGBAImage, by factor: Int) -> RGBAImage {
-        let outW = image.width * factor
-        let outH = image.height * factor
-        var rgba = [UInt8](repeating: 0, count: outW * outH * 4)
-        for y in 0..<image.height {
-            for x in 0..<image.width {
-                let base = (y * image.width + x) * 4
-                let (r, g, b, a) = (image.rgba[base], image.rgba[base+1], image.rgba[base+2], image.rgba[base+3])
-                for dy in 0..<factor {
-                    for dx in 0..<factor {
-                        let o = ((y*factor+dy)*outW + (x*factor+dx)) * 4
-                        rgba[o] = r; rgba[o+1] = g; rgba[o+2] = b; rgba[o+3] = a
-                    }
-                }
-            }
-        }
-        return RGBAImage(width: outW, height: outH, rgba: rgba)
+        return CompositionRenderer.composite(
+            result,
+            mode: rasterMode,
+            pixelsPerCell: pixelsPerCell
+        )
     }
 
     // MARK: - Export / print
@@ -329,6 +316,7 @@ final class AppModel {
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
+            rasterMode: rasterMode,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
             layers: layerSnaps
@@ -347,6 +335,7 @@ final class AppModel {
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
+        rasterMode = s.rasterMode
         physicalWidthMM = s.physicalWidthMM
         physicalHeightMM = s.physicalHeightMM
 

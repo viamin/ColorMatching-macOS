@@ -1,4 +1,16 @@
-import Foundation
+public enum RasterMode: String, Sendable, Codable, CaseIterable {
+    case flat
+    case halftone
+    case twoColor
+
+    public var displayName: String {
+        switch self {
+        case .flat: return "Flat"
+        case .halftone: return "Halftone"
+        case .twoColor: return "Two-color"
+        }
+    }
+}
 
 /// A raw RGBA8 raster buffer (row-major, 4 bytes per pixel, unpremultiplied).
 public struct RGBAImage: Sendable, Equatable {
@@ -42,23 +54,227 @@ public extension BrightnessGrid {
 /// predicted lighting previews.
 public enum CompositionRenderer {
 
-    /// The printable color composite: each cell is its selected palette color.
-    /// Unmatched cells are fully transparent.
-    public static func composite(_ result: CompositionResult) -> RGBAImage {
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        for cell in 0..<result.cellCount {
-            guard let index = result.colorIndices[cell] else {
-                // Transparent marker — no palette color was eligible.
-                rgba[cell * 4 + 3] = 0
-                continue
+    public static func composite(
+        _ result: CompositionResult,
+        mode: RasterMode = .flat,
+        pixelsPerCell: Int = 1
+    ) -> RGBAImage {
+        let factor = max(pixelsPerCell, 1)
+        let outWidth = result.gridWidth * factor
+        let outHeight = result.gridHeight * factor
+        var rgba = [UInt8](repeating: 0, count: outWidth * outHeight * 4)
+        let dotOrder = mode == .halftone ? dotPixelOrder(for: factor) : []
+        let screenOrder = mode == .twoColor ? screenPixelOrder(for: factor) : []
+
+        for y in 0..<result.gridHeight {
+            for x in 0..<result.gridWidth {
+                let cell = y * result.gridWidth + x
+                let positions: [(x: Int, y: Int, color: RGBColor?)]
+                switch mode {
+                case .flat:
+                    positions = filledCell(for: result, cell: cell, factor: factor)
+                case .halftone:
+                    positions = halftoneCell(
+                        for: result,
+                        cell: cell,
+                        factor: factor,
+                        order: dotOrder
+                    )
+                case .twoColor:
+                    positions = twoColorCell(
+                        for: result,
+                        cell: cell,
+                        factor: factor,
+                        order: screenOrder
+                    )
+                }
+                for position in positions {
+                    let output = ((y * factor + position.y) * outWidth + x * factor + position.x) * 4
+                    guard let color = position.color else { continue }
+                    rgba[output] = color.red
+                    rgba[output + 1] = color.green
+                    rgba[output + 2] = color.blue
+                    rgba[output + 3] = 255
+                }
             }
-            let color = result.palette[index].rgb
-            rgba[cell * 4 + 0] = color.red
-            rgba[cell * 4 + 1] = color.green
-            rgba[cell * 4 + 2] = color.blue
-            rgba[cell * 4 + 3] = 255
         }
-        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+        return RGBAImage(width: outWidth, height: outHeight, rgba: rgba)
+    }
+
+    public static func rasterized(
+        _ result: CompositionResult,
+        mode: RasterMode,
+        pixelsPerCell: Int
+    ) -> RGBAImage {
+        composite(result, mode: mode, pixelsPerCell: pixelsPerCell)
+    }
+
+    private static func filledCell(
+        for result: CompositionResult,
+        cell: Int,
+        factor: Int
+    ) -> [(x: Int, y: Int, color: RGBColor?)] {
+        let color = result.colorIndices[cell].map { result.palette[$0].rgb }
+        return (0..<factor).flatMap { y in
+            (0..<factor).map { x in (x: x, y: y, color: color) }
+        }
+    }
+
+    private static func halftoneCell(
+        for result: CompositionResult,
+        cell: Int,
+        factor: Int,
+        order: [(x: Int, y: Int)]
+    ) -> [(x: Int, y: Int, color: RGBColor?)] {
+        guard let index = result.colorIndices[cell] else {
+            return paperCell(factor: factor)
+        }
+        let coverage = targetBrightness(for: result, cell: cell)
+        let dotCount = Int((coverage * Double(order.count)).rounded())
+        let dotKeys = Set(order.prefix(dotCount).map { pixelKey(x: $0.x, y: $0.y, factor: factor) })
+        let color = result.palette[index].rgb
+        let paper = RGBColor(red: 255, green: 255, blue: 255)
+        return (0..<factor).flatMap { y in
+            (0..<factor).map { x in
+                (x: x, y: y, color: dotKeys.contains(pixelKey(x: x, y: y, factor: factor)) ? color : paper)
+            }
+        }
+    }
+
+    private static func twoColorCell(
+        for result: CompositionResult,
+        cell: Int,
+        factor: Int,
+        order: [(x: Int, y: Int)]
+    ) -> [(x: Int, y: Int, color: RGBColor?)] {
+        guard let mix = bestTwoColorMix(for: result, cell: cell) else {
+            return filledCell(for: result, cell: cell, factor: factor)
+        }
+        let firstCount = Int((mix.fraction * Double(order.count)).rounded())
+        let firstKeys = Set(order.prefix(firstCount).map { pixelKey(x: $0.x, y: $0.y, factor: factor) })
+        return (0..<factor).flatMap { y in
+            (0..<factor).map { x in
+                let isFirst = firstKeys.contains(pixelKey(x: x, y: y, factor: factor))
+                return (x: x, y: y, color: isFirst ? mix.first : mix.second)
+            }
+        }
+    }
+
+    private static func paperCell(factor: Int) -> [(x: Int, y: Int, color: RGBColor?)] {
+        let paper = RGBColor(red: 255, green: 255, blue: 255)
+        return (0..<factor).flatMap { y in
+            (0..<factor).map { x in (x: x, y: y, color: paper) }
+        }
+    }
+
+    private static func pixelKey(x: Int, y: Int, factor: Int) -> Int {
+        y * factor + x
+    }
+
+    private static func targetBrightness(for result: CompositionResult, cell: Int) -> Double {
+        let entries = result.weights.activeEntries
+        let totalWeight = entries.reduce(0.0) { $0 + $1.weight }
+        guard totalWeight > 0 else { return 0 }
+        let weighted = entries.reduce(0.0) { sum, entry in
+            sum + (result.sourceGrids[entry.condition]?.values[cell] ?? 0) * entry.weight
+        }
+        return max(0, min(1, weighted / totalWeight))
+    }
+
+    private static func bestTwoColorMix(
+        for result: CompositionResult,
+        cell: Int
+    ) -> (first: RGBColor, second: RGBColor, fraction: Double)? {
+        let entries = result.weights.activeEntries
+        let candidates = result.palette.enumerated().compactMap { index, color in
+            responseVector(for: color, conditions: entries.map(\.condition)).map {
+                (index: index, color: color, responses: $0)
+            }
+        }
+        guard candidates.count > 1 else {
+            return candidates.first.map { (first: $0.color.rgb, second: $0.color.rgb, fraction: 1) }
+        }
+        let target = entries.map { result.sourceGrids[$0.condition]!.values[cell] }
+        var best: (first: RGBColor, second: RGBColor, fraction: Double)?
+        var bestError = Double.infinity
+
+        for first in 0..<(candidates.count - 1) {
+            for second in (first + 1)..<candidates.count {
+                let a = candidates[first].responses
+                let b = candidates[second].responses
+                var numerator = 0.0
+                var denominator = 0.0
+                for channel in 0..<entries.count {
+                    let difference = a[channel] - b[channel]
+                    numerator += entries[channel].weight * (target[channel] - b[channel]) * difference
+                    denominator += entries[channel].weight * difference * difference
+                }
+                let fraction = denominator > 0 ? max(0, min(1, numerator / denominator)) : 0
+                var error = 0.0
+                for channel in 0..<entries.count {
+                    let prediction = b[channel] + fraction * (a[channel] - b[channel])
+                    let difference = prediction - target[channel]
+                    error += entries[channel].weight * difference * difference
+                }
+                if error < bestError {
+                    bestError = error
+                    best = (
+                        first: candidates[first].color.rgb,
+                        second: candidates[second].color.rgb,
+                        fraction: fraction
+                    )
+                }
+            }
+        }
+        return best
+    }
+
+    private static func responseVector(
+        for color: PaletteColor,
+        conditions: [LightingCondition]
+    ) -> [Double]? {
+        let values = conditions.compactMap { color.brightness(for: $0) }
+        return values.count == conditions.count ? values : nil
+    }
+
+    private static func dotPixelOrder(for factor: Int) -> [(x: Int, y: Int)] {
+        let center = (Double(factor - 1) / 2, Double(factor - 1) / 2)
+        return (0..<factor).flatMap { y in (0..<factor).map { x in (x: x, y: y) } }
+            .sorted { left, right in
+                let leftDistance = squaredDistance(from: left, to: center)
+                let rightDistance = squaredDistance(from: right, to: center)
+                if leftDistance == rightDistance {
+                    if left.y != right.y { return left.y < right.y }
+                    return left.x < right.x
+                }
+                return leftDistance < rightDistance
+            }
+    }
+
+    private static func squaredDistance(
+        from pixel: (x: Int, y: Int),
+        to center: (Double, Double)
+    ) -> Double {
+        let dx = Double(pixel.x) - center.0
+        let dy = Double(pixel.y) - center.1
+        return dx * dx + dy * dy
+    }
+
+    private static func screenPixelOrder(for factor: Int) -> [(x: Int, y: Int)] {
+        let matrix = [
+            [0, 8, 2, 10],
+            [12, 4, 14, 6],
+            [3, 11, 1, 9],
+            [15, 7, 13, 5]
+        ]
+        return (0..<factor).flatMap { y in (0..<factor).map { x in (x: x, y: y) } }
+            .sorted { left, right in
+                let leftRank = matrix[left.y % 4][left.x % 4]
+                let rightRank = matrix[right.y % 4][right.x % 4]
+                return leftRank == rightRank
+                    ? (left.y, left.x) < (right.y, right.x)
+                    : leftRank < rightRank
+            }
     }
 
     /// Normalized error map. Brighter means larger matching error; unmatched
