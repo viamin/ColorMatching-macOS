@@ -86,6 +86,85 @@ final class StatisticsAndRendererTests: XCTestCase {
         // No lps measurements -> black, but still opaque.
         XCTAssertEqual(lps.rgba[7], 255)
     }
+
+    func testLightingDifferenceIsSourceMinusPredicted() throws {
+        // Palette: black (red 0.0) and a mid-gray (red 0.5). The gray caps how
+        // bright red can get, so cell 1 under-shoots.
+        let palette = [
+            color(1, "#000000", [.red: 0.0]),
+            color(2, "#808080", [.red: 0.5])
+        ]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 2, height: 1, values: [0.0, 1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+        // Predicted: cell0 -> black (0.0), cell1 -> gray (0.5).
+        let diff = CompositionRenderer.lightingDifference(result, for: .red)
+
+        XCTAssertEqual(diff.width, 2)
+        XCTAssertEqual(diff.height, 1)
+        // Element-wise: source − predicted = [0.0−0.0, 1.0−0.5].
+        XCTAssertEqual(diff.value(x: 0, y: 0), 0.0, accuracy: 1e-9)
+        XCTAssertEqual(diff.value(x: 1, y: 0), 0.5, accuracy: 1e-9)
+
+        // Verify the full element-wise identity holds against the stored grids.
+        let source = try XCTUnwrap(result.sourceGrids[.red])
+        let predicted = CompositionRenderer.lightingPreview(result, for: .red)
+        for i in 0..<diff.values.count {
+            XCTAssertEqual(diff.values[i], source.values[i] - predicted.values[i], accuracy: 1e-9)
+        }
+    }
+
+    func testLightingDifferenceZeroWhenNoSourceGrid() throws {
+        // Only a red source; asking for the green difference has nothing to
+        // compare against, so every cell is 0.
+        let palette = [color(1, "#000000", [.red: 0.0, .green: 0.3])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [0.0])],
+            weights: ChannelWeights(red: 1)
+        )
+        let diff = CompositionRenderer.lightingDifference(result, for: .green)
+        XCTAssertEqual(diff.value(x: 0, y: 0), 0.0, accuracy: 1e-9)
+    }
+
+    func testDifferenceTintedDivergingColors() throws {
+        // One color (mid-gray under red, 0.5): every cell maps to it, so cell 0
+        // over-shoots (predicted 0.5 > source 0.0) and cell 1 under-shoots.
+        let palette = [color(1, "#808080", [.red: 0.5])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 2, height: 1, values: [0.0, 1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+        let img = CompositionRenderer.lightingDifferenceTinted(result, for: .red)
+        // cell 0: over-shoot (negative) -> red: R > 0, B == 0.
+        XCTAssertGreaterThan(img.rgba[0], 0)
+        XCTAssertEqual(img.rgba[2], 0)
+        // cell 1: under-shoot (positive) -> blue: R == 0, B > 0.
+        XCTAssertEqual(img.rgba[4], 0)
+        XCTAssertGreaterThan(img.rgba[6], 0)
+        // Both cells opaque.
+        XCTAssertEqual(img.rgba[3], 255)
+        XCTAssertEqual(img.rgba[7], 255)
+    }
+
+    func testSourcePreviewTintedMirrorsPredicted() throws {
+        let palette = [color(1, "#ffffff", [.red: 1.0])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+        // Source fully bright under red -> full red tint, opaque.
+        let source = CompositionRenderer.sourcePreviewTinted(result, for: .red)
+        XCTAssertEqual(source.rgba[0], 255)
+        XCTAssertEqual(source.rgba[1], 0)
+        XCTAssertEqual(source.rgba[2], 0)
+        XCTAssertEqual(source.rgba[3], 255)
+    }
+
     func testErrorMapNormalizesToUnitRange() throws {
         let palette = [
             color(1, "#000000", [.red: 0.0]),
