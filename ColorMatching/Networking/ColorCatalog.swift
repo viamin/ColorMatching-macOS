@@ -92,11 +92,11 @@ final class ColorCatalog {
         do {
             try cache.removeAll()
             if isServingFromCache {
-                colors = []
-                colorsForProfile = nil
-                lastRefresh = nil
-                isServingFromCache = false
+                clearLoadedColors()
+                printerProfiles = []
+                selectedPrinterProfileID = nil
             }
+            isServingFromCache = false
             connectionMessage = "Cleared cached colors."
         } catch {
             connectionMessage = "Could not clear the color cache."
@@ -140,6 +140,7 @@ final class ColorCatalog {
         let reason = (error as? PaletteAPIError)?.errorDescription ?? missMessage
         guard let profileID = selectedPrinterProfileID,
               let cached = cache.entry(for: profileID) else {
+            clearLoadedColors()
             isServingFromCache = false
             connectionMessage = reason
             return
@@ -166,6 +167,12 @@ final class ColorCatalog {
 
     private static func cacheTimestamp(_ date: Date) -> String {
         date.formatted(.dateTime.month().day().hour().minute())
+    }
+
+    private func clearLoadedColors() {
+        colors = []
+        colorsForProfile = nil
+        lastRefresh = nil
     }
 
     /// Colors eligible for the solver given the currently active channels.
