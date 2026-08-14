@@ -1,6 +1,17 @@
 import SwiftUI
 import ColorComposerCore
 
+struct PreviewSelectionKey: FocusedValueKey {
+    typealias Value = Binding<PreviewMode>
+}
+
+extension FocusedValues {
+    var selectedPreviewMode: Binding<PreviewMode>? {
+        get { self[PreviewSelectionKey.self] }
+        set { self[PreviewSelectionKey.self] = newValue }
+    }
+}
+
 enum PreviewMode: Hashable, CaseIterable, Identifiable {
     case composite
     case errorMap
@@ -60,6 +71,7 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
+        .focusedSceneValue(\.selectedPreviewMode, $mode)
     }
 
     private var previewPicker: some View {

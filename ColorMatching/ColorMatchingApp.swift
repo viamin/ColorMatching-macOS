@@ -24,7 +24,10 @@ struct ColorMatchingApp: App {
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
+                    .disabled(!model.hasResult)
             }
+            PreviewCommands(model: model)
+            WorkflowCommands(model: model, addImages: addImages)
         }
     }
 
@@ -60,6 +63,62 @@ struct ColorMatchingApp: App {
             do { try model.exportComposite(to: url) }
             catch { NSApp.presentError(error) }
         }
+    }
+
+    private func addImages() {
+        FilePanels.openImages { urls in
+            model.appendImages(from: urls)
+        }
+    }
+}
+
+private struct WorkflowCommands: Commands {
+    let model: AppModel
+    let addImages: () -> Void
+
+    var body: some Commands {
+        CommandMenu("Actions") {
+            Button("Add Images…", action: addImages)
+                .keyboardShortcut("o", modifiers: [.command, .option])
+
+            Button("Generate") { model.runSolve() }
+                .keyboardShortcut(.return, modifiers: [.command])
+                .disabled(model.catalog.colors.isEmpty)
+        }
+    }
+}
+
+private struct PreviewCommands: Commands {
+    let model: AppModel
+    @FocusedBinding(\.selectedPreviewMode) private var selectedPreviewMode: PreviewMode?
+
+    var body: some Commands {
+        CommandMenu("Preview") {
+            previewButton("Composite", mode: .composite, key: "1")
+            previewButton("Error Map", mode: .errorMap, key: "2")
+            Divider()
+            previewButton("Red", mode: .lighting(.red), key: "3")
+            previewButton("Green", mode: .lighting(.green), key: "4")
+            previewButton("Blue", mode: .lighting(.blue), key: "5")
+            previewButton("LPS", mode: .lighting(.lps), key: "6")
+            Button("White") { selectedPreviewMode = .lighting(.white) }
+                .disabled(!canSelect(.lighting(.white)))
+            Divider()
+            Button("Gamut") { selectedPreviewMode = .gamut }
+                .disabled(!canSelect(.gamut))
+        }
+    }
+
+    private func previewButton(_ title: String, mode: PreviewMode, key: KeyEquivalent) -> some View {
+        Button(title) { selectedPreviewMode = mode }
+            .keyboardShortcut(key)
+            .disabled(!canSelect(mode))
+    }
+
+    private func canSelect(_ mode: PreviewMode) -> Bool {
+        guard selectedPreviewMode != nil else { return false }
+        guard model.hasResult else { return mode == .composite || mode == .errorMap || mode == .gamut }
+        return true
     }
 }
 
