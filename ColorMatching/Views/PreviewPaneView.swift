@@ -32,6 +32,16 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
     static var allCases: [PreviewMode] {
         [.composite, .errorMap, .gamut] + LightingCondition.all.map { .lighting($0) }
     }
+
+    /// Title in the Preview menu. Numbered menu items mirror `allCases` so
+    /// ⌘1–⌘8 always select the Nth visible tab; `label`'s "Preview ·" prefix
+    /// would read redundant inside that menu.
+    var menuTitle: String {
+        switch self {
+        case .composite, .errorMap, .gamut: return label
+        case .lighting(let condition): return condition.displayName
+        }
+    }
 }
 
 /// Per-channel comparison options, shown when a lighting preview is selected so

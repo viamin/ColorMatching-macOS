@@ -27,7 +27,7 @@ struct ColorMatchingApp: App {
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
                     .disabled(!model.hasResult)
             }
-            PreviewCommands(model: model)
+            PreviewCommands()
             WorkflowCommands(model: model, addImages: addImages)
         }
     }
@@ -90,34 +90,19 @@ private struct WorkflowCommands: Commands {
 }
 
 private struct PreviewCommands: Commands {
-    let model: AppModel
     @FocusedBinding(\.selectedPreviewMode) private var selectedPreviewMode: PreviewMode?
 
     var body: some Commands {
         CommandMenu("Preview") {
-            previewButton("Composite", mode: .composite, key: "1")
-            previewButton("Error Map", mode: .errorMap, key: "2")
-            Divider()
-            previewButton("Red", mode: .lighting(.red), key: "3")
-            previewButton("Green", mode: .lighting(.green), key: "4")
-            previewButton("Blue", mode: .lighting(.blue), key: "5")
-            previewButton("LPS", mode: .lighting(.lps), key: "6")
-            previewButton("White", mode: .lighting(.white), key: "7")
-            Divider()
-            previewButton("Gamut", mode: .gamut, key: "8")
+            // Mirrors PreviewMode.allCases — the segmented picker's tab order —
+            // so ⌘N selects the Nth visible tab, matching picker behavior
+            // (any mode may be chosen before a composition exists).
+            ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { pair in
+                Button(pair.element.menuTitle) { selectedPreviewMode = pair.element }
+                    .keyboardShortcut(KeyEquivalent("\(pair.offset + 1)"))
+                    .disabled(selectedPreviewMode == nil)
+            }
         }
-    }
-
-    private func previewButton(_ title: String, mode: PreviewMode, key: KeyEquivalent) -> some View {
-        Button(title) { selectedPreviewMode = mode }
-            .keyboardShortcut(key)
-            .disabled(!canSelect(mode))
-    }
-
-    private func canSelect(_ mode: PreviewMode) -> Bool {
-        guard selectedPreviewMode != nil else { return false }
-        guard model.hasResult else { return mode == .composite || mode == .errorMap || mode == .gamut }
-        return true
     }
 }
 
