@@ -462,6 +462,7 @@ final class AppModel {
         serverToken = s.apiToken
         catalog.selectedPrinterProfileID = s.printerProfileID
         catalog.colors = s.colorSnapshot.map { $0.toColor() }
+        catalog.loadedColorsProfileID = s.printerProfileID
         catalog.lastRefresh = Date()
         catalog.isServingFromCache = false
         catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."

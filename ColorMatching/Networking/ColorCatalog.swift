@@ -30,9 +30,17 @@ final class ColorCatalog {
     /// True when `colors` were served from the offline cache rather than a
     /// live fetch — the UI shows a staleness badge while this is set.
     var isServingFromCache = false
+    /// Profile id the on-screen `colors` belong to (`nil` when none). A failed
+    /// fetch keeps them only when they match the selected profile — colors
+    /// loaded from a project or an earlier fetch survive, another profile's
+    /// leftovers are cleared as stale.
+    var loadedColorsProfileID: Int?
 
     private var client: PaletteAPIClient?
     private let cache: ProfileColorCache
+    /// True when `printerProfiles` were offered from the offline cache because
+    /// the server could not be reached at all.
+    private var printerProfilesAreCached = false
 
     init(cache: ProfileColorCache = ProfileColorCache()) {
         self.cache = cache
@@ -77,6 +85,7 @@ final class ColorCatalog {
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
+            printerProfilesAreCached = false
             if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
@@ -86,17 +95,21 @@ final class ColorCatalog {
         }
     }
 
-    /// Drops every cached color fetch. Colors currently on screen from the
-    /// cache are cleared too; a live session is unaffected.
+    /// Drops every cached color fetch. Cache-backed state on screen — colors
+    /// served from the cache, profiles offered from it — is cleared too;
+    /// live-fetched and project-loaded colors are unaffected.
     func clearCache() {
         do {
             try cache.removeAll()
-            if isServingFromCache {
-                clearLoadedColors()
+            if printerProfilesAreCached {
                 printerProfiles = []
+                printerProfilesAreCached = false
                 selectedPrinterProfileID = nil
             }
-            isServingFromCache = false
+            if isServingFromCache {
+                clearLoadedColors()
+                isServingFromCache = false
+            }
             connectionMessage = "Cleared cached colors."
         } catch {
             connectionMessage = "Could not clear the color cache."
@@ -111,8 +124,12 @@ final class ColorCatalog {
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            // The selection may have changed while the request was in flight;
+            // a late response for another profile must not overwrite it.
+            guard selectedPrinterProfileID == profileID else { return }
             applyFetched(dtos: dtos, profile: profile, profileID: profileID)
         } catch {
+            guard selectedPrinterProfileID == profileID else { return }
             handleFetchFailure(error, missMessage: "Could not load colors.")
         }
     }
@@ -122,6 +139,7 @@ final class ColorCatalog {
         colors = dtos.compactMap { $0.toDomain() }
         colorsForProfile = profile
         lastRefresh = fetchedAt
+        loadedColorsProfileID = profileID
         isServingFromCache = false
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         // Best effort: a failed write only costs the *next* offline fallback,
@@ -134,22 +152,39 @@ final class ColorCatalog {
         ))
     }
 
-    /// Serves the cached fetch for the selected profile, or reports `error`
-    /// when no usable cache entry exists.
+    /// Serves the cached fetch for the selected profile when one exists; on a
+    /// cache miss, keeps colors already loaded for that profile and clears
+    /// any other profile's leftovers, reporting `error` either way.
     private func handleFetchFailure(_ error: Error, missMessage: String) {
         let reason = (error as? PaletteAPIError)?.errorDescription ?? missMessage
-        guard let profileID = selectedPrinterProfileID,
-              let cached = cache.entry(for: profileID) else {
-            clearLoadedColors()
-            isServingFromCache = false
+        guard let profileID = selectedPrinterProfileID else {
             connectionMessage = reason
             return
         }
+        if let cached = cache.entry(for: profileID) {
+            serve(cached, profileID: profileID, reason: reason)
+        } else {
+            keepOrClearLoadedColors(profileID: profileID, reason: reason)
+        }
+    }
+
+    private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
         colors = cached.colors.compactMap { $0.toDomain() }
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
+        loadedColorsProfileID = profileID
         isServingFromCache = true
         connectionMessage = "\(reason) — showing cached colors from \(Self.cacheTimestamp(cached.fetchedAt))."
+    }
+
+    private func keepOrClearLoadedColors(profileID: Int, reason: String) {
+        isServingFromCache = false
+        if loadedColorsProfileID == profileID {
+            connectionMessage = "\(reason) — keeping loaded colors."
+        } else {
+            clearLoadedColors()
+            connectionMessage = reason
+        }
     }
 
     /// Offline cold start: offer cached profiles in the picker so a profile
@@ -160,6 +195,7 @@ final class ColorCatalog {
         let cachedProfiles = cache.allEntries().compactMap(\.profile)
         guard !cachedProfiles.isEmpty else { return }
         printerProfiles = cachedProfiles
+        printerProfilesAreCached = true
         if selectedPrinterProfileID == nil {
             selectedPrinterProfileID = cachedProfiles.first?.id
         }
@@ -173,6 +209,7 @@ final class ColorCatalog {
         colors = []
         colorsForProfile = nil
         lastRefresh = nil
+        loadedColorsProfileID = nil
     }
 
     /// Colors eligible for the solver given the currently active channels.

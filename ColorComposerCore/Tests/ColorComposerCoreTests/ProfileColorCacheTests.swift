@@ -74,6 +74,17 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 5))
     }
 
+    func testEntryWhoseStoredIDDisagreesWithFilenameCountsAsMiss() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3))
+        try FileManager.default.moveItem(
+            at: directory.appendingPathComponent("profile-3.json"),
+            to: directory.appendingPathComponent("profile-5.json")
+        )
+
+        XCTAssertNil(cache.entry(for: 5))
+    }
+
     func testAllEntriesSkipsCorruptFilesAndSortsByProfile() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
@@ -83,6 +94,18 @@ final class ProfileColorCacheTests: XCTestCase {
             .write(to: directory.appendingPathComponent("profile-9.json"))
 
         XCTAssertEqual(cache.allEntries().map(\.profileID), [1, 2, 3])
+    }
+
+    func testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3))
+        try FileManager.default.moveItem(
+            at: directory.appendingPathComponent("profile-3.json"),
+            to: directory.appendingPathComponent("profile-5.json")
+        )
+        try cache.store(try makeEntry(profileID: 2))
+
+        XCTAssertEqual(cache.allEntries().map(\.profileID), [2])
     }
 
     func testAllEntriesIsEmptyWithoutDirectory() {

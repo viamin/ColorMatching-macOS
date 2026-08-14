@@ -45,21 +45,29 @@ public struct ProfileColorCache: Sendable {
     // MARK: - Reads
 
     /// The cached fetch for a profile, or `nil` when nothing usable is cached
-    /// (a missing, unreadable, or corrupt file all count as a miss).
+    /// (a missing, unreadable, or corrupt file — or one whose stored profile
+    /// id disagrees with the requested one — all count as a miss).
     public func entry(for profileID: Int) -> CachedProfileColors? {
-        entry(at: fileURL(for: profileID))
+        guard let entry = entry(at: fileURL(for: profileID)),
+              entry.profileID == profileID else { return nil }
+        return entry
     }
 
-    /// Every intact cached entry, ordered by profile id. Used to offer cached
-    /// profiles in the picker when the server cannot be reached at all.
+    /// Every intact cached entry, ordered by profile id. Only files honoring
+    /// the `profile-<id>.json` naming contract with a matching stored id are
+    /// returned. Used to offer cached profiles in the picker when the server
+    /// cannot be reached at all.
     public func allEntries() -> [CachedProfileColors] {
         let files = (try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
         )) ?? []
         return files
-            .filter { $0.pathExtension == "json" }
-            .compactMap { entry(at: $0) }
+            .compactMap { url in
+                guard let id = Self.profileID(fromFileURL: url),
+                      let entry = entry(at: url), entry.profileID == id else { return nil }
+                return entry
+            }
             .sorted { $0.profileID < $1.profileID }
     }
 
@@ -80,8 +88,17 @@ public struct ProfileColorCache: Sendable {
 
     // MARK: - Internals
 
+    private static let fileStemPrefix = "profile-"
+
     private func fileURL(for profileID: Int) -> URL {
-        directory.appendingPathComponent("profile-\(profileID).json")
+        directory.appendingPathComponent("\(Self.fileStemPrefix)\(profileID).json")
+    }
+
+    /// The `<id>` in a cache file named `profile-<id>.json`, if it parses.
+    private static func profileID(fromFileURL url: URL) -> Int? {
+        let stem = url.deletingPathExtension().lastPathComponent
+        guard url.pathExtension == "json", stem.hasPrefix(fileStemPrefix) else { return nil }
+        return Int(stem.dropFirst(fileStemPrefix.count))
     }
 
     private func entry(at url: URL) -> CachedProfileColors? {
