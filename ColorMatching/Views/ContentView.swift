@@ -28,7 +28,6 @@ struct ContentView: View {
                     Label("Generate", systemImage: "wand.and.stars")
                 }
                 .disabled(model.catalog.colors.isEmpty)
-                .keyboardShortcut(.return, modifiers: [.command])
 
                 Button {
                     FilePanels.exportImage { url in

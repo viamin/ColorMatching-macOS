@@ -23,6 +23,7 @@ struct ColorMatchingApp: App {
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
+                    .disabled(!model.hasResult)
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
                     .disabled(!model.hasResult)
             }
@@ -101,11 +102,9 @@ private struct PreviewCommands: Commands {
             previewButton("Green", mode: .lighting(.green), key: "4")
             previewButton("Blue", mode: .lighting(.blue), key: "5")
             previewButton("LPS", mode: .lighting(.lps), key: "6")
-            Button("White") { selectedPreviewMode = .lighting(.white) }
-                .disabled(!canSelect(.lighting(.white)))
+            previewButton("White", mode: .lighting(.white), key: "7")
             Divider()
-            Button("Gamut") { selectedPreviewMode = .gamut }
-                .disabled(!canSelect(.gamut))
+            previewButton("Gamut", mode: .gamut, key: "8")
         }
     }
 
