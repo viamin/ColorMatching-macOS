@@ -99,7 +99,7 @@ private struct PreviewCommands: Commands {
             // (any mode may be chosen before a composition exists).
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { pair in
                 Button(pair.element.menuTitle) { selectedPreviewMode = pair.element }
-                    .keyboardShortcut(KeyEquivalent("\(pair.offset + 1)"))
+                    .keyboardShortcut(KeyEquivalent(Character("\(pair.offset + 1)")))
                     .disabled(selectedPreviewMode == nil)
             }
         }
