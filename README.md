@@ -37,7 +37,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 ## Workflow
 
 1. **Server** (sidebar) — set the `color_matching` base URL (persisted), Test, then Refresh to load printer profiles and palettes.
-2. **Palette** — choose a printer profile and palette; the app fetches every color with its measured illuminant responses.
+2. **Palette** — choose a printer profile; the app fetches every color with its measured illuminant responses. Each fetch is cached to disk per profile: when the server is unreachable the cached colors load instead and are badged as offline-stale (with their fetch date), and **Clear Cache** discards them.
 3. **Source images** — add up to 4 images (PNG/JPEG/TIFF/HEIC), assign each to Red / Green / Blue / LPS. Per image: invert, and Fit / Fill / Stretch mapping.
 4. **Composition** — set the logical resolution (e.g. 200×200), export pixels-per-cell, physical print size, and per-channel weights.
 5. **Generate** — solve, then explore:
