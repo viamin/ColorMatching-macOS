@@ -108,6 +108,31 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(cache.allEntries().map(\.profileID), [2])
     }
 
+    func testAllEntriesIgnoresFilesOutsideTheNamingContract() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try cache.store(try makeEntry(profileID: 1))
+        for foreign in ["notes.txt", "profile-abc.json", ".DS_Store"] {
+            try Data("not json".utf8).write(to: directory.appendingPathComponent(foreign))
+        }
+
+        XCTAssertEqual(cache.allEntries().map(\.profileID), [1])
+    }
+
+    func testAllEntriesIncludesEntriesWithoutProfileMetadata() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 4))
+        try cache.store(CachedProfileColors(
+            profileID: 7,
+            profile: nil,
+            colors: [try makeColor(id: 1)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+
+        XCTAssertEqual(cache.allEntries().map(\.profileID), [4, 7])
+        XCTAssertNil(cache.entry(for: 7)?.profile)
+    }
+
     func testAllEntriesIsEmptyWithoutDirectory() {
         let cache = ProfileColorCache(directory: directory)
 

@@ -108,7 +108,6 @@ final class ColorCatalog {
             }
             if isServingFromCache {
                 clearLoadedColors()
-                isServingFromCache = false
             }
             connectionMessage = "Cleared cached colors."
         } catch {
@@ -177,8 +176,10 @@ final class ColorCatalog {
         connectionMessage = "\(reason) — showing cached colors from \(Self.cacheTimestamp(cached.fetchedAt))."
     }
 
+    /// Keeps colors already on screen only when they belong to the selected
+    /// profile; another profile's leftovers are cleared as stale. The cache
+    /// badge is left untouched — kept colors keep their true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        isServingFromCache = false
         if loadedColorsProfileID == profileID {
             connectionMessage = "\(reason) — keeping loaded colors."
         } else {
@@ -210,6 +211,7 @@ final class ColorCatalog {
         colorsForProfile = nil
         lastRefresh = nil
         loadedColorsProfileID = nil
+        isServingFromCache = false
     }
 
     /// Colors eligible for the solver given the currently active channels.
