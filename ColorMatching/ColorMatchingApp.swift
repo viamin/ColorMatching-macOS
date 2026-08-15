@@ -95,7 +95,7 @@ private struct PreviewCommands: Commands {
     var body: some Commands {
         CommandMenu("Preview") {
             // Mirrors PreviewMode.allCases — the segmented picker's tab order —
-            // so ⌘N selects the Nth visible tab, matching picker behavior
+            // so ⌘1–⌘8 select the corresponding tab, matching picker behavior
             // (any mode may be chosen before a composition exists).
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { pair in
                 Button(pair.element.menuTitle) { selectedPreviewMode = pair.element }
