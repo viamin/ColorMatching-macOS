@@ -54,7 +54,7 @@ struct ProfileSection: View {
                 Label("Offline — cached colors", systemImage: "clock.badge.exclamationmark")
                     .font(.caption)
                     .foregroundStyle(.orange)
-                    .help("The server could not be reached; these colors were loaded from the local cache.")
+                    .help("The last fetch failed, so these colors were loaded from the local cache and may be stale.")
             }
             if let refreshed = catalog.lastRefresh {
                 LabeledContent(
