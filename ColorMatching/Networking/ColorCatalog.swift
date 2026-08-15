@@ -201,8 +201,8 @@ final class ColorCatalog {
             connectionMessage = reason
             return
         }
-        // `reason` reads standalone above but is continued with an em-dash
-        // below, so its trailing period is dropped for the composed messages.
+        // The clause is continued with an em-dash in the composed messages
+        // below; the branches that show it standing alone restore the period.
         let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
         if let server = cacheServer,
            let cached = cache.entry(for: profileID, serverBaseUrl: server),
@@ -235,7 +235,7 @@ final class ColorCatalog {
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
         guard loadedColorsProfileID == profileID else {
             clearLoadedColors()
-            connectionMessage = reason
+            connectionMessage = "\(reason)."
             return
         }
         let kept = colorsLoadedFromProject ? "colors loaded from the project" : "loaded colors"
