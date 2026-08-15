@@ -11,9 +11,9 @@ import ColorComposerCore
 /// measurement for the profile come back response-less and are excluded by the
 /// solver.
 ///
-/// Every successful fetch is written to a profile-keyed disk cache. When the
-/// server is unreachable the cached fetch is served instead and
-/// `isServingFromCache` is set, so the UI can badge the colors as stale.
+/// Every successful fetch is written to a disk cache keyed by server and
+/// profile. When the server is unreachable the cached fetch is served instead
+/// and `isServingFromCache` is set, so the UI can badge the colors as stale.
 @Observable
 final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
@@ -60,6 +60,11 @@ final class ColorCatalog {
     }
 
     var isConfigured: Bool { client != nil }
+
+    /// Cache namespace: the client's base URL string. Profile ids are unique
+    /// only per server, so cached fetches are stored and read per server —
+    /// one server's palette is never served for another's same-id profile.
+    private var cacheServer: String? { client?.baseURL.absoluteString }
 
     // MARK: - Actions
 
@@ -149,12 +154,15 @@ final class ColorCatalog {
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         // Best effort: a failed write only costs the *next* offline fallback,
         // never the live session, so the error is deliberately not surfaced.
-        try? cache.store(CachedProfileColors(
-            profileId: profileID,
-            profile: profile,
-            colors: dtos,
-            fetchedAt: fetchedAt
-        ))
+        if let server = cacheServer {
+            try? cache.store(CachedProfileColors(
+                serverBaseUrl: server,
+                profileId: profileID,
+                profile: profile,
+                colors: dtos,
+                fetchedAt: fetchedAt
+            ))
+        }
     }
 
     /// Serves the cached fetch for the selected profile when one exists —
@@ -167,7 +175,9 @@ final class ColorCatalog {
             connectionMessage = reason
             return
         }
-        if let cached = cache.entry(for: profileID), !keepsProjectColors(profileID) {
+        if let server = cacheServer,
+           let cached = cache.entry(for: profileID, serverBaseUrl: server),
+           !keepsProjectColors(profileID) {
             serve(cached, profileID: profileID, reason: reason)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: reason)
@@ -207,8 +217,8 @@ final class ColorCatalog {
     /// can be selected (and its colors then served from the cache) with no
     /// server round-trip at all.
     private func serveCachedProfilesIfUnavailable() {
-        guard printerProfiles.isEmpty else { return }
-        let cachedProfiles = cache.allEntries().compactMap(\.profile)
+        guard printerProfiles.isEmpty, let server = cacheServer else { return }
+        let cachedProfiles = cache.allEntries(serverBaseUrl: server).compactMap(\.profile)
         guard !cachedProfiles.isEmpty else { return }
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true

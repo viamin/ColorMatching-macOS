@@ -1,8 +1,15 @@
 import Foundation
 
 /// One cached fetch of a profile's colors: the wire DTOs exactly as the server
-/// returned them, plus the moment they were fetched (the staleness marker).
+/// returned them, the server they came from, plus the moment they were fetched
+/// (the staleness marker).
 public struct CachedProfileColors: Codable, Equatable, Sendable {
+    /// Base URL string of the server the fetch came from. Profile ids are
+    /// unique only per server, so this field keeps one server's cached palette
+    /// from ever being served for another's same-id profile: reads treat a
+    /// mismatch as a miss. Spelled `serverBaseUrl` (not `serverBaseURL`) for
+    /// the CodingKey reason given at `profileId` below.
+    public let serverBaseUrl: String
     /// Deliberately `profileId` (not `profileID`): the auto-generated CodingKey
     /// must round-trip through Foundation's snake-case key conversion. The
     /// encoded `profile_id` decodes back as `profileId`; `profileID` would
@@ -12,7 +19,14 @@ public struct CachedProfileColors: Codable, Equatable, Sendable {
     public let colors: [PaletteColorDTO]
     public let fetchedAt: Date
 
-    public init(profileId: Int, profile: PrinterProfileDTO?, colors: [PaletteColorDTO], fetchedAt: Date) {
+    public init(
+        serverBaseUrl: String,
+        profileId: Int,
+        profile: PrinterProfileDTO?,
+        colors: [PaletteColorDTO],
+        fetchedAt: Date
+    ) {
+        self.serverBaseUrl = serverBaseUrl
         self.profileId = profileId
         self.profile = profile
         self.colors = colors
@@ -25,8 +39,11 @@ public struct CachedProfileColors: Codable, Equatable, Sendable {
 ///
 /// Each profile's fetch is stored as one JSON file (`profile-<id>.json`) under
 /// `directory`, encoded with the same snake-case wire format the API uses.
-/// Reads treat a missing or corrupt file as a cache miss; writes are atomic,
-/// so a crash mid-write can never leave a half-written entry.
+/// Entries record the server they were fetched from and are never served
+/// across servers — profile ids are unique only per server, so (server,
+/// profile) is the real cache key. Reads treat a missing or corrupt file as a
+/// cache miss; writes are atomic, so a crash mid-write can never leave a
+/// half-written entry.
 public struct ProfileColorCache: Sendable {
     /// Directory holding one `profile-<id>.json` per cached profile.
     public let directory: URL
@@ -48,20 +65,22 @@ public struct ProfileColorCache: Sendable {
 
     // MARK: - Reads
 
-    /// The cached fetch for a profile, or `nil` when nothing usable is cached
-    /// (a missing, unreadable, or corrupt file — or one whose stored profile
-    /// id disagrees with the requested one — all count as a miss).
-    public func entry(for profileID: Int) -> CachedProfileColors? {
+    /// The cached fetch for a profile on `serverBaseUrl`, or `nil` when nothing
+    /// usable is cached (a missing, unreadable, or corrupt file — or one whose
+    /// stored profile id or server disagrees with the request — all count as
+    /// a miss).
+    public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
         guard let entry = entry(at: fileURL(for: profileID)),
-              entry.profileId == profileID else { return nil }
+              entry.profileId == profileID,
+              entry.serverBaseUrl == serverBaseUrl else { return nil }
         return entry
     }
 
-    /// Every intact cached entry, ordered by profile id. Only files honoring
-    /// the `profile-<id>.json` naming contract with a matching stored id are
-    /// returned. Used to offer cached profiles in the picker when the server
-    /// cannot be reached at all.
-    public func allEntries() -> [CachedProfileColors] {
+    /// Every intact cached entry for `serverBaseUrl`, ordered by profile id.
+    /// Only files honoring the `profile-<id>.json` naming contract with a
+    /// matching stored id and server are returned. Used to offer cached
+    /// profiles in the picker when the server cannot be reached at all.
+    public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
         let files = (try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
@@ -69,7 +88,9 @@ public struct ProfileColorCache: Sendable {
         return files
             .compactMap { url in
                 guard let id = Self.profileID(fromFileURL: url),
-                      let entry = entry(at: url), entry.profileId == id else { return nil }
+                      let entry = entry(at: url),
+                      entry.profileId == id,
+                      entry.serverBaseUrl == serverBaseUrl else { return nil }
                 return entry
             }
             .sorted { $0.profileId < $1.profileId }
@@ -77,7 +98,9 @@ public struct ProfileColorCache: Sendable {
 
     // MARK: - Writes
 
-    /// Stores (or overwrites) the cached fetch for `entry.profileId`.
+    /// Stores (or overwrites) the cached fetch for `entry.profileId`. Two
+    /// servers' entries for the same profile id share one file — the last
+    /// store wins, and reads still never cross servers.
     public func store(_ entry: CachedProfileColors) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try encode(entry).write(to: fileURL(for: entry.profileId), options: .atomic)
