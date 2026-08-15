@@ -51,26 +51,41 @@ final class ColorCatalog {
     /// True when `printerProfiles` were offered from the offline cache because
     /// the server could not be reached at all.
     private var printerProfilesAreCached = false
+    /// The server whose cache-backed state (cached profiles, cached colors) is
+    /// currently on screen, or `nil` when none is. Compared against
+    /// `cacheServer` to tell a genuine server change from the server merely
+    /// being reconfigured — see `retireStaleCacheBackedState`.
+    private var cacheBackedServer: String?
 
     init(cache: ProfileColorCache = ProfileColorCache()) {
         self.cache = cache
     }
 
     func configure(baseURL: URL?, token: String?) {
-        let serverChanged = baseURL?.absoluteString != client?.baseURL.absoluteString
         client = baseURL.map { PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil) }
-        if serverChanged { dropCacheBackedState() }
     }
 
     var isConfigured: Bool { client != nil }
 
+    /// Retires cache-backed state left over from a different server, before
+    /// this server is used for a real request. `configure` cannot call this
+    /// directly: it runs on every keystroke while the server URL field is
+    /// edited, and eagerly dropping cache-backed state there would blank the
+    /// screen mid-edit, before the user has typed a real URL. Instead every
+    /// entry point that actually acts on the configured server — testing it,
+    /// refreshing from it, fetching colors from it — calls this first, so a
+    /// genuinely different server's stale offline data is retired before it
+    /// can be shown as (or mistaken for) the new server's own.
+    private func retireStaleCacheBackedState() {
+        guard cacheBackedServer != cacheServer else { return }
+        dropCacheBackedState()
+    }
+
     /// Retires cache-backed state: colors served from the cache and profiles
-    /// offered from it. Such state belongs to the server it was cached from,
-    /// so a server change (or Clear Cache) drops it rather than letting one
-    /// server's offline palette linger on screen under the next server's URL.
-    /// Live-fetched and project-loaded colors are untouched; only the next
-    /// fetch decides their fate. A message describing the dropped state is
-    /// retracted — it would otherwise keep describing a screen that is gone.
+    /// offered from it. Live-fetched and project-loaded colors are untouched;
+    /// only the next fetch decides their fate. A message describing the
+    /// dropped state is retracted — it would otherwise keep describing a
+    /// screen that is gone.
     private func dropCacheBackedState() {
         guard printerProfilesAreCached || isServingFromCache else { return }
         if printerProfilesAreCached {
@@ -82,6 +97,7 @@ final class ColorCatalog {
             clearLoadedColors()
         }
         connectionMessage = nil
+        cacheBackedServer = nil
     }
 
     /// Cache namespace: the client's base URL string. Profile ids are unique
@@ -96,6 +112,7 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        retireStaleCacheBackedState()
         let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
@@ -117,6 +134,7 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        retireStaleCacheBackedState()
         let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
@@ -156,6 +174,7 @@ final class ColorCatalog {
 
     private func fetchColorsIfPossible() async {
         guard let client, let profileID = selectedPrinterProfileID else { return }
+        retireStaleCacheBackedState()
         let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
@@ -247,6 +266,7 @@ final class ColorCatalog {
         loadedColorsProfileID = profileID
         colorsLoadedFromProject = false
         isServingFromCache = true
+        cacheBackedServer = cacheServer
         connectionMessage = "\(reason) — showing cached colors from \(Self.cacheTimestamp(cached.fetchedAt))."
     }
 
@@ -273,6 +293,7 @@ final class ColorCatalog {
         guard !cachedProfiles.isEmpty else { return }
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true
+        cacheBackedServer = server
         if selectedPrinterProfileID == nil {
             selectedPrinterProfileID = cachedProfiles.first?.id
         }
