@@ -35,6 +35,11 @@ final class ColorCatalog {
     /// loaded from a project or an earlier fetch survive, another profile's
     /// leftovers are cleared as stale.
     var loadedColorsProfileID: Int?
+    /// True when `colors` are the loaded project's embedded palette snapshot
+    /// (set by the app model when a `.cmpj` is opened). A failed fetch keeps
+    /// them even when a cache entry exists: a saved document's palette is the
+    /// data the user chose, not a stale fetch to fall back from.
+    var colorsLoadedFromProject = false
 
     private var client: PaletteAPIClient?
     private let cache: ProfileColorCache
@@ -139,6 +144,7 @@ final class ColorCatalog {
         colorsForProfile = profile
         lastRefresh = fetchedAt
         loadedColorsProfileID = profileID
+        colorsLoadedFromProject = false
         isServingFromCache = false
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         // Best effort: a failed write only costs the *next* offline fallback,
@@ -151,20 +157,27 @@ final class ColorCatalog {
         ))
     }
 
-    /// Serves the cached fetch for the selected profile when one exists; on a
-    /// cache miss, keeps colors already loaded for that profile and clears
-    /// any other profile's leftovers, reporting `error` either way.
+    /// Serves the cached fetch for the selected profile when one exists —
+    /// unless the loaded project's own palette is on screen, which outranks
+    /// the cache. Otherwise keeps colors already loaded for that profile and
+    /// clears any other profile's leftovers, reporting `error` either way.
     private func handleFetchFailure(_ error: Error, missMessage: String) {
         let reason = (error as? PaletteAPIError)?.errorDescription ?? missMessage
         guard let profileID = selectedPrinterProfileID else {
             connectionMessage = reason
             return
         }
-        if let cached = cache.entry(for: profileID) {
+        if let cached = cache.entry(for: profileID), !keepsProjectColors(profileID) {
             serve(cached, profileID: profileID, reason: reason)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: reason)
         }
+    }
+
+    /// Whether the on-screen colors are the loaded project's own palette
+    /// snapshot for the selected profile, and so win over the cache.
+    private func keepsProjectColors(_ profileID: Int) -> Bool {
+        colorsLoadedFromProject && loadedColorsProfileID == profileID
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
@@ -172,6 +185,7 @@ final class ColorCatalog {
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
         loadedColorsProfileID = profileID
+        colorsLoadedFromProject = false
         isServingFromCache = true
         connectionMessage = "\(reason) — showing cached colors from \(Self.cacheTimestamp(cached.fetchedAt))."
     }
@@ -180,12 +194,13 @@ final class ColorCatalog {
     /// profile; another profile's leftovers are cleared as stale. The cache
     /// badge is left untouched — kept colors keep their true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        if loadedColorsProfileID == profileID {
-            connectionMessage = "\(reason) — keeping loaded colors."
-        } else {
+        guard loadedColorsProfileID == profileID else {
             clearLoadedColors()
             connectionMessage = reason
+            return
         }
+        let kept = colorsLoadedFromProject ? "colors loaded from the project" : "loaded colors"
+        connectionMessage = "\(reason) — keeping \(kept)."
     }
 
     /// Offline cold start: offer cached profiles in the picker so a profile
@@ -211,6 +226,7 @@ final class ColorCatalog {
         colorsForProfile = nil
         lastRefresh = nil
         loadedColorsProfileID = nil
+        colorsLoadedFromProject = false
         isServingFromCache = false
     }
 
