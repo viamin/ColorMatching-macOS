@@ -59,6 +59,12 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 99, serverBaseUrl: defaultServer))
     }
 
+    func testEntryForMissingDirectoryIsNil() {
+        let cache = ProfileColorCache(directory: directory)
+
+        XCTAssertNil(cache.entry(for: 1, serverBaseUrl: defaultServer))
+    }
+
     func testStoreOverwritesPreviousFetch() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, colorIDs: [1], fetchedAt: Date(timeIntervalSince1970: 100)))
@@ -195,6 +201,19 @@ final class ProfileColorCacheTests: XCTestCase {
         let cache = ProfileColorCache(directory: directory)
 
         XCTAssertNoThrow(try cache.removeAll())
+    }
+
+    /// Clear Cache followed by a later successful fetch must be able to
+    /// repopulate the cache: `removeAll` deletes the directory, so `store`
+    /// has to recreate it.
+    func testStoreRecreatesDirectoryAfterRemoveAll() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+
+        try cache.removeAll()
+        try cache.store(try makeEntry(profileID: 1))
+
+        XCTAssertEqual(cache.entry(for: 1, serverBaseUrl: defaultServer)?.profileId, 1)
     }
 
     // MARK: On-disk format

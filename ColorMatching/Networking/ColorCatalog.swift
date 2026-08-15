@@ -234,10 +234,11 @@ final class ColorCatalog {
     }
 
     /// Keeps colors already on screen only when they belong to the selected
-    /// profile; another profile's leftovers are cleared as stale. The cache
-    /// badge is left untouched — kept colors keep their true provenance.
+    /// profile and there are colors to keep; another profile's leftovers —
+    /// or an empty palette — are cleared. The cache badge is left untouched —
+    /// kept colors keep their true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        guard loadedColorsProfileID == profileID else {
+        guard loadedColorsProfileID == profileID, !colors.isEmpty else {
             clearLoadedColors()
             connectionMessage = "\(reason)."
             return
