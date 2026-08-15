@@ -61,6 +61,20 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(cache.entry(for: 2, serverBaseUrl: defaultServer), entry)
     }
 
+    /// An empty fetch is still cached and survives the disk round-trip: it
+    /// reads back as an entry whose `domainColors` are empty — nothing to
+    /// serve offline, so the failure path reports the miss plainly instead of
+    /// badging an empty palette as cached colors.
+    func testEmptyCachedFetchSurvivesDiskRoundTrip() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 8, colorIDs: []))
+
+        let entry = try XCTUnwrap(cache.entry(for: 8, serverBaseUrl: defaultServer))
+
+        XCTAssertTrue(entry.colors.isEmpty)
+        XCTAssertTrue(entry.domainColors.isEmpty)
+    }
+
     func testEntryForUncachedProfileIsNil() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 1))
