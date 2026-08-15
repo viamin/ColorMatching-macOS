@@ -44,6 +44,11 @@ public struct CachedProfileColors: Codable, Equatable, Sendable {
 /// profile) is the real cache key. Reads treat a missing or corrupt file as a
 /// cache miss; writes are atomic, so a crash mid-write can never leave a
 /// half-written entry.
+///
+/// Deliberately over the ~100-line type guideline: the read, write, and
+/// integrity-check paths all share one file-naming contract, and splitting
+/// them would spread that contract across collaborators without reducing
+/// any complexity.
 public struct ProfileColorCache: Sendable {
     /// Directory holding one `profile-<id>.json` per cached profile.
     public let directory: URL
