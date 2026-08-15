@@ -69,8 +69,10 @@ final class ColorCatalog {
     /// so a server change (or Clear Cache) drops it rather than letting one
     /// server's offline palette linger on screen under the next server's URL.
     /// Live-fetched and project-loaded colors are untouched; only the next
-    /// fetch decides their fate.
+    /// fetch decides their fate. A message describing the dropped state is
+    /// retracted — it would otherwise keep describing a screen that is gone.
     private func dropCacheBackedState() {
+        guard printerProfilesAreCached || isServingFromCache else { return }
         if printerProfilesAreCached {
             printerProfiles = []
             printerProfilesAreCached = false
@@ -79,6 +81,7 @@ final class ColorCatalog {
         if isServingFromCache {
             clearLoadedColors()
         }
+        connectionMessage = nil
     }
 
     /// Cache namespace: the client's base URL string. Profile ids are unique
