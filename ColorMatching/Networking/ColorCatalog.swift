@@ -52,14 +52,29 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
-        guard let baseURL else {
-            client = nil
-            return
-        }
-        client = PaletteAPIClient(baseURL: baseURL, token: token?.isEmpty == false ? token : nil)
+        let serverChanged = baseURL?.absoluteString != client?.baseURL.absoluteString
+        client = baseURL.map { PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil) }
+        if serverChanged { dropCacheBackedState() }
     }
 
     var isConfigured: Bool { client != nil }
+
+    /// Retires cache-backed state: colors served from the cache and profiles
+    /// offered from it. Such state belongs to the server it was cached from,
+    /// so a server change (or Clear Cache) drops it rather than letting one
+    /// server's offline palette linger on screen under the next server's URL.
+    /// Live-fetched and project-loaded colors are untouched; only the next
+    /// fetch decides their fate.
+    private func dropCacheBackedState() {
+        if printerProfilesAreCached {
+            printerProfiles = []
+            printerProfilesAreCached = false
+            selectedPrinterProfileID = nil
+        }
+        if isServingFromCache {
+            clearLoadedColors()
+        }
+    }
 
     /// Cache namespace: the client's base URL string. Profile ids are unique
     /// only per server, so cached fetches are stored and read per server —
@@ -111,14 +126,7 @@ final class ColorCatalog {
     func clearCache() {
         do {
             try cache.removeAll()
-            if printerProfilesAreCached {
-                printerProfiles = []
-                printerProfilesAreCached = false
-                selectedPrinterProfileID = nil
-            }
-            if isServingFromCache {
-                clearLoadedColors()
-            }
+            dropCacheBackedState()
             connectionMessage = "Cleared cached colors."
         } catch {
             connectionMessage = "Could not clear the color cache."
@@ -175,12 +183,15 @@ final class ColorCatalog {
             connectionMessage = reason
             return
         }
+        // `reason` reads standalone above but is continued with an em-dash
+        // below, so its trailing period is dropped for the composed messages.
+        let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
         if let server = cacheServer,
            let cached = cache.entry(for: profileID, serverBaseUrl: server),
            !keepsProjectColors(profileID) {
-            serve(cached, profileID: profileID, reason: reason)
+            serve(cached, profileID: profileID, reason: clause)
         } else {
-            keepOrClearLoadedColors(profileID: profileID, reason: reason)
+            keepOrClearLoadedColors(profileID: profileID, reason: clause)
         }
     }
 
