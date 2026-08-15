@@ -97,9 +97,9 @@ private struct PreviewCommands: Commands {
             // Mirrors PreviewMode.allCases — the segmented picker's tab order —
             // so ⌘1–⌘8 select the corresponding tab, matching picker behavior
             // (any mode may be chosen before a composition exists).
-            ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { pair in
-                Button(pair.element.menuTitle) { selectedPreviewMode = pair.element }
-                    .keyboardShortcut(KeyEquivalent(Character("\(pair.offset + 1)")))
+            ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
+                Button(mode.menuTitle) { selectedPreviewMode = mode }
+                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")))
                     .disabled(selectedPreviewMode == nil)
             }
         }
