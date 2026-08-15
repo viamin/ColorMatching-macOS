@@ -34,6 +34,17 @@ public struct CachedProfileColors: Codable, Equatable, Sendable {
     }
 }
 
+public extension CachedProfileColors {
+    /// The cached colors converted to solver-ready domain colors. An entry
+    /// that cached an empty fetch — or whose DTOs all fail conversion (no
+    /// rgb, unparseable hex) — yields none, and so is nothing to serve
+    /// offline: callers report the failure plainly instead of claiming to
+    /// show cached colors over an empty palette.
+    var domainColors: [PaletteColor] {
+        colors.compactMap { $0.toDomain() }
+    }
+}
+
 /// Disk cache of the last-fetched colors per printer profile, so the app can
 /// keep composing when the `color_matching` server is unreachable.
 ///

@@ -195,10 +195,11 @@ final class ColorCatalog {
         ))
     }
 
-    /// Serves the cached fetch for the selected profile when one exists —
-    /// unless the loaded project's own palette is on screen, which outranks
-    /// the cache. Otherwise keeps colors already loaded for that profile and
-    /// clears any other profile's leftovers, reporting `error` either way.
+    /// Serves the cached fetch for the selected profile when a usable one
+    /// exists — unless the loaded project's own palette is on screen, which
+    /// outranks the cache. Otherwise keeps colors already loaded for that
+    /// profile and clears any other profile's leftovers, reporting `error`
+    /// either way.
     private func handleFetchFailure(_ error: Error, fallbackMessage: String) {
         let reason = (error as? PaletteAPIError)?.errorDescription ?? fallbackMessage
         guard let profileID = selectedPrinterProfileID else {
@@ -208,13 +209,24 @@ final class ColorCatalog {
         // The clause is continued with an em-dash in the composed messages
         // below; the branches that show it standing alone restore the period.
         let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
-        if let server = cacheServer,
-           let cached = cache.entry(for: profileID, serverBaseUrl: server),
-           !keepsProjectColors(profileID) {
+        if let cached = servableCacheEntry(for: profileID) {
             serve(cached, profileID: profileID, reason: clause)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
         }
+    }
+
+    /// The cached fetch the failure fallback may serve for `profileID`: an
+    /// entry for the configured server carrying at least one usable color,
+    /// when the loaded project's own palette isn't on screen (a saved
+    /// document's palette is the data the user chose, not a stale fetch to
+    /// fall back from). An empty cached fetch is nothing to serve, so it
+    /// counts as a miss and the failure is reported plainly instead.
+    private func servableCacheEntry(for profileID: Int) -> CachedProfileColors? {
+        guard let server = cacheServer, !keepsProjectColors(profileID) else { return nil }
+        guard let cached = cache.entry(for: profileID, serverBaseUrl: server),
+              !cached.domainColors.isEmpty else { return nil }
+        return cached
     }
 
     /// Whether the on-screen colors are the loaded project's own palette
@@ -224,7 +236,7 @@ final class ColorCatalog {
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
-        colors = cached.colors.compactMap { $0.toDomain() }
+        colors = cached.domainColors
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
         loadedColorsProfileID = profileID

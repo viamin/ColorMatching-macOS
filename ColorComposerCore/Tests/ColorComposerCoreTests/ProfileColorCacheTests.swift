@@ -26,6 +26,15 @@ final class ProfileColorCacheTests: XCTestCase {
         return try decoder.decode(PaletteColorDTO.self, from: Data(json.utf8))
     }
 
+    /// A color that decodes from the wire but cannot convert for the solver:
+    /// no `rgb` and a hex no color parses from.
+    private func makeUnconvertibleColor(id: Int) throws -> PaletteColorDTO {
+        let json = "{\"id\":\(id),\"hex\":\"not-a-color\",\"responses\":{}}"
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(PaletteColorDTO.self, from: Data(json.utf8))
+    }
+
     private func makeEntry(
         profileID: Int,
         colorIDs: [Int] = [1],
@@ -214,6 +223,37 @@ final class ProfileColorCacheTests: XCTestCase {
         try cache.store(try makeEntry(profileID: 1))
 
         XCTAssertEqual(cache.entry(for: 1, serverBaseUrl: defaultServer)?.profileId, 1)
+    }
+
+    // MARK: Domain colors
+
+    func testDomainColorsConvertRoundTrippedDTOs() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1, colorIDs: [7, 8]))
+
+        let entry = try XCTUnwrap(cache.entry(for: 1, serverBaseUrl: defaultServer))
+
+        XCTAssertEqual(entry.domainColors.map(\.id), [7, 8])
+    }
+
+    /// A fetch that returned no colors still gets cached; its entry has
+    /// nothing to serve offline and must be distinguishable from a usable one.
+    func testDomainColorsIsEmptyForAnEmptyCachedFetch() throws {
+        let entry = try makeEntry(profileID: 1, colorIDs: [])
+
+        XCTAssertTrue(entry.domainColors.isEmpty)
+    }
+
+    func testDomainColorsIsEmptyWhenEveryDTOFailsConversion() throws {
+        let entry = CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 1,
+            profile: nil,
+            colors: [try makeUnconvertibleColor(id: 1), try makeUnconvertibleColor(id: 2)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+
+        XCTAssertTrue(entry.domainColors.isEmpty)
     }
 
     // MARK: On-disk format
