@@ -233,9 +233,11 @@ final class ColorCatalog {
     }
 
     /// Whether the on-screen colors are the loaded project's own palette
-    /// snapshot for the selected profile, and so win over the cache.
+    /// snapshot for the selected profile, and so win over the cache. An
+    /// empty snapshot is no palette to protect — nothing chosen is on
+    /// screen, so the cache may still serve offline.
     private func keepsProjectColors(_ profileID: Int) -> Bool {
-        colorsLoadedFromProject && loadedColorsProfileID == profileID
+        colorsLoadedFromProject && loadedColorsProfileID == profileID && !colors.isEmpty
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
