@@ -99,13 +99,29 @@ private struct PreviewCommands: Commands {
     var body: some Commands {
         CommandMenu("Preview") {
             // Mirrors PreviewMode.allCases — the segmented picker's tab order —
-            // so ⌘1–⌘8 select the corresponding tab, matching picker behavior
-            // (any mode may be chosen before a composition exists).
+            // so ⌘1…⌘N select the corresponding tab, matching picker behavior
+            // (any mode may be chosen before a composition exists). KeyEquivalent
+            // is a single Character, so only the first nine modes can carry a
+            // shortcut; further modes appear in the menu without one.
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
                 Button(mode.menuTitle) { selectedPreviewMode = mode }
-                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")))
+                    .modifier(PreviewTabShortcut(digit: index + 1))
                     .disabled(selectedPreviewMode == nil)
             }
+        }
+    }
+}
+
+/// Attaches the ⌘<digit> equivalent only when `digit` is a single character;
+/// `KeyEquivalent(Character:)` would trap for multi-digit numbers.
+private struct PreviewTabShortcut: ViewModifier {
+    let digit: Int
+
+    func body(content: Content) -> some View {
+        if (1...9).contains(digit) {
+            content.keyboardShortcut(KeyEquivalent(Character("\(digit)")))
+        } else {
+            content
         }
     }
 }
