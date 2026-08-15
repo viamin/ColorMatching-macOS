@@ -110,16 +110,23 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
+            // The server may have changed while the request was in flight;
+            // the previous server's late response must not populate state.
+            guard cacheServer == requestedServer else { return }
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
             if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
         } catch {
+            // A failure of an abandoned request says nothing about the
+            // newly configured server — only a fresh request may report.
+            guard cacheServer == requestedServer else { return }
             serveCachedProfilesIfUnavailable()
             handleFetchFailure(error, fallbackMessage: "Could not reach the server.")
         }
@@ -142,21 +149,29 @@ final class ColorCatalog {
 
     private func fetchColorsIfPossible() async {
         guard let client, let profileID = selectedPrinterProfileID else { return }
+        let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
-            // The selection may have changed while the request was in flight;
-            // a late response for another profile must not overwrite it.
-            guard selectedPrinterProfileID == profileID else { return }
-            applyFetched(dtos: dtos, profile: profile, profileID: profileID)
+            // The selection or server may have changed while the request was
+            // in flight; a late response for another profile must not
+            // overwrite it, and another server's response must be neither
+            // shown nor cached under the current server.
+            guard selectedPrinterProfileID == profileID, cacheServer == requestedServer else { return }
+            applyFetched(dtos: dtos, profile: profile, profileID: profileID, server: requestedServer)
         } catch {
-            guard selectedPrinterProfileID == profileID else { return }
+            guard selectedPrinterProfileID == profileID, cacheServer == requestedServer else { return }
             handleFetchFailure(error, fallbackMessage: "Could not load colors.")
         }
     }
 
-    private func applyFetched(dtos: [PaletteColorDTO], profile: PrinterProfileDTO?, profileID: Int) {
+    private func applyFetched(
+        dtos: [PaletteColorDTO],
+        profile: PrinterProfileDTO?,
+        profileID: Int,
+        server: String
+    ) {
         let fetchedAt = Date()
         colors = dtos.compactMap { $0.toDomain() }
         colorsForProfile = profile
@@ -167,15 +182,13 @@ final class ColorCatalog {
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         // Best effort: a failed write only costs the *next* offline fallback,
         // never the live session, so the error is deliberately not surfaced.
-        if let server = cacheServer {
-            try? cache.store(CachedProfileColors(
-                serverBaseUrl: server,
-                profileId: profileID,
-                profile: profile,
-                colors: dtos,
-                fetchedAt: fetchedAt
-            ))
-        }
+        try? cache.store(CachedProfileColors(
+            serverBaseUrl: server,
+            profileId: profileID,
+            profile: profile,
+            colors: dtos,
+            fetchedAt: fetchedAt
+        ))
     }
 
     /// Serves the cached fetch for the selected profile when one exists —
