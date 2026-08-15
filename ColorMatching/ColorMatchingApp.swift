@@ -18,7 +18,9 @@ struct ColorMatchingApp: App {
                 Button("New Project") { newProject() }.keyboardShortcut("n")
                 Button("Open Project…") { openProject() }.keyboardShortcut("o")
             }
-            CommandGroup(after: .saveItem) {
+            // Replaces the default ⌘P print item so the File menu carries only
+            // one Print… command, bound to the generated composition.
+            CommandGroup(replacing: .printItem) {
                 Button("Save Project") { saveProject() }.keyboardShortcut("s")
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
@@ -79,7 +81,7 @@ private struct WorkflowCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Actions") {
-            Button("Add Images…", action: addImages)
+            Button("Add Images…") { addImages() }
                 .keyboardShortcut("o", modifiers: [.command, .option])
 
             Button("Generate") { model.runSolve() }
