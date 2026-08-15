@@ -461,6 +461,9 @@ final class AppModel {
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
         catalog.colors = s.colorSnapshot.map { $0.toColor() }
+        // The snapshot carries no profile metadata, so the on-screen colors
+        // describe no fetched profile; a later live fetch fills it back in.
+        catalog.colorsForProfile = nil
         catalog.loadedColorsProfileID = s.printerProfileID
         catalog.colorsLoadedFromProject = true
         catalog.lastRefresh = Date()
