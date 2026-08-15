@@ -56,7 +56,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 | ⌘↩ | Generate |
 | ⌘O / ⌘⌥O | Open Project… / Add Images… |
 | ⌘S / ⌘⌥S | Save Project / Save Project As… |
-| ⌘E / ⌘P | Export Composite… / Print… (require a generated composition) |
+| ⇧⌘E / ⌘P | Export Composite… / Print… (require a generated composition) |
 | ⌘N | New Project |
 
 ## Architecture

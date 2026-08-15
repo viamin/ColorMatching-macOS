@@ -23,7 +23,10 @@ struct ColorMatchingApp: App {
                 Button("Save Project") { saveProject() }.keyboardShortcut("s")
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
-                Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
+                // ⇧⌘E matches Apple's Export convention (Notes, Pages); plain ⌘E
+                // would shadow the system-wide "Use Selection for Find".
+                Button("Export Composite…") { exportComposite() }
+                    .keyboardShortcut("e", modifiers: [.command, .shift])
                     .disabled(!model.hasResult)
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
                     .disabled(!model.hasResult)
