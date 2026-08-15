@@ -144,7 +144,7 @@ final class ColorCatalog {
         // Best effort: a failed write only costs the *next* offline fallback,
         // never the live session, so the error is deliberately not surfaced.
         try? cache.store(CachedProfileColors(
-            profileID: profileID,
+            profileId: profileID,
             profile: profile,
             colors: dtos,
             fetchedAt: fetchedAt

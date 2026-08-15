@@ -3,13 +3,17 @@ import Foundation
 /// One cached fetch of a profile's colors: the wire DTOs exactly as the server
 /// returned them, plus the moment they were fetched (the staleness marker).
 public struct CachedProfileColors: Codable, Equatable, Sendable {
-    public let profileID: Int
+    /// Deliberately `profileId` (not `profileID`): the auto-generated CodingKey
+    /// must round-trip through Foundation's snake-case key conversion. The
+    /// encoded `profile_id` decodes back as `profileId`; `profileID` would
+    /// never match and every cache read would silently count as a miss.
+    public let profileId: Int
     public let profile: PrinterProfileDTO?
     public let colors: [PaletteColorDTO]
     public let fetchedAt: Date
 
-    public init(profileID: Int, profile: PrinterProfileDTO?, colors: [PaletteColorDTO], fetchedAt: Date) {
-        self.profileID = profileID
+    public init(profileId: Int, profile: PrinterProfileDTO?, colors: [PaletteColorDTO], fetchedAt: Date) {
+        self.profileId = profileId
         self.profile = profile
         self.colors = colors
         self.fetchedAt = fetchedAt
@@ -49,7 +53,7 @@ public struct ProfileColorCache: Sendable {
     /// id disagrees with the requested one — all count as a miss).
     public func entry(for profileID: Int) -> CachedProfileColors? {
         guard let entry = entry(at: fileURL(for: profileID)),
-              entry.profileID == profileID else { return nil }
+              entry.profileId == profileID else { return nil }
         return entry
     }
 
@@ -65,18 +69,18 @@ public struct ProfileColorCache: Sendable {
         return files
             .compactMap { url in
                 guard let id = Self.profileID(fromFileURL: url),
-                      let entry = entry(at: url), entry.profileID == id else { return nil }
+                      let entry = entry(at: url), entry.profileId == id else { return nil }
                 return entry
             }
-            .sorted { $0.profileID < $1.profileID }
+            .sorted { $0.profileId < $1.profileId }
     }
 
     // MARK: - Writes
 
-    /// Stores (or overwrites) the cached fetch for `entry.profileID`.
+    /// Stores (or overwrites) the cached fetch for `entry.profileId`.
     public func store(_ entry: CachedProfileColors) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try encode(entry).write(to: fileURL(for: entry.profileID), options: .atomic)
+        try encode(entry).write(to: fileURL(for: entry.profileId), options: .atomic)
     }
 
     /// Removes every cached profile. A missing cache directory is a no-op.

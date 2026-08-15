@@ -30,7 +30,7 @@ final class ProfileColorCacheTests: XCTestCase {
         fetchedAt: Date = Date(timeIntervalSince1970: 1_700_000_000)
     ) throws -> CachedProfileColors {
         CachedProfileColors(
-            profileID: profileID,
+            profileId: profileID,
             profile: PrinterProfileDTO(
                 id: profileID, printerMakeModel: "Epson", paperType: "Matte", inkType: "Dye"
             ),
@@ -93,7 +93,7 @@ final class ProfileColorCacheTests: XCTestCase {
         try Data("not json".utf8)
             .write(to: directory.appendingPathComponent("profile-9.json"))
 
-        XCTAssertEqual(cache.allEntries().map(\.profileID), [1, 2, 3])
+        XCTAssertEqual(cache.allEntries().map(\.profileId), [1, 2, 3])
     }
 
     func testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename() throws {
@@ -105,7 +105,7 @@ final class ProfileColorCacheTests: XCTestCase {
         )
         try cache.store(try makeEntry(profileID: 2))
 
-        XCTAssertEqual(cache.allEntries().map(\.profileID), [2])
+        XCTAssertEqual(cache.allEntries().map(\.profileId), [2])
     }
 
     func testAllEntriesIgnoresFilesOutsideTheNamingContract() throws {
@@ -116,20 +116,20 @@ final class ProfileColorCacheTests: XCTestCase {
             try Data("not json".utf8).write(to: directory.appendingPathComponent(foreign))
         }
 
-        XCTAssertEqual(cache.allEntries().map(\.profileID), [1])
+        XCTAssertEqual(cache.allEntries().map(\.profileId), [1])
     }
 
     func testAllEntriesIncludesEntriesWithoutProfileMetadata() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 4))
         try cache.store(CachedProfileColors(
-            profileID: 7,
+            profileId: 7,
             profile: nil,
             colors: [try makeColor(id: 1)],
             fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
         ))
 
-        XCTAssertEqual(cache.allEntries().map(\.profileID), [4, 7])
+        XCTAssertEqual(cache.allEntries().map(\.profileId), [4, 7])
         XCTAssertNil(cache.entry(for: 7)?.profile)
     }
 
@@ -165,5 +165,29 @@ final class ProfileColorCacheTests: XCTestCase {
         let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertNotNil(object["profile_id"])
         XCTAssertNotNil(object["fetched_at"])
+    }
+
+    /// Pins the on-disk format: a hand-written snake_case cache file must
+    /// decode. This is the guard against CodingKey/strategy drift (e.g. an
+    /// auto-generated key like `profileID` that the snake-case round-trip
+    /// never matches), where every stored entry would silently count as a miss.
+    func testDecodesHandWrittenSnakeCaseCacheFile() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let json = """
+            {"profile_id":6,
+            "profile":{"id":6,"printer_make_model":"Canon","paper_type":"Glossy","ink_type":"Pigment"},
+            "colors":[{"id":1,"name":"Color 1","hex":"#112233","rgb":{"r":17,"g":34,"b":51},
+            "responses":{"red":{"brightness":0.5}}}],
+            "fetched_at":"2023-11-14T22:13:20Z"}
+            """
+        try Data(json.utf8).write(to: directory.appendingPathComponent("profile-6.json"))
+
+        let entry = try XCTUnwrap(cache.entry(for: 6))
+
+        XCTAssertEqual(entry.profileId, 6)
+        XCTAssertEqual(entry.profile?.printerMakeModel, "Canon")
+        XCTAssertEqual(entry.colors.map(\.id), [1])
+        XCTAssertEqual(entry.fetchedAt, Date(timeIntervalSince1970: 1_700_000_000))
     }
 }
