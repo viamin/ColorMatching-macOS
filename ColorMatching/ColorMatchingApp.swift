@@ -99,7 +99,7 @@ private struct PreviewCommands: Commands {
     var body: some Commands {
         CommandMenu("Preview") {
             // Mirrors PreviewMode.allCases — the segmented picker's tab order —
-            // so ⌘1…⌘N select the corresponding tab, matching picker behavior
+            // so ⌘1…⌘9 select the corresponding tab, matching picker behavior
             // (any mode may be chosen before a composition exists). KeyEquivalent
             // is a single Character, so only the first nine modes can carry a
             // shortcut; further modes appear in the menu without one.
