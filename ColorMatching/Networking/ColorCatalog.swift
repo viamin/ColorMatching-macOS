@@ -93,15 +93,19 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
         do {
             try await client.testConnection()
+            // A late result describes the server it was sent to, which may no
+            // longer be configured; only a fresh request may report.
+            guard cacheServer == requestedServer else { return }
             connectionMessage = "Connected."
-        } catch let error as PaletteAPIError {
-            connectionMessage = error.errorDescription
         } catch {
-            connectionMessage = "Could not reach the server."
+            guard cacheServer == requestedServer else { return }
+            connectionMessage = (error as? PaletteAPIError)?.errorDescription
+                ?? "Could not reach the server."
         }
     }
 
