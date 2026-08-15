@@ -14,6 +14,11 @@ import ColorComposerCore
 /// Every successful fetch is written to a disk cache keyed by server and
 /// profile. When the server is unreachable the cached fetch is served instead
 /// and `isServingFromCache` is set, so the UI can badge the colors as stale.
+///
+/// Deliberately over the ~100-line class guideline: the fetch, cache, and
+/// failure-policy paths all mutate this one set of observable state, so
+/// splitting them would pass that state between collaborators without
+/// reducing any complexity.
 @Observable
 final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
@@ -116,7 +121,7 @@ final class ColorCatalog {
             await fetchColorsIfPossible()
         } catch {
             serveCachedProfilesIfUnavailable()
-            handleFetchFailure(error, missMessage: "Could not reach the server.")
+            handleFetchFailure(error, fallbackMessage: "Could not reach the server.")
         }
     }
 
@@ -147,7 +152,7 @@ final class ColorCatalog {
             applyFetched(dtos: dtos, profile: profile, profileID: profileID)
         } catch {
             guard selectedPrinterProfileID == profileID else { return }
-            handleFetchFailure(error, missMessage: "Could not load colors.")
+            handleFetchFailure(error, fallbackMessage: "Could not load colors.")
         }
     }
 
@@ -177,8 +182,8 @@ final class ColorCatalog {
     /// unless the loaded project's own palette is on screen, which outranks
     /// the cache. Otherwise keeps colors already loaded for that profile and
     /// clears any other profile's leftovers, reporting `error` either way.
-    private func handleFetchFailure(_ error: Error, missMessage: String) {
-        let reason = (error as? PaletteAPIError)?.errorDescription ?? missMessage
+    private func handleFetchFailure(_ error: Error, fallbackMessage: String) {
+        let reason = (error as? PaletteAPIError)?.errorDescription ?? fallbackMessage
         guard let profileID = selectedPrinterProfileID else {
             connectionMessage = reason
             return
