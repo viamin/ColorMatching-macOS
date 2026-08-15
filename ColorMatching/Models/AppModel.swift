@@ -27,6 +27,13 @@ final class AppModel {
         }
     }
 
+    /// Configures the catalog from persisted settings so every fresh instance —
+    /// the initial window's model and ⌘N's replacement model alike — starts
+    /// able to reach the server without relying on an external configure call.
+    init() {
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+    }
+
     // MARK: - Source layers
 
     private(set) var layers: [SourceLayer] = [SourceLayer(), SourceLayer(), SourceLayer(), SourceLayer()]
