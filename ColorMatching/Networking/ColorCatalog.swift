@@ -83,9 +83,11 @@ final class ColorCatalog {
 
     /// Retires cache-backed state: colors served from the cache and profiles
     /// offered from it. Live-fetched and project-loaded colors are untouched;
-    /// only the next fetch decides their fate. A message describing the
-    /// dropped state is retracted — it would otherwise keep describing a
-    /// screen that is gone.
+    /// only the next fetch decides their fate. Only the cached-colors message
+    /// is retracted, with the colors it described — no path composes one
+    /// about cached profiles, so a profiles-only drop keeps messages that
+    /// still describe the colors on screen (a plain failure reason, a loaded
+    /// project's palette).
     private func dropCacheBackedState() {
         guard printerProfilesAreCached || isServingFromCache else { return }
         if printerProfilesAreCached {
@@ -95,8 +97,8 @@ final class ColorCatalog {
         }
         if isServingFromCache {
             clearLoadedColors()
+            connectionMessage = nil
         }
-        connectionMessage = nil
         cacheBackedServer = nil
     }
 
