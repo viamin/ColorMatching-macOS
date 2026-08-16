@@ -203,6 +203,17 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
     }
 
+    func testUserInfoUsesTheSameCacheNamespaceAndIsNotStored() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 4, serverBaseUrl: "http://user:secret@LOCALHOST:4000/colors/"))
+
+        let entry = try XCTUnwrap(cache.entry(for: 4, serverBaseUrl: "http://localhost:4000/colors"))
+
+        XCTAssertEqual(entry.serverBaseUrl, "http://localhost:4000/colors")
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://other:creds@localhost:4000/colors").map(\.profileId), [4])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
+    }
+
     func testStoreCreatesSeparateServerDirectories() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))

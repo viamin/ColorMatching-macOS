@@ -180,6 +180,8 @@ public struct ProfileColorCache: Sendable {
         guard var components = URLComponents(string: serverBaseUrl) else { return serverBaseUrl }
         components.scheme = components.scheme?.lowercased()
         components.host = components.host?.lowercased()
+        components.user = nil
+        components.password = nil
         if let port = components.port, isDefaultPort(port, for: components.scheme) {
             components.port = nil
         }
