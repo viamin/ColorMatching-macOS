@@ -219,6 +219,7 @@ final class ColorCatalog {
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
+            clearLoadedColorsIfServerChanged()
             let selectionChanged = reconcileSelectedProfile(with: fetchedProfiles)
             clearLoadedColorsIfSelectionChanged()
             clearLoadedColorsWithoutSelection()
@@ -291,6 +292,7 @@ final class ColorCatalog {
         // selection; fetching afterwards would only be discarded.)
         guard let client else { return }
         retireStaleCacheBackedState()
+        clearLoadedColorsIfServerChanged()
         guard let profileID = selectedPrinterProfileID else { return }
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         beginRequest()
@@ -494,6 +496,16 @@ final class ColorCatalog {
     /// user's chosen document data and intentionally survives.
     private func clearLoadedColorsWithoutSelection() {
         guard selectedPrinterProfileID == nil, !colorsLoadedFromProject else { return }
+        clearLoadedColors()
+    }
+
+    /// When the configured server changes, previously fetched live colors from
+    /// another server become stale immediately, even if the selected numeric
+    /// profile id happens to exist on both servers. A loaded project snapshot
+    /// still survives because it is the user's chosen document state.
+    private func clearLoadedColorsIfServerChanged() {
+        guard !colorsLoadedFromProject, !colors.isEmpty else { return }
+        guard let loadedColorsServer, loadedColorsServer != cacheServer else { return }
         clearLoadedColors()
     }
 
