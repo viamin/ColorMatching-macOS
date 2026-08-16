@@ -145,7 +145,9 @@ final class ColorCatalog {
         loadedPrinterProfileID = printerProfileID
         loadedProjectPaletteWithoutProfile = printerProfileID == nil
         colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
-        lastRefresh = Date()
+        // `lastRefresh` is reserved for server fetches; project restores are an
+        // offline snapshot, not a network refresh.
+        lastRefresh = nil
         connectionMessage = "Loaded \(colors.count) color(s) from project."
     }
 
