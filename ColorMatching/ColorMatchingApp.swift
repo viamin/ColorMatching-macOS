@@ -39,6 +39,7 @@ struct ColorMatchingApp: App {
 
 private struct DocumentSceneView: View {
     @State private var model = AppModel()
+    @State private var didConsumePendingProject = false
 
     var body: some View {
         ContentView(addImages: addImages)
@@ -96,6 +97,8 @@ private struct DocumentSceneView: View {
     }
 
     private func consumePendingProjectIfNeeded() {
+        guard !didConsumePendingProject else { return }
+        didConsumePendingProject = true
         // Only a newly created scene should consume a staged open request.
         // Existing windows observing a shared "pending open" signal can race the
         // new window and load the project into the wrong document.
