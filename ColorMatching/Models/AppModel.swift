@@ -182,6 +182,7 @@ final class AppModel {
         solveTask?.cancel()
         solveTask = nil
         isSolving = false
+        pendingAutoRegenerate = false
         clearGeneratedOutput()
         solveQueued = false
         solveGeneration += 1
