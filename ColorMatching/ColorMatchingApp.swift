@@ -46,6 +46,7 @@ struct ColorMatchingApp: App {
     }
 
     private func newProject() {
+        model.cancelPendingWork()
         model = AppModel()
     }
 

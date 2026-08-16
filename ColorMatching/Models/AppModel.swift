@@ -34,6 +34,10 @@ final class AppModel {
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
     }
 
+    deinit {
+        cancelPendingWork()
+    }
+
     // MARK: - Source layers
 
     private(set) var layers: [SourceLayer] = [SourceLayer(), SourceLayer(), SourceLayer(), SourceLayer()]
@@ -136,6 +140,16 @@ final class AppModel {
             await self.generate()
         }
         solveTask = task
+    }
+
+    /// Stops any pending debounce or in-flight solve before the project's state
+    /// is replaced, so stale work cannot write results into the next document.
+    func cancelPendingWork() {
+        debounceTask?.cancel()
+        debounceTask = nil
+        solveTask?.cancel()
+        solveTask = nil
+        isSolving = false
     }
 
     // MARK: - Result
@@ -438,6 +452,7 @@ final class AppModel {
     }
 
     func loadProject(from url: URL) throws {
+        cancelPendingWork()
         let data = try Data(contentsOf: url)
         let snapshot = try JSONDecoder().decode(ProjectDocument.self, from: data)
         applySnapshot(snapshot)
