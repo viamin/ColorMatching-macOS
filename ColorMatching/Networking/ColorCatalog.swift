@@ -21,6 +21,7 @@ final class ColorCatalog {
         didSet {
             guard fetchesColorsOnProfileSelection else { return }
             loadedPrinterProfileID = nil
+            colors = []
             colorsForProfile = nil
             Task { await fetchColorsIfPossible() }
         }
