@@ -43,6 +43,13 @@ public extension CachedProfileColors {
     var domainColors: [PaletteColor] {
         colors.compactMap { $0.toDomain() }
     }
+
+    /// `true` when the cached fetch still contains at least one usable color
+    /// to serve offline. Cached profiles without any convertible colors are
+    /// not useful fallbacks and should stay out of the offline picker too.
+    var hasServableColors: Bool {
+        !domainColors.isEmpty
+    }
 }
 
 /// Disk cache of the last-fetched colors per printer profile, so the app can

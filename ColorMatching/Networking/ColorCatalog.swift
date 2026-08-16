@@ -287,7 +287,7 @@ final class ColorCatalog {
     private func servableCacheEntry(for profileID: Int) -> CachedProfileColors? {
         guard let server = cacheServer, !keepsProjectColors(profileID) else { return nil }
         guard let cached = cache.entry(for: profileID, serverBaseUrl: server),
-              !cached.domainColors.isEmpty else { return nil }
+              cached.hasServableColors else { return nil }
         return cached
     }
 
@@ -334,7 +334,9 @@ final class ColorCatalog {
     /// picker does not mislabel it as belonging to the current server.
     private func serveCachedProfilesIfUnavailable() {
         guard let server = cacheServer, !keepsProfilesForCurrentServer else { return }
-        let cachedProfiles = cache.allEntries(serverBaseUrl: server).compactMap(\.profile)
+        let cachedProfiles = cache.allEntries(serverBaseUrl: server)
+            .filter(\.hasServableColors)
+            .compactMap(\.profile)
         guard !cachedProfiles.isEmpty else {
             printerProfiles = []
             printerProfilesAreCached = false

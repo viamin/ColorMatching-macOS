@@ -278,6 +278,22 @@ final class ProfileColorCacheTests: XCTestCase {
         let entry = try XCTUnwrap(cache.entry(for: 1, serverBaseUrl: defaultServer))
 
         XCTAssertEqual(entry.domainColors.map(\.id), [7, 8])
+        XCTAssertTrue(entry.hasServableColors)
+    }
+
+    func testHasServableColorsIsFalseWhenNoCachedColorConverts() throws {
+        let entry = CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 6,
+            profile: PrinterProfileDTO(
+                id: 6, printerMakeModel: "Epson", paperType: "Matte", inkType: "Dye"
+            ),
+            colors: [try makeUnconvertibleColor(id: 99)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+
+        XCTAssertTrue(entry.domainColors.isEmpty)
+        XCTAssertFalse(entry.hasServableColors)
     }
 
     /// A fetch that returned no colors still gets cached; its entry has
