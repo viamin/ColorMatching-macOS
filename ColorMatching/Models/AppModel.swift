@@ -91,7 +91,6 @@ final class AppModel {
     var pixelsPerCell = 4
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
-    var previewMode: PreviewMode = .composite
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]

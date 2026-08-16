@@ -1,6 +1,17 @@
 import SwiftUI
 import ColorComposerCore
 
+private struct PreviewModeBindingKey: FocusedValueKey {
+    typealias Value = Binding<PreviewMode>
+}
+
+extension FocusedValues {
+    var previewModeBinding: Binding<PreviewMode>? {
+        get { self[PreviewModeBindingKey.self] }
+        set { self[PreviewModeBindingKey.self] = newValue }
+    }
+}
+
 enum PreviewMode: Hashable, CaseIterable, Identifiable {
     case composite
     case errorMap
@@ -54,14 +65,14 @@ enum LightingCompareMode: Hashable, CaseIterable, Identifiable {
 
 struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
+    @State private var previewMode: PreviewMode = .composite
     @State private var compareMode: LightingCompareMode = .predicted
 
     var body: some View {
-        @Bindable var model = model
         VStack(spacing: 0) {
-            previewPicker(selection: $model.previewMode)
+            previewPicker(selection: $previewMode)
             Divider()
-            content(mode: model.previewMode)
+            content(mode: previewMode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.hasResult {
                 Divider()
@@ -70,6 +81,10 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
+        // Scene focus keeps the binding available to menu commands for the
+        // frontmost window without promoting a per-window UI choice into the
+        // shared application model.
+        .focusedSceneValue(\.previewModeBinding, $previewMode)
     }
 
     private func previewPicker(selection: Binding<PreviewMode>) -> some View {

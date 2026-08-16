@@ -40,7 +40,7 @@ struct ColorMatchingApp: App {
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
                     .disabled(!model.hasResult)
             }
-            PreviewCommands(model: model)
+            PreviewCommands()
             WorkflowCommands(model: model, addImages: addImages)
         }
     }
@@ -110,18 +110,14 @@ private struct WorkflowCommands: Commands {
 }
 
 private struct PreviewCommands: Commands {
-    let model: AppModel
+    @FocusedValue(\.previewModeBinding) private var previewModeBinding
 
     var body: some Commands {
         CommandMenu("Preview") {
-            // Mirrors PreviewMode.allCases — the segmented picker's tab order — so
-            // ⌘1–⌘8 keep working anywhere in the window, including while focus is in
-            // the sidebar, instead of relying on a focus-scoped binding.
-            // KeyEquivalent is a single Character, so only the first nine modes
-            // can carry a shortcut; further modes appear in the menu without one.
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
-                Button(mode.menuTitle) { model.previewMode = mode }
+                Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
                     .modifier(PreviewTabShortcut(digit: index + 1))
+                    .disabled(previewModeBinding == nil)
             }
         }
     }
