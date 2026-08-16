@@ -121,8 +121,8 @@ private struct PreviewCommands: Commands {
         }
     }
 
-    @ViewBuilder
-    private func previewButton(for mode: PreviewMode, shortcutIndex: Int) -> some View {
+    @CommandsBuilder
+    private func previewButton(for mode: PreviewMode, shortcutIndex: Int) -> some Commands {
         if let shortcut = previewShortcut(for: shortcutIndex) {
             Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
                 .keyboardShortcut(shortcut)
