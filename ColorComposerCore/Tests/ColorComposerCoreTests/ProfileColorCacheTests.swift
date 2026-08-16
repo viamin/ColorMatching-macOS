@@ -117,16 +117,33 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://two.example:4000").map(\.profileId), [2])
     }
 
-    func testTwoServersShareAProfileFileSoLastStoreWins() throws {
+    func testTwoServersKeepSeparateEntriesForTheSameProfileID() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://two.example:4000"))
 
         XCTAssertEqual(
+            cache.entry(for: 3, serverBaseUrl: "http://one.example:4000")?.serverBaseUrl,
+            "http://one.example:4000"
+        )
+        XCTAssertEqual(
             cache.entry(for: 3, serverBaseUrl: "http://two.example:4000")?.serverBaseUrl,
             "http://two.example:4000"
         )
-        XCTAssertNil(cache.entry(for: 3, serverBaseUrl: "http://one.example:4000"))
+    }
+
+    func testStoreCreatesSeparateServerDirectories() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
+        try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://two.example:4000"))
+
+        let directories = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        )
+
+        XCTAssertEqual(directories.count, 2)
+        XCTAssertTrue(directories.allSatisfy(\.hasDirectoryPath))
     }
 
     // MARK: Corrupt and foreign files
@@ -276,7 +293,11 @@ final class ProfileColorCacheTests: XCTestCase {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 1))
 
-        let data = try Data(contentsOf: directory.appendingPathComponent("profile-1.json"))
+        let serverDirectory = try XCTUnwrap(try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ).first)
+        let data = try Data(contentsOf: serverDirectory.appendingPathComponent("profile-1.json"))
         let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertNotNil(object["profile_id"])
         XCTAssertNotNil(object["server_base_url"])

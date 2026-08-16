@@ -49,19 +49,20 @@ public extension CachedProfileColors {
 /// keep composing when the `color_matching` server is unreachable.
 ///
 /// Each profile's fetch is stored as one JSON file (`profile-<id>.json`) under
-/// `directory`, encoded with the same snake-case wire format the API uses.
-/// Entries record the server they were fetched from and are never served
-/// across servers — profile ids are unique only per server, so (server,
-/// profile) is the real cache key. Reads treat a missing or corrupt file as a
-/// cache miss; writes are atomic, so a crash mid-write can never leave a
-/// half-written entry.
+/// a server-specific subdirectory of `directory`, encoded with the same
+/// snake-case wire format the API uses. Entries record the server they were
+/// fetched from and are never served across servers — profile ids are unique
+/// only per server, so (server, profile) is the real cache key. Reads treat a
+/// missing or corrupt file as a cache miss; writes are atomic, so a crash
+/// mid-write can never leave a half-written entry.
 ///
 /// Deliberately over the ~100-line type guideline: the read, write, and
 /// integrity-check paths all share one file-naming contract, and splitting
 /// them would spread that contract across collaborators without reducing
 /// any complexity.
 public struct ProfileColorCache: Sendable {
-    /// Directory holding one `profile-<id>.json` per cached profile.
+    /// Root directory holding one subdirectory per server, each with one
+    /// `profile-<id>.json` per cached profile.
     public let directory: URL
 
     /// Cache at an explicit directory (tests and custom locations).
@@ -86,7 +87,7 @@ public struct ProfileColorCache: Sendable {
     /// stored profile id or server disagrees with the request — all count as
     /// a miss).
     public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
-        guard let entry = entry(at: fileURL(for: profileID)),
+        guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: serverBaseUrl)),
               entry.profileId == profileID,
               entry.serverBaseUrl == serverBaseUrl else { return nil }
         return entry
@@ -97,8 +98,9 @@ public struct ProfileColorCache: Sendable {
     /// matching stored id and server are returned. Used to offer cached
     /// profiles in the picker when the server cannot be reached at all.
     public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
+        let serverDirectory = directory(for: serverBaseUrl)
         let files = (try? FileManager.default.contentsOfDirectory(
-            at: directory,
+            at: serverDirectory,
             includingPropertiesForKeys: nil
         )) ?? []
         return files
@@ -115,11 +117,15 @@ public struct ProfileColorCache: Sendable {
     // MARK: - Writes
 
     /// Stores (or overwrites) the cached fetch for `entry.profileId`. Two
-    /// servers' entries for the same profile id share one file — the last
-    /// store wins, and reads still never cross servers.
+    /// servers' entries for the same profile id live in different
+    /// subdirectories and do not overwrite one another.
     public func store(_ entry: CachedProfileColors) throws {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try encode(entry).write(to: fileURL(for: entry.profileId), options: .atomic)
+        let serverDirectory = directory(for: entry.serverBaseUrl)
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try encode(entry).write(
+            to: fileURL(for: entry.profileId, serverBaseUrl: entry.serverBaseUrl),
+            options: .atomic
+        )
     }
 
     /// Removes every cached profile. A missing cache directory is a no-op.
@@ -133,8 +139,12 @@ public struct ProfileColorCache: Sendable {
 
     private static let fileStemPrefix = "profile-"
 
-    private func fileURL(for profileID: Int) -> URL {
-        directory.appendingPathComponent("\(Self.fileStemPrefix)\(profileID).json")
+    private func directory(for serverBaseUrl: String) -> URL {
+        directory.appendingPathComponent(Self.directoryName(for: serverBaseUrl), isDirectory: true)
+    }
+
+    private func fileURL(for profileID: Int, serverBaseUrl: String) -> URL {
+        directory(for: serverBaseUrl).appendingPathComponent("\(Self.fileStemPrefix)\(profileID).json")
     }
 
     /// The `<id>` in a cache file named `profile-<id>.json`, if it parses.
@@ -142,6 +152,15 @@ public struct ProfileColorCache: Sendable {
         let stem = url.deletingPathExtension().lastPathComponent
         guard url.pathExtension == "json", stem.hasPrefix(fileStemPrefix) else { return nil }
         return Int(stem.dropFirst(fileStemPrefix.count))
+    }
+
+    private static func directoryName(for serverBaseUrl: String) -> String {
+        let base64 = Data(serverBaseUrl.utf8).base64EncodedString()
+        let safe = base64
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
+        return "server-\(safe)"
     }
 
     private func entry(at url: URL) -> CachedProfileColors? {
