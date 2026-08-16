@@ -364,7 +364,9 @@ final class ColorCatalog {
             // leave the previous server's live colors on screen under the new
             // server's profile list or "no profiles" state.
             clearLoadedColorsIfServerChanged()
-            serveCachedProfilesIfUnavailable()
+            if allowsOfflineFallback(for: error) {
+                serveCachedProfilesIfUnavailable()
+            }
             handleFetchFailure(error, fallbackMessage: "Could not reach the server.")
         }
     }
@@ -507,11 +509,23 @@ final class ColorCatalog {
         let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
         if keepsLiveColors(profileID) {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
-        } else if let cached = servableCacheEntry(for: profileID) {
+        } else if allowsOfflineFallback(for: error),
+                  let cached = servableCacheEntry(for: profileID) {
             serve(cached, profileID: profileID, reason: clause)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
         }
+    }
+
+    /// Offline cache is only for transport failures: using stale local data to
+    /// hide a 401, 500, or malformed payload would misreport a live server
+    /// problem as "offline".
+    private func allowsOfflineFallback(for error: Error) -> Bool {
+        if error is URLError {
+            return true
+        }
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain
     }
 
     /// The cached fetch the failure fallback may serve for `profileID`: an
