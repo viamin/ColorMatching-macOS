@@ -519,6 +519,13 @@ final class ColorCatalog {
             && !colors.isEmpty
     }
 
+    /// When no cached profile list exists for the current server, still keep
+    /// the active selection representable if the on-screen colors already
+    /// belong to it (from a live fetch, cache fallback, or loaded project).
+    private var keepsActiveSelectionWithoutCachedProfiles: Bool {
+        keepsActiveSelectionVisible
+    }
+
     /// When the active selection changes to another concrete profile, any
     /// colors left from the previous profile become stale immediately and
     /// should drop before the replacement fetch completes. That includes a
