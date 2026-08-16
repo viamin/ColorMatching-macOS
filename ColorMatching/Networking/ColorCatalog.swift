@@ -16,6 +16,7 @@ final class ColorCatalog {
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
     private(set) var loadedPrinterProfileID: Int?
+    private var loadedProjectPaletteWithoutProfile = false
     private var colorFetchTask: Task<Void, Never>?
     private var operationVersion = 0
 
@@ -56,9 +57,11 @@ final class ColorCatalog {
     var isConfigured: Bool { client != nil }
     /// A selection counts as loaded once the fetch (or project restore) for the
     /// currently selected profile has completed, even if that profile contains
-    /// zero measured colors. An empty palette is still a real loaded result.
+    /// zero measured colors. A restored project palette with no current profile
+    /// selection also counts as loaded, so Generate stays available for legacy
+    /// or offline project snapshots that still embed color data.
     var hasLoadedColorsForSelection: Bool {
-        guard let selectedPrinterProfileID else { return false }
+        guard let selectedPrinterProfileID else { return loadedProjectPaletteWithoutProfile }
         return loadedPrinterProfileID == selectedPrinterProfileID
     }
 
@@ -138,6 +141,7 @@ final class ColorCatalog {
         setSelectedPrinterProfileID(printerProfileID, fetchColors: false)
         self.colors = colors
         loadedPrinterProfileID = printerProfileID
+        loadedProjectPaletteWithoutProfile = printerProfileID == nil
         colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
         lastRefresh = Date()
         connectionMessage = "Loaded \(colors.count) color(s) from project."
@@ -164,6 +168,7 @@ final class ColorCatalog {
         isWorking = true
         let shouldClearStaleColors = loadedPrinterProfileID != profileID
         loadedPrinterProfileID = nil
+        loadedProjectPaletteWithoutProfile = false
         colorsForProfile = nil
         if shouldClearStaleColors {
             colors = []
@@ -204,6 +209,7 @@ final class ColorCatalog {
         colors = []
         colorsForProfile = nil
         loadedPrinterProfileID = nil
+        loadedProjectPaletteWithoutProfile = false
         lastRefresh = nil
         connectionMessage = nil
     }
