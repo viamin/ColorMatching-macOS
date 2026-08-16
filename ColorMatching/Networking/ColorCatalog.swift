@@ -28,6 +28,7 @@ final class ColorCatalog {
     var selectedPrinterProfileID: Int? {
         didSet {
             guard !suppressesSelectionFetch else { return }
+            clearStaleColorsForSelectionChange()
             Task { @MainActor in await fetchColorsIfPossible() }
         }
     }
@@ -164,6 +165,15 @@ final class ColorCatalog {
         suppressesSelectionFetch = true
         defer { suppressesSelectionFetch = false }
         selectedPrinterProfileID = profileID
+    }
+
+    /// The picker changes selection synchronously, before any replacement fetch
+    /// completes. Clear live/cached colors that no longer match immediately so
+    /// the UI does not show profile A's palette while profile B (or None) is
+    /// selected. A loaded project snapshot intentionally survives deselection.
+    private func clearStaleColorsForSelectionChange() {
+        clearLoadedColorsIfSelectionChanged()
+        clearLoadedColorsWithoutSelection()
     }
 
     // MARK: - Actions
