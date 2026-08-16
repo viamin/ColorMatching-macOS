@@ -160,7 +160,6 @@ extension FocusedValues {
 private struct DocumentCommands: Commands {
     @FocusedValue(\.documentCommandContext) private var context
     @Environment(\.openWindow) private var openWindow
-    private let pendingProjectOpen = PendingProjectOpen.shared
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -213,7 +212,7 @@ private struct DocumentCommands: Commands {
             return
         }
         FilePanels.openProject { url in
-            pendingProjectOpen.stage(url)
+            PendingProjectOpen.shared.stage(url)
             openWindow(id: SceneIDs.document)
         }
     }

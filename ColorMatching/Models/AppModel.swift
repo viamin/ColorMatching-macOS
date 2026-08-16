@@ -82,6 +82,10 @@ final class AppModel {
         guard index >= 0 && index < layers.count else { return }
         layers[index].imageData = nil
         layers[index].filename = nil
+        layers[index].assignedCondition = nil
+        layers[index].inverted = false
+        layers[index].scalingMode = .fit
+        layers[index].colorSpace = .gamma
         handleUpstreamChange()
     }
 
