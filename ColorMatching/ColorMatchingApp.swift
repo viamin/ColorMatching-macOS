@@ -115,20 +115,23 @@ private struct PreviewCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Preview") {
-            ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
-                previewButton(for: mode, shortcutIndex: index + 1)
-            }
-        }
-    }
-
-    @CommandsBuilder
-    private func previewButton(for mode: PreviewMode, shortcutIndex: Int) -> some Commands {
-        if let shortcut = previewShortcut(for: shortcutIndex) {
-            Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
-                .keyboardShortcut(shortcut)
+            // Keep numbering explicit in the menu so the visible order always
+            // matches the documented shortcuts and the LightingCondition test.
+            Button(PreviewMode.composite.menuTitle) { setPreview(.composite) }.keyboardShortcut("1")
                 .disabled(!hasFocusedPreview)
-        } else {
-            Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
+            Button(PreviewMode.errorMap.menuTitle) { setPreview(.errorMap) }.keyboardShortcut("2")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.gamut.menuTitle) { setPreview(.gamut) }.keyboardShortcut("3")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.lighting(.white).menuTitle) { setPreview(.lighting(.white)) }.keyboardShortcut("4")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.lighting(.red).menuTitle) { setPreview(.lighting(.red)) }.keyboardShortcut("5")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.lighting(.green).menuTitle) { setPreview(.lighting(.green)) }.keyboardShortcut("6")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.lighting(.blue).menuTitle) { setPreview(.lighting(.blue)) }.keyboardShortcut("7")
+                .disabled(!hasFocusedPreview)
+            Button(PreviewMode.lighting(.lps).menuTitle) { setPreview(.lighting(.lps)) }.keyboardShortcut("8")
                 .disabled(!hasFocusedPreview)
         }
     }
@@ -137,13 +140,8 @@ private struct PreviewCommands: Commands {
         previewModeBinding != nil
     }
 
-    /// Keeps the command menu explicit and avoids trapping if the preview list
-    /// ever grows beyond single-digit shortcuts.
-    private func previewShortcut(for digit: Int) -> KeyEquivalent? {
-        guard (1...9).contains(digit), let character = String(digit).first else {
-            return nil
-        }
-        return KeyEquivalent(character)
+    private func setPreview(_ mode: PreviewMode) {
+        previewModeBinding?.wrappedValue = mode
     }
 }
 
