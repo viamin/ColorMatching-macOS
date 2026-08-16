@@ -14,13 +14,19 @@ struct ProjectDocument: Codable {
     var pixelsPerCell: Int
     var physicalWidthMM: Double
     var physicalHeightMM: Double
+    var tilingEnabled: Bool
+    var tileWidthMM: Double
+    var tileHeightMM: Double
+    var tileOverlapMM: Double
     var layers: [LayerSnapshot]
 
     private enum CodingKeys: String, CodingKey {
         case serverBaseURL, apiToken, printerProfileID, colorSnapshot
         case weights, scorerKind
         case logicalWidth, logicalHeight, pixelsPerCell
-        case physicalWidthMM, physicalHeightMM, layers
+        case physicalWidthMM, physicalHeightMM
+        case tilingEnabled, tileWidthMM, tileHeightMM, tileOverlapMM
+        case layers
     }
 
     init(
@@ -35,6 +41,10 @@ struct ProjectDocument: Codable {
         pixelsPerCell: Int,
         physicalWidthMM: Double,
         physicalHeightMM: Double,
+        tilingEnabled: Bool,
+        tileWidthMM: Double,
+        tileHeightMM: Double,
+        tileOverlapMM: Double,
         layers: [LayerSnapshot]
     ) {
         self.serverBaseURL = serverBaseURL
@@ -48,6 +58,10 @@ struct ProjectDocument: Codable {
         self.pixelsPerCell = pixelsPerCell
         self.physicalWidthMM = physicalWidthMM
         self.physicalHeightMM = physicalHeightMM
+        self.tilingEnabled = tilingEnabled
+        self.tileWidthMM = tileWidthMM
+        self.tileHeightMM = tileHeightMM
+        self.tileOverlapMM = tileOverlapMM
         self.layers = layers
     }
 
@@ -66,6 +80,12 @@ struct ProjectDocument: Codable {
         pixelsPerCell = try c.decode(Int.self, forKey: .pixelsPerCell)
         physicalWidthMM = try c.decode(Double.self, forKey: .physicalWidthMM)
         physicalHeightMM = try c.decode(Double.self, forKey: .physicalHeightMM)
+        // Older projects predate tiling; default to disabled with sane sizes
+        // so they round-trip identically to how they were originally authored.
+        tilingEnabled = try c.decodeIfPresent(Bool.self, forKey: .tilingEnabled) ?? false
+        tileWidthMM = try c.decodeIfPresent(Double.self, forKey: .tileWidthMM) ?? physicalWidthMM
+        tileHeightMM = try c.decodeIfPresent(Double.self, forKey: .tileHeightMM) ?? physicalHeightMM
+        tileOverlapMM = try c.decodeIfPresent(Double.self, forKey: .tileOverlapMM) ?? 10.0
         layers = try c.decode([LayerSnapshot].self, forKey: .layers)
     }
 }

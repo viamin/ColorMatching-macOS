@@ -347,6 +347,64 @@ final class AppModel {
         PrintSupport.print(image, physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM))
     }
 
+    // MARK: - Large-format tiling
+
+    /// When enabled, `exportTiles`/`printTiles` split the export raster into
+    /// page-sized tiles instead of producing one oversized file/job — for
+    /// artwork larger than the printer's paper (issue #11).
+    var tilingEnabled = false
+    var tileWidthMM = 200.0
+    var tileHeightMM = 200.0
+    var tileOverlapMM = 10.0
+
+    /// The planned tile layout for the current export raster, in image pixel
+    /// coordinates. `nil` when tiling is disabled or there is no result yet.
+    /// Tile edges snap to `pixelsPerCell` boundaries so a logical cell is not
+    /// split across two tiles.
+    var tilePlan: [TileSpec]? {
+        guard tilingEnabled, let raster = exportRaster else { return nil }
+        let scaleX = Double(raster.width) / physicalWidthMM
+        let scaleY = Double(raster.height) / physicalHeightMM
+        let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
+        let tileHeightPx = max(1, Int((tileHeightMM * scaleY).rounded()))
+        let overlapPx = max(0, Int((tileOverlapMM * scaleX).rounded()))
+        return RasterTiler.plan(
+            imageWidth: raster.width,
+            imageHeight: raster.height,
+            tileWidth: tileWidthPx,
+            tileHeight: tileHeightPx,
+            overlap: overlapPx,
+            cellSize: pixelsPerCell
+        )
+    }
+
+    /// Exports one image file per tile into `directoryURL`, named
+    /// `tile_<row>_<column>.png`.
+    func exportTiles(to directoryURL: URL) throws {
+        guard let raster = exportRaster, let tiles = tilePlan else { return }
+        for tile in tiles {
+            let tileImage = RasterTiler.extract(raster, tile: tile)
+            guard let cgImage = ImageUtilities.makeCGImage(from: tileImage) else {
+                throw ImageWriteError.writeFailed
+            }
+            let url = directoryURL.appendingPathComponent("tile_\(tile.row)_\(tile.column).png")
+            try ImageUtilities.write(cgImage, to: url)
+        }
+    }
+
+    /// Presents one native print job per tile, in row-major order.
+    func printTiles() {
+        guard let raster = exportRaster, let tiles = tilePlan else { return }
+        let scaleX = physicalWidthMM / Double(raster.width)
+        let scaleY = physicalHeightMM / Double(raster.height)
+        for tile in tiles {
+            let tileImage = RasterTiler.extract(raster, tile: tile)
+            guard let image = ImageUtilities.nsImage(from: tileImage) else { continue }
+            let size = CGSize(width: Double(tile.width) * scaleX, height: Double(tile.height) * scaleY)
+            PrintSupport.print(image, physicalSizeMM: size, title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)")
+        }
+    }
+
     // MARK: - Project persistence
 
     var projectURL: URL?
@@ -391,6 +449,10 @@ final class AppModel {
             pixelsPerCell: pixelsPerCell,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
+            tilingEnabled: tilingEnabled,
+            tileWidthMM: tileWidthMM,
+            tileHeightMM: tileHeightMM,
+            tileOverlapMM: tileOverlapMM,
             layers: layerSnaps
         )
     }
@@ -410,6 +472,10 @@ final class AppModel {
         pixelsPerCell = s.pixelsPerCell
         physicalWidthMM = s.physicalWidthMM
         physicalHeightMM = s.physicalHeightMM
+        tilingEnabled = s.tilingEnabled
+        tileWidthMM = s.tileWidthMM
+        tileHeightMM = s.tileHeightMM
+        tileOverlapMM = s.tileOverlapMM
 
         let restored = s.layers.enumerated().map { (index, snap) -> SourceLayer in
             let layer = index < layers.count ? layers[index] : SourceLayer()

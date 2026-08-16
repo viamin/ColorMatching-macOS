@@ -24,6 +24,11 @@ struct ColorMatchingApp: App {
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
+                if model.tilingEnabled {
+                    Divider()
+                    Button("Export Tiles…") { exportTiles() }
+                    Button("Print Tiles") { model.printTiles() }
+                }
             }
         }
     }
@@ -61,6 +66,13 @@ struct ColorMatchingApp: App {
             catch { NSApp.presentError(error) }
         }
     }
+
+    private func exportTiles() {
+        FilePanels.chooseDirectory { url in
+            do { try model.exportTiles(to: url) }
+            catch { NSApp.presentError(error) }
+        }
+    }
 }
 
 /// Native file-panel helpers.
@@ -93,5 +105,16 @@ enum FilePanels {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         if panel.runModal() == .OK { onComplete(panel.urls) }
+    }
+
+    /// Prompts for a destination folder, used to export one image file per
+    /// tile for large-format artwork.
+    static func chooseDirectory(onComplete: @escaping (URL) -> Void) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let url = panel.url { onComplete(url) }
     }
 }
