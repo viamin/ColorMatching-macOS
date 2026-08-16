@@ -342,7 +342,6 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
         }
-        ensureVisiblePrinterProfile(profileID)
         colors = projectColors
         // The snapshot carries no profile metadata, so the on-screen colors
         // describe no fetched profile; a later live fetch fills it back in.
@@ -350,6 +349,11 @@ final class ColorCatalog {
         loadedColorsProfileID = profileID
         loadedColorsServer = nil
         colorsLoadedFromProject = true
+        // If the project switches servers, `colorsForProfile` may still hold
+        // metadata from an earlier live fetch for the same numeric id. Clear
+        // that first so the picker keeps only a placeholder until a live
+        // refresh repopulates profile details for this server.
+        ensureVisiblePrinterProfile(profileID)
         // A document snapshot is neither a live refresh nor a cached fetch, so
         // leave the timestamp empty rather than mislabeling "right now" as the
         // age of server-derived data.
