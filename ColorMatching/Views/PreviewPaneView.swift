@@ -1,17 +1,6 @@
 import SwiftUI
 import ColorComposerCore
 
-struct PreviewSelectionKey: FocusedValueKey {
-    typealias Value = Binding<PreviewMode>
-}
-
-extension FocusedValues {
-    var selectedPreviewMode: Binding<PreviewMode>? {
-        get { self[PreviewSelectionKey.self] }
-        set { self[PreviewSelectionKey.self] = newValue }
-    }
-}
-
 enum PreviewMode: Hashable, CaseIterable, Identifiable {
     case composite
     case errorMap
@@ -65,14 +54,14 @@ enum LightingCompareMode: Hashable, CaseIterable, Identifiable {
 
 struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
-    @State private var mode: PreviewMode = .composite
     @State private var compareMode: LightingCompareMode = .predicted
 
     var body: some View {
+        @Bindable var model = model
         VStack(spacing: 0) {
-            previewPicker
+            previewPicker(selection: $model.previewMode)
             Divider()
-            content
+            content(mode: model.previewMode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.hasResult {
                 Divider()
@@ -81,11 +70,10 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
-        .focusedSceneValue(\.selectedPreviewMode, $mode)
     }
 
-    private var previewPicker: some View {
-        Picker("Preview", selection: $mode) {
+    private func previewPicker(selection: Binding<PreviewMode>) -> some View {
+        Picker("Preview", selection: selection) {
             ForEach(PreviewMode.allCases) { m in
                 Text(m.label).tag(m)
             }
@@ -95,7 +83,7 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private var content: some View {
+    private func content(mode: PreviewMode) -> some View {
         if mode == .gamut {
             // The gamut explains why a solve will struggle, so it stays useful
             // before Generate and when nothing could be matched at all.
