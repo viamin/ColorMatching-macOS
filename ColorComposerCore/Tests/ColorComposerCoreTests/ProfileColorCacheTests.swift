@@ -433,6 +433,42 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 7, serverBaseUrl: defaultServer)?.profile)
     }
 
+    func testEntryDropsProfileMetadataWhoseNestedIDDisagreesWithProfileID() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 7,
+            profile: PrinterProfileDTO(
+                id: 99, printerMakeModel: "Wrong", paperType: "Glossy", inkType: "Dye"
+            ),
+            colors: [try makeColor(id: 1)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+
+        let entry = try XCTUnwrap(cache.entry(for: 7, serverBaseUrl: defaultServer))
+
+        XCTAssertEqual(entry.profileId, 7)
+        XCTAssertNil(entry.profile)
+    }
+
+    func testAllEntriesDropProfileMetadataWhoseNestedIDDisagreesWithProfileID() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 7,
+            profile: PrinterProfileDTO(
+                id: 99, printerMakeModel: "Wrong", paperType: "Glossy", inkType: "Dye"
+            ),
+            colors: [try makeColor(id: 1)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+
+        let entries = cache.allEntries(serverBaseUrl: defaultServer)
+
+        XCTAssertEqual(entries.map(\.profileId), [7])
+        XCTAssertNil(entries.first?.profile)
+    }
+
     func testAllEntriesIsEmptyWithoutDirectory() {
         let cache = ProfileColorCache(directory: directory)
 

@@ -251,7 +251,7 @@ public struct ProfileColorCache: Sendable {
         CachedProfileColors(
             serverBaseUrl: Self.normalizedServerBaseUrl(entry.serverBaseUrl),
             profileId: entry.profileId,
-            profile: entry.profile,
+            profile: sanitizedProfile(entry.profile, for: entry.profileId),
             colors: entry.colors,
             fetchedAt: entry.fetchedAt
         )
@@ -259,8 +259,20 @@ public struct ProfileColorCache: Sendable {
 
     private func entry(at url: URL) -> CachedProfileColors? {
         guard isRegularFile(url),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return decode(data)
+              let data = try? Data(contentsOf: url),
+              let entry = decode(data) else { return nil }
+        return CachedProfileColors(
+            serverBaseUrl: entry.serverBaseUrl,
+            profileId: entry.profileId,
+            profile: sanitizedProfile(entry.profile, for: entry.profileId),
+            colors: entry.colors,
+            fetchedAt: entry.fetchedAt
+        )
+    }
+
+    private func sanitizedProfile(_ profile: PrinterProfileDTO?, for profileID: Int) -> PrinterProfileDTO? {
+        guard let profile, profile.id == profileID else { return nil }
+        return profile
     }
 
     private func ensureWritableRootDirectory() throws {
