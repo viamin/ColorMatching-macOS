@@ -4,6 +4,7 @@ import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+@MainActor
 @Observable
 final class AppModel {
 

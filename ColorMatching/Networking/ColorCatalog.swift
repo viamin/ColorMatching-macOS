@@ -19,6 +19,7 @@ import ColorComposerCore
 /// failure-policy paths all mutate this one set of observable state, so
 /// splitting them would pass that state between collaborators without
 /// reducing any complexity.
+@MainActor
 @Observable
 final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
