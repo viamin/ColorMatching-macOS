@@ -24,10 +24,7 @@ final class ColorCatalog {
         didSet {
             guard fetchesColorsOnProfileSelection else { return }
             cancelPendingWork()
-            loadedPrinterProfileID = nil
-            colors = []
-            colorsForProfile = nil
-            lastRefresh = nil
+            clearLoadedPalette()
             let version = operationVersion
             colorFetchTask = Task { [weak self] in
                 await self?.fetchColorsIfPossible(version: version)
@@ -125,6 +122,9 @@ final class ColorCatalog {
                 setSelectedPrinterProfileID(fetchedProfiles.first?.id, fetchColors: false)
             }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
+            if selectedPrinterProfileID == nil {
+                clearLoadedPalette()
+            }
             await fetchColorsIfPossible(version: version)
         } catch let error as PaletteAPIError {
             guard isCurrent(version) else { return }
@@ -203,15 +203,19 @@ final class ColorCatalog {
         return colors.filter { $0.hasMeasurements(for: required) }
     }
 
-    private func invalidateLoadedData() {
-        cancelPendingWork()
-        printerProfiles = []
-        setSelectedPrinterProfileID(nil, fetchColors: false)
+    private func clearLoadedPalette() {
         colors = []
         colorsForProfile = nil
         loadedPrinterProfileID = nil
         loadedProjectPaletteWithoutProfile = false
         lastRefresh = nil
+    }
+
+    private func invalidateLoadedData() {
+        cancelPendingWork()
+        printerProfiles = []
+        setSelectedPrinterProfileID(nil, fetchColors: false)
+        clearLoadedPalette()
         connectionMessage = nil
     }
 }
