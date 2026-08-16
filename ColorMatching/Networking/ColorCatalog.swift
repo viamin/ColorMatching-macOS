@@ -131,10 +131,13 @@ final class ColorCatalog {
         cacheBackedServer = nil
     }
 
-    /// Cache namespace: the client's base URL string. Profile ids are unique
-    /// only per server, so cached fetches are stored and read per server —
-    /// one server's palette is never served for another's same-id profile.
-    private var cacheServer: String? { client?.baseURL.absoluteString }
+    /// Cache namespace and server identity: a normalized base URL string.
+    /// Harmless spelling differences (host case, trailing slash, default port)
+    /// still name the same logical server everywhere the catalog reasons about
+    /// live, cached, and project-loaded state.
+    private var cacheServer: String? {
+        client.map { ProfileColorCache.normalizedServerBaseUrl($0.baseURL.absoluteString) }
+    }
 
     // MARK: - Actions
 
@@ -144,7 +147,7 @@ final class ColorCatalog {
             return
         }
         retireStaleCacheBackedState()
-        let requestedServer = client.baseURL.absoluteString
+        let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         isWorking = true
         defer { isWorking = false }
         do {
@@ -166,7 +169,7 @@ final class ColorCatalog {
             return
         }
         retireStaleCacheBackedState()
-        let requestedServer = client.baseURL.absoluteString
+        let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         isWorking = true
         defer { isWorking = false }
         do {
@@ -242,7 +245,7 @@ final class ColorCatalog {
         guard let client else { return }
         retireStaleCacheBackedState()
         guard let profileID = selectedPrinterProfileID else { return }
-        let requestedServer = client.baseURL.absoluteString
+        let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         isWorking = true
         defer { isWorking = false }
         do {

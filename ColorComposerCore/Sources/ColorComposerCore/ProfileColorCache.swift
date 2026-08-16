@@ -176,7 +176,7 @@ public struct ProfileColorCache: Sendable {
     /// Cache keys should ignore harmless URL spelling differences like a
     /// trailing slash or host capitalization, so one logical server maps to
     /// one cache namespace.
-    private static func normalizedServerBaseUrl(_ serverBaseUrl: String) -> String {
+    public static func normalizedServerBaseUrl(_ serverBaseUrl: String) -> String {
         guard var components = URLComponents(string: serverBaseUrl) else { return serverBaseUrl }
         components.scheme = components.scheme?.lowercased()
         components.host = components.host?.lowercased()
