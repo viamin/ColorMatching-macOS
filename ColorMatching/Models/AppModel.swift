@@ -46,8 +46,9 @@ final class AppModel {
 
     static let maxLayers = 4
 
-    func loadLayer(_ index: Int, from url: URL) {
-        guard index >= 0 && index < layers.count else { return }
+    @discardableResult
+    func loadLayer(_ index: Int, from url: URL) -> Bool {
+        guard index >= 0 && index < layers.count else { return false }
         do {
             let (data, filename, _) = try ImageUtilities.load(from: url)
             layers[index].imageData = data
@@ -57,8 +58,10 @@ final class AppModel {
                 layers[index].assignedCondition = nextUnassignedCondition()
             }
             handleUpstreamChange()
+            return true
         } catch {
             lastError = error.localizedDescription
+            return false
         }
     }
 
@@ -69,8 +72,9 @@ final class AppModel {
         for url in urls {
             while slot < layers.count && layers[slot].hasImage { slot += 1 }
             guard slot < layers.count else { return }
-            loadLayer(slot, from: url)
-            slot += 1
+            if loadLayer(slot, from: url) {
+                slot += 1
+            }
         }
     }
 
