@@ -11,6 +11,10 @@ struct ContentView: View {
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340)
         } detail: {
             PreviewPaneView()
+                // A brand-new project swaps in a new AppModel; rebuilding the
+                // preview pane resets its per-window tab/compare state to the
+                // default Composite / Predicted selection for that project.
+                .id(ObjectIdentifier(model))
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
