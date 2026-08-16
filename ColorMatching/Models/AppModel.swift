@@ -209,9 +209,9 @@ final class AppModel {
             lastError = "Set at least one channel weight above zero."
             return
         }
-        guard !catalog.colors.isEmpty else {
+        guard catalog.hasLoadedColorsForSelection else {
             clearGeneratedOutput()
-            lastError = "Load colors from the server first."
+            lastError = "Load colors for the selected profile before generating."
             return
         }
         guard let grids = sourceGrids(for: active) else {

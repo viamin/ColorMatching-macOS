@@ -17,6 +17,7 @@ final class ColorCatalog {
     var colorsForProfile: PrinterProfileDTO?
     private(set) var loadedPrinterProfileID: Int?
     private var colorFetchTask: Task<Void, Never>?
+    private var operationVersion = 0
 
     var selectedPrinterProfileID: Int? {
         didSet {
@@ -25,8 +26,9 @@ final class ColorCatalog {
             loadedPrinterProfileID = nil
             colors = []
             colorsForProfile = nil
+            let version = operationVersion
             colorFetchTask = Task { [weak self] in
-                await self?.fetchColorsIfPossible()
+                await self?.fetchColorsIfPossible(version: version)
             }
         }
     }
@@ -61,8 +63,10 @@ final class ColorCatalog {
     /// Prevents stale palette loads from mutating the current selection or a
     /// just-opened project after the user has moved on.
     func cancelPendingWork() {
+        operationVersion += 1
         colorFetchTask?.cancel()
         colorFetchTask = nil
+        isWorking = false
     }
 
     func testConnection() async {
@@ -70,14 +74,21 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        let version = operationVersion
         isWorking = true
-        defer { isWorking = false }
+        defer {
+            guard isCurrent(version) else { return }
+            isWorking = false
+        }
         do {
             try await client.testConnection()
+            guard isCurrent(version) else { return }
             connectionMessage = "Connected."
         } catch let error as PaletteAPIError {
+            guard isCurrent(version) else { return }
             connectionMessage = error.errorDescription
         } catch {
+            guard isCurrent(version) else { return }
             connectionMessage = "Could not reach the server."
         }
     }
@@ -87,19 +98,26 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        let version = operationVersion
         isWorking = true
-        defer { isWorking = false }
+        defer {
+            guard isCurrent(version) else { return }
+            isWorking = false
+        }
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
+            guard isCurrent(version) else { return }
             printerProfiles = fetchedProfiles
             if needsProfileSelection(from: fetchedProfiles) {
                 setSelectedPrinterProfileID(fetchedProfiles.first?.id, fetchColors: false)
             }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
-            await fetchColorsIfPossible()
+            await fetchColorsIfPossible(version: version)
         } catch let error as PaletteAPIError {
+            guard isCurrent(version) else { return }
             connectionMessage = error.errorDescription
         } catch {
+            guard isCurrent(version) else { return }
             connectionMessage = "Could not reach the server."
         }
     }
@@ -128,7 +146,11 @@ final class ColorCatalog {
         return !profiles.contains { $0.id == selectedPrinterProfileID }
     }
 
-    private func fetchColorsIfPossible() async {
+    private func isCurrent(_ version: Int) -> Bool {
+        !Task.isCancelled && operationVersion == version
+    }
+
+    private func fetchColorsIfPossible(version: Int) async {
         guard let client, let profileID = selectedPrinterProfileID else { return }
         isWorking = true
         let shouldClearStaleColors = loadedPrinterProfileID != profileID
@@ -140,17 +162,17 @@ final class ColorCatalog {
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
-            guard selectedPrinterProfileID == profileID else { return }
+            guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
             colors = dtos.compactMap { $0.toDomain() }
             loadedPrinterProfileID = profileID
             colorsForProfile = profile
             lastRefresh = Date()
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         } catch let error as PaletteAPIError {
-            guard selectedPrinterProfileID == profileID else { return }
+            guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
             connectionMessage = error.errorDescription
         } catch {
-            guard selectedPrinterProfileID == profileID else { return }
+            guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
             connectionMessage = "Could not load colors."
         }
     }
