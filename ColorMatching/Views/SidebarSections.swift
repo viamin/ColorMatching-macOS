@@ -53,10 +53,10 @@ struct ProfileSection: View {
             }
         }
         .onChange(of: catalog.selectedPrinterProfileID) { _, _ in
-            model.invalidateGeneratedOutput()
+            model.handleUpstreamChange()
         }
         .onChange(of: catalog.lastRefresh) { _, _ in
-            model.invalidateGeneratedOutput()
+            model.handleUpstreamChange()
         }
     }
 
@@ -156,10 +156,10 @@ struct SourceLayerRow: View {
         }
         .padding(6)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
-        .onChange(of: layer.inverted) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.scalingMode) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.assignedCondition) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.colorSpace) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.inverted) { model.handleUpstreamChange() }
+        .onChange(of: layer.scalingMode) { model.handleUpstreamChange() }
+        .onChange(of: layer.assignedCondition) { model.handleUpstreamChange() }
+        .onChange(of: layer.colorSpace) { model.handleUpstreamChange() }
     }
 }
 
@@ -234,10 +234,10 @@ struct CompositionSettingsSection: View {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
         }
-        .onChange(of: model.weights) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.logicalWidth) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.logicalHeight) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.scorerKind) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.weights) { model.handleUpstreamChange() }
+        .onChange(of: model.logicalWidth) { model.handleUpstreamChange() }
+        .onChange(of: model.logicalHeight) { model.handleUpstreamChange() }
+        .onChange(of: model.scorerKind) { model.handleUpstreamChange() }
     }
 
     private func weightBinding(_ keyPath: WritableKeyPath<ChannelWeights, Double>) -> Binding<Double> {

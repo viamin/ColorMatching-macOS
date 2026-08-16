@@ -54,6 +54,7 @@ final class AppModel {
             if layers[index].assignedCondition == nil {
                 layers[index].assignedCondition = nextUnassignedCondition()
             }
+            handleUpstreamChange()
         } catch {
             lastError = error.localizedDescription
         }
@@ -75,6 +76,7 @@ final class AppModel {
         guard index >= 0 && index < layers.count else { return }
         layers[index].imageData = nil
         layers[index].filename = nil
+        handleUpstreamChange()
     }
 
     private func nextUnassignedCondition() -> LightingCondition? {
@@ -117,15 +119,7 @@ final class AppModel {
     /// produces a result.
     func scheduleAutoRegenerate() {
         guard autoRegenerate, hasResult, canGenerate else { return }
-
-        debounceTask?.cancel()
-        debounceTask = Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await Task.sleep(for: .milliseconds(300))
-            } catch { return }
-            runSolve()
-        }
+        scheduleDebouncedSolve()
     }
 
     /// Cancels any in-flight solve and starts a new one. Both the manual
@@ -177,7 +171,21 @@ final class AppModel {
     /// Discards the solved composition when upstream inputs such as the active
     /// palette change, so export/print cannot operate on stale output.
     func invalidateGeneratedOutput() {
+        debounceTask?.cancel()
+        debounceTask = nil
+        solveTask?.cancel()
+        solveTask = nil
+        isSolving = false
         clearGeneratedOutput()
+    }
+
+    /// Handles edits to any solver input. Existing output is invalidated
+    /// immediately; when auto-regenerate is enabled, a fresh solve is queued.
+    func handleUpstreamChange() {
+        let shouldAutoRegenerate = autoRegenerate && hasResult
+        invalidateGeneratedOutput()
+        guard shouldAutoRegenerate, canGenerate else { return }
+        scheduleDebouncedSolve()
     }
 
     var eligibleColorCount: Int {
@@ -280,6 +288,17 @@ final class AppModel {
 
     private func hasAssignedSource(for condition: LightingCondition) -> Bool {
         layers.contains { $0.hasImage && $0.assignedCondition == condition }
+    }
+
+    private func scheduleDebouncedSolve() {
+        debounceTask?.cancel()
+        debounceTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+            } catch { return }
+            runSolve()
+        }
     }
 
     // MARK: - Derived images
