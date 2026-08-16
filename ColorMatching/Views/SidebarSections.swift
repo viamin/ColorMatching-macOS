@@ -52,6 +52,12 @@ struct ProfileSection: View {
                 LabeledContent("Last refreshed", value: refreshed.formatted(.dateTime.month().day().hour().minute()))
             }
         }
+        .onChange(of: catalog.selectedPrinterProfileID) { _, _ in
+            model.invalidateGeneratedOutput()
+        }
+        .onChange(of: catalog.lastRefresh) { _, _ in
+            model.invalidateGeneratedOutput()
+        }
     }
 
     private func profileLabel(_ profile: PrinterProfileDTO) -> String {

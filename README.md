@@ -53,7 +53,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 | Shortcut | Action |
 | --- | --- |
 | ⌘1 – ⌘8 | Switch the preview tab in the frontmost window, numbered in on-screen order (Composite, Error Map, Gamut, White, Red, Green, Blue, LPS) |
-| ⌘↩ | Generate (requires colors loaded from the server) |
+| ⌘↩ | Generate (requires colors loaded for the selected profile, from the server or a saved project) |
 | ⌘O / ⌘⌥O | Open Project… / Add Images… |
 | ⌘S / ⌘⌥S | Save Project / Save Project As… |
 | ⇧⌘E / ⌘P | Export Composite… / Print… (require a generated composition) |

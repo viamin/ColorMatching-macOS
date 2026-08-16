@@ -174,6 +174,12 @@ final class AppModel {
     var canExportComposite: Bool { hasResult }
     var canExportTiles: Bool { tilingEnabled && hasResult }
 
+    /// Discards the solved composition when upstream inputs such as the active
+    /// palette change, so export/print cannot operate on stale output.
+    func invalidateGeneratedOutput() {
+        clearGeneratedOutput()
+    }
+
     var eligibleColorCount: Int {
         catalog.eligibleColors(activeConditions: weights.activeConditions).count
     }
@@ -550,6 +556,7 @@ final class AppModel {
     private func clearGeneratedOutput() {
         result = nil
         errorStatistics = nil
+        lastError = nil
         solvedGamut = nil
     }
 }
