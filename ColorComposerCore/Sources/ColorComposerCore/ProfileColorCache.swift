@@ -177,7 +177,8 @@ public struct ProfileColorCache: Sendable {
     /// trailing slash or host capitalization, so one logical server maps to
     /// one cache namespace.
     public static func normalizedServerBaseUrl(_ serverBaseUrl: String) -> String {
-        guard var components = URLComponents(string: serverBaseUrl) else { return serverBaseUrl }
+        let trimmed = serverBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var components = URLComponents(string: trimmed) else { return trimmed }
         components.scheme = components.scheme?.lowercased()
         components.host = components.host?.lowercased()
         components.user = nil
@@ -196,7 +197,7 @@ public struct ProfileColorCache: Sendable {
             components.percentEncodedPath = trimmedPath.allSatisfy({ $0 == "/" }) ? "" : trimmedPath
         }
 
-        return components.string ?? serverBaseUrl
+        return components.string ?? trimmed
     }
 
     private static func isDefaultPort(_ port: Int, for scheme: String?) -> Bool {

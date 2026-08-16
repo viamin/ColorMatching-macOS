@@ -215,6 +215,17 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
     }
 
+    func testLeadingAndTrailingWhitespaceUsesTheSameCacheNamespace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 4, serverBaseUrl: "  http://LOCALHOST:4000/colors/ \n"))
+
+        let entry = try XCTUnwrap(cache.entry(for: 4, serverBaseUrl: "\nhttp://localhost:4000/colors\t"))
+
+        XCTAssertEqual(entry.serverBaseUrl, "http://localhost:4000/colors")
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: " http://localhost:4000/colors ").map(\.profileId), [4])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
+    }
+
     func testStoreCreatesSeparateServerDirectories() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
@@ -462,5 +473,14 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(entry.profile?.printerMakeModel, "Canon")
         XCTAssertEqual(entry.colors.map(\.id), [1])
         XCTAssertEqual(entry.fetchedAt, Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
+    func testStoreTrimsWhitespaceBeforePersistingServerBaseUrl() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 6, serverBaseUrl: " \nhttp://LOCALHOST:4000/colors/\t"))
+
+        let entry = try XCTUnwrap(cache.entry(for: 6, serverBaseUrl: "http://localhost:4000/colors"))
+
+        XCTAssertEqual(entry.serverBaseUrl, "http://localhost:4000/colors")
     }
 }
