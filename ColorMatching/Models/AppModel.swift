@@ -204,14 +204,19 @@ final class AppModel {
 
         let active = weights.activeConditions
         guard !active.isEmpty else {
+            clearGeneratedOutput()
             lastError = "Set at least one channel weight above zero."
             return
         }
         guard !catalog.colors.isEmpty else {
+            clearGeneratedOutput()
             lastError = "Load colors from the server first."
             return
         }
-        guard let grids = sourceGrids(for: active) else { return }
+        guard let grids = sourceGrids(for: active) else {
+            clearGeneratedOutput()
+            return
+        }
 
         let candidateColors = catalog.colors
         let weights = self.weights
@@ -246,6 +251,7 @@ final class AppModel {
                 weights: weights
             )
         case .failure(let error):
+            clearGeneratedOutput()
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
@@ -538,5 +544,11 @@ final class AppModel {
         lastError = nil
         solvedGamut = nil
         previewStateID = UUID()
+    }
+
+    private func clearGeneratedOutput() {
+        result = nil
+        errorStatistics = nil
+        solvedGamut = nil
     }
 }
