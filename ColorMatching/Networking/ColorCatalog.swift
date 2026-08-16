@@ -116,6 +116,14 @@ final class ColorCatalog {
             clearLoadedColors()
             connectionMessage = nil
         }
+        clearCacheBackedServerIfUnused()
+    }
+
+    /// `cacheBackedServer` only matters while some cache-backed profiles or
+    /// colors are on screen. Once both have gone, clear the marker so later
+    /// server changes and retries reason from current state only.
+    private func clearCacheBackedServerIfUnused() {
+        guard !printerProfilesAreCached, !isServingFromCache else { return }
         cacheBackedServer = nil
     }
 
@@ -166,6 +174,7 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
             reconcileSelectedProfile(with: fetchedProfiles)
+            clearCacheBackedServerIfUnused()
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
         } catch {
@@ -233,6 +242,7 @@ final class ColorCatalog {
         loadedColorsServer = server
         colorsLoadedFromProject = false
         isServingFromCache = false
+        clearCacheBackedServerIfUnused()
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         // Best effort: a failed write only costs the *next* offline fallback,
         // never the live session, so the error is deliberately not surfaced.
@@ -325,7 +335,9 @@ final class ColorCatalog {
         let cachedProfiles = cache.allEntries(serverBaseUrl: server).compactMap(\.profile)
         guard !cachedProfiles.isEmpty else {
             printerProfiles = []
+            printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
+            clearCacheBackedServerIfUnused()
             return
         }
         printerProfiles = cachedProfiles
