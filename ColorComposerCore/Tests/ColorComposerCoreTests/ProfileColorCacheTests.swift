@@ -760,6 +760,45 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(entry.serverBaseUrl, "http://localhost:4000/colors")
     }
 
+    func testStoreNormalizesServerBaseUrlInTheWrittenJSON() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(
+            profileID: 6,
+            serverBaseUrl: " \nhttp://user:secret@LOCALHOST:80/colors/?token=abc#frag\t"
+        ))
+
+        let serverDirectory = try XCTUnwrap(try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ).first)
+        let data = try Data(contentsOf: serverDirectory.appendingPathComponent("profile-6.json"))
+        let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        XCTAssertEqual(object["server_base_url"] as? String, "http://localhost/colors")
+    }
+
+    func testStoreDropsMismatchedNestedProfileMetadataBeforePersisting() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 7,
+            profile: PrinterProfileDTO(
+                id: 99, printerMakeModel: "Wrong", paperType: "Glossy", inkType: "Dye"
+            ),
+            colors: [try makeColor(id: 1)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+
+        let serverDirectory = try XCTUnwrap(try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ).first)
+        let data = try Data(contentsOf: serverDirectory.appendingPathComponent("profile-7.json"))
+        let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        XCTAssertNil(object["profile"])
+    }
+
     private func encode(_ entry: CachedProfileColors) throws -> Data {
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
