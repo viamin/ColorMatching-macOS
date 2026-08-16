@@ -116,6 +116,8 @@ final class AppModel {
     private var solveTask: Task<Void, Never>?
     private var debounceTask: Task<Void, Never>?
     private var pendingAutoRegenerate = false
+    private var solveQueued = false
+    private var solveGeneration = 0
 
     /// Cancels any in-flight solve and starts a new one. Both the manual
     /// Generate action and the debounced auto-regenerate pipeline go through
@@ -127,9 +129,14 @@ final class AppModel {
         debounceTask = nil
         solveTask?.cancel()
         pendingAutoRegenerate = false
+        solveQueued = true
+        solveGeneration += 1
+        let generation = solveGeneration
         let task = Task { [weak self] in
             guard let self else { return }
             await self.generate()
+            guard self.solveGeneration == generation else { return }
+            self.solveTask = nil
         }
         solveTask = task
     }
@@ -144,6 +151,8 @@ final class AppModel {
         solveTask = nil
         isSolving = false
         pendingAutoRegenerate = false
+        solveQueued = false
+        solveGeneration += 1
     }
 
     // MARK: - Result
@@ -174,6 +183,8 @@ final class AppModel {
         solveTask = nil
         isSolving = false
         clearGeneratedOutput()
+        solveQueued = false
+        solveGeneration += 1
     }
 
     /// Handles edits to any solver input. Existing output is invalidated
@@ -184,7 +195,7 @@ final class AppModel {
     /// the document with no replacement result.
     func handleUpstreamChange() {
         let shouldAutoRegenerate = autoRegenerate &&
-            (hasResult || isSolving || debounceTask != nil || solveTask != nil || pendingAutoRegenerate)
+            (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
         invalidateGeneratedOutput()
         guard shouldAutoRegenerate else { return }
         guard canGenerate else {
@@ -223,6 +234,7 @@ final class AppModel {
         // ourselves, the solver would bail at the cancellation guard below,
         // and the result would never reach the UI.
         debounceTask?.cancel()
+        solveQueued = false
 
         let active = weights.activeConditions
         guard !active.isEmpty else {
@@ -577,6 +589,8 @@ final class AppModel {
         lastError = nil
         solvedGamut = nil
         pendingAutoRegenerate = false
+        solveQueued = false
+        solveGeneration += 1
         previewStateID = UUID()
     }
 

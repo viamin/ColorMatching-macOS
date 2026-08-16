@@ -74,6 +74,7 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        cancelPendingWork()
         let version = operationVersion
         isWorking = true
         defer {
