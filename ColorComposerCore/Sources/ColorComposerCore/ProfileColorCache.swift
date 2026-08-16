@@ -141,6 +141,7 @@ public struct ProfileColorCache: Sendable {
     /// subdirectories and do not overwrite one another.
     public func store(_ entry: CachedProfileColors) throws {
         let normalizedEntry = normalized(entry)
+        try ensureWritableRootDirectory()
         let serverDirectory = directory(for: normalizedEntry.serverBaseUrl)
         try ensureWritableDirectory(serverDirectory)
         try ensureOwnershipMarker(in: serverDirectory)
@@ -260,6 +261,17 @@ public struct ProfileColorCache: Sendable {
         guard isRegularFile(url),
               let data = try? Data(contentsOf: url) else { return nil }
         return decode(data)
+    }
+
+    private func ensureWritableRootDirectory() throws {
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory) else {
+            return try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        guard isDirectory.boolValue, isOwnedDirectory(directory) else {
+            throw CacheError.rootIsNotDirectory
+        }
     }
 
     private func ensureWritableDirectory(_ url: URL) throws {

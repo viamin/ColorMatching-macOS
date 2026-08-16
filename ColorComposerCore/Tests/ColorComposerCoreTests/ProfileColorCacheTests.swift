@@ -550,6 +550,29 @@ final class ProfileColorCacheTests: XCTestCase {
         )
     }
 
+    func testStoreRejectsANonDirectoryRoot() throws {
+        let rootFile = directory.appendingPathComponent("cache-root")
+        try Data("not a directory".utf8).write(to: rootFile)
+        let cache = ProfileColorCache(directory: rootFile)
+
+        XCTAssertThrowsError(try cache.store(try makeEntry(profileID: 5))) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .rootIsNotDirectory)
+        }
+    }
+
+    func testStoreRejectsASymbolicLinkRoot() throws {
+        let targetRoot = directory.appendingPathComponent("real-cache-root", isDirectory: true)
+        let linkedRoot = directory.appendingPathComponent("cache-root-link", isDirectory: true)
+        try FileManager.default.createDirectory(at: targetRoot, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: linkedRoot, withDestinationURL: targetRoot)
+        let cache = ProfileColorCache(directory: linkedRoot)
+
+        XCTAssertThrowsError(try cache.store(try makeEntry(profileID: 5))) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .rootIsNotDirectory)
+        }
+        XCTAssertTrue(try FileManager.default.contentsOfDirectory(at: targetRoot, includingPropertiesForKeys: nil).isEmpty)
+    }
+
     func testStoreRejectsANonEmptyUnmarkedServerDirectory() throws {
         let cache = ProfileColorCache(directory: directory)
         let serverDirectory = serverDirectory()
