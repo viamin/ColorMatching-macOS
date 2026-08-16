@@ -125,6 +125,7 @@ final class AppModel {
     private var pendingAutoRegenerate = false
     private var solveQueued = false
     private var solveGeneration = 0
+    private var isRestoringProject = false
 
     /// Cancels any in-flight solve and starts a new one. Both the manual
     /// Generate action and the debounced auto-regenerate pipeline go through
@@ -204,6 +205,7 @@ final class AppModel {
     /// still in flight, otherwise a later edit could cancel that work and leave
     /// the document with no replacement result.
     func handleUpstreamChange() {
+        guard !isRestoringProject else { return }
         let shouldAutoRegenerate = autoRegenerate &&
             (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
         invalidateGeneratedOutput()
@@ -220,6 +222,7 @@ final class AppModel {
     /// solve was previously visible we still want the next successful refresh to
     /// restore it automatically when auto-regenerate is enabled.
     private func handleCatalogConfigurationChange() {
+        guard !isRestoringProject else { return }
         let shouldAutoRegenerate = autoRegenerate &&
             (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
         invalidateGeneratedOutput()
@@ -573,6 +576,8 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        isRestoringProject = true
+        defer { isRestoringProject = false }
         clearDerivedState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
