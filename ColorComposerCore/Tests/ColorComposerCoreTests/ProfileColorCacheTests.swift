@@ -152,6 +152,18 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
     }
 
+    func testDefaultPortAndSchemeCaseUseTheSameCacheNamespace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "HTTP://localhost:80/"))
+
+        XCTAssertEqual(
+            cache.entry(for: 3, serverBaseUrl: "http://localhost")?.serverBaseUrl,
+            "http://localhost"
+        )
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://localhost:80").map(\.profileId), [3])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).count, 1)
+    }
+
     func testStoreCreatesSeparateServerDirectories() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))

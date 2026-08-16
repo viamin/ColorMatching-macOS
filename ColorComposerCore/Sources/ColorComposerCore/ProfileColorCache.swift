@@ -178,7 +178,11 @@ public struct ProfileColorCache: Sendable {
     /// one cache namespace.
     private static func normalizedServerBaseUrl(_ serverBaseUrl: String) -> String {
         guard var components = URLComponents(string: serverBaseUrl) else { return serverBaseUrl }
+        components.scheme = components.scheme?.lowercased()
         components.host = components.host?.lowercased()
+        if let port = components.port, isDefaultPort(port, for: components.scheme) {
+            components.port = nil
+        }
         components.query = nil
         components.fragment = nil
 
@@ -191,6 +195,14 @@ public struct ProfileColorCache: Sendable {
         }
 
         return components.string ?? serverBaseUrl
+    }
+
+    private static func isDefaultPort(_ port: Int, for scheme: String?) -> Bool {
+        switch scheme {
+        case "http": return port == 80
+        case "https": return port == 443
+        default: return false
+        }
     }
 
     private func normalized(_ entry: CachedProfileColors) -> CachedProfileColors {
