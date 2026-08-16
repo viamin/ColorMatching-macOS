@@ -17,7 +17,10 @@ final class ColorCatalog {
     var colorsForProfile: PrinterProfileDTO?
 
     var selectedPrinterProfileID: Int? {
-        didSet { Task { await fetchColorsIfPossible() } }
+        didSet {
+            guard fetchesColorsOnProfileSelection else { return }
+            Task { await fetchColorsIfPossible() }
+        }
     }
 
     var lastRefresh: Date?
@@ -25,6 +28,7 @@ final class ColorCatalog {
     var isWorking = false
 
     private var client: PaletteAPIClient?
+    private var fetchesColorsOnProfileSelection = true
 
     func configure(baseURL: URL?, token: String?) {
         guard let baseURL else {
@@ -73,6 +77,19 @@ final class ColorCatalog {
         } catch {
             connectionMessage = "Could not reach the server."
         }
+    }
+
+    /// Restores the saved palette and selected profile from a project document
+    /// without immediately replacing the embedded colors from the server.
+    func restoreProjectPalette(printerProfileID: Int?, colors: [PaletteColor]) {
+        fetchesColorsOnProfileSelection = false
+        defer { fetchesColorsOnProfileSelection = true }
+
+        selectedPrinterProfileID = printerProfileID
+        self.colors = colors
+        colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
+        lastRefresh = Date()
+        connectionMessage = "Loaded \(colors.count) color(s) from project."
     }
 
     private func fetchColorsIfPossible() async {

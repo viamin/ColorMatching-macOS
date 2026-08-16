@@ -497,10 +497,10 @@ final class AppModel {
         clearDerivedState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        catalog.selectedPrinterProfileID = s.printerProfileID
-        catalog.colors = s.colorSnapshot.map { $0.toColor() }
-        catalog.lastRefresh = Date()
-        catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
+        catalog.restoreProjectPalette(
+            printerProfileID: s.printerProfileID,
+            colors: s.colorSnapshot.map { $0.toColor() }
+        )
 
         weights = s.weights
         scorerKind = s.scorerKind
