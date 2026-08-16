@@ -167,6 +167,21 @@ final class ColorCatalog {
         selectedPrinterProfileID = profileID
     }
 
+    /// A saved project can refer to a profile id that the current on-screen
+    /// list does not include yet (or no longer includes). Keep that selection
+    /// representable in the picker until a later refresh replaces it with the
+    /// server's current list.
+    private func ensureVisiblePrinterProfile(_ profileID: Int?) {
+        guard let profileID else { return }
+        guard !printerProfiles.map(\.id).contains(profileID) else { return }
+        printerProfiles.append(PrinterProfileDTO(
+            id: profileID,
+            printerMakeModel: nil,
+            paperType: nil,
+            inkType: nil
+        ))
+    }
+
     /// The picker changes selection synchronously, before any replacement fetch
     /// completes. Clear live/cached colors that no longer match immediately so
     /// the UI does not show profile A's palette while profile B (or None) is
@@ -261,6 +276,7 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
         }
+        ensureVisiblePrinterProfile(profileID)
         colors = projectColors
         // The snapshot carries no profile metadata, so the on-screen colors
         // describe no fetched profile; a later live fetch fills it back in.
