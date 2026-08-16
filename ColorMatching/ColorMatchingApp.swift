@@ -6,6 +6,24 @@ private enum SceneIDs {
     static let document = "document"
 }
 
+@Observable
+private final class PendingProjectOpen {
+    static let shared = PendingProjectOpen()
+
+    private(set) var requestID = UUID()
+    private var pendingURL: URL?
+
+    func stage(_ url: URL) {
+        pendingURL = url
+        requestID = UUID()
+    }
+
+    func consume() -> URL? {
+        defer { pendingURL = nil }
+        return pendingURL
+    }
+}
+
 @main
 struct ColorMatchingApp: App {
     var body: some Scene {
@@ -22,6 +40,7 @@ struct ColorMatchingApp: App {
 
 private struct DocumentSceneView: View {
     @State private var model = AppModel()
+    @State private var pendingProjectOpen = PendingProjectOpen.shared
 
     var body: some View {
         ContentView(addImages: addImages)
@@ -30,6 +49,12 @@ private struct DocumentSceneView: View {
             // Route menu shortcuts through the frontmost window's document
             // state instead of a process-wide model shared by every scene.
             .focusedSceneValue(\.documentCommandContext, commandContext)
+            .task {
+                consumePendingProjectIfNeeded()
+            }
+            .onChange(of: pendingProjectOpen.requestID) { _, _ in
+                consumePendingProjectIfNeeded()
+            }
     }
 
     private func newProject() {
@@ -78,6 +103,12 @@ private struct DocumentSceneView: View {
         FilePanels.openImages { urls in
             model.appendImages(from: urls)
         }
+    }
+
+    private func consumePendingProjectIfNeeded() {
+        guard let url = pendingProjectOpen.consume() else { return }
+        do { try model.loadProject(from: url) }
+        catch { NSApp.presentError(error) }
     }
 
     private var commandContext: DocumentCommandContext {
@@ -131,14 +162,14 @@ extension FocusedValues {
 private struct DocumentCommands: Commands {
     @FocusedValue(\.documentCommandContext) private var context
     @Environment(\.openWindow) private var openWindow
+    @State private var pendingProjectOpen = PendingProjectOpen.shared
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Project") { newProject() }
                 .keyboardShortcut("n")
-            Button("Open Project…") { context?.openProject() }
+            Button("Open Project…") { openProject() }
                 .keyboardShortcut("o")
-                .disabled(context == nil)
         }
         CommandGroup(replacing: .saveItem) {
             Button("Save Project") { context?.saveProject() }
@@ -176,6 +207,17 @@ private struct DocumentCommands: Commands {
             return
         }
         openWindow(id: SceneIDs.document)
+    }
+
+    private func openProject() {
+        if let context {
+            context.openProject()
+            return
+        }
+        FilePanels.openProject { url in
+            pendingProjectOpen.stage(url)
+            openWindow(id: SceneIDs.document)
+        }
     }
 }
 
