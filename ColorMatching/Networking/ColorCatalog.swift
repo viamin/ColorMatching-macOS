@@ -339,6 +339,9 @@ final class ColorCatalog {
             printerProfiles = []
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
+            if !keepsActiveSelectionWithoutCachedProfiles {
+                selectedPrinterProfileID = nil
+            }
             clearCacheBackedServerIfUnused()
             return
         }
