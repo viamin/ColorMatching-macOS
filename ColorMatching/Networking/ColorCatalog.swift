@@ -212,6 +212,7 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
             let selectionChanged = reconcileSelectedProfile(with: fetchedProfiles)
+            clearLoadedColorsWithoutSelection()
             clearCacheBackedServerIfUnused()
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             if !selectionChanged {
@@ -454,6 +455,15 @@ final class ColorCatalog {
         return loadedColorsProfileID == selectedPrinterProfileID
             && loadedColorsBelongToCurrentServer
             && !colors.isEmpty
+    }
+
+    /// A successful refresh can legitimately leave no selectable profile.
+    /// When that happens, any live or cached colors from a previously selected
+    /// profile are stale and must be cleared; a loaded project snapshot is the
+    /// user's chosen document data and intentionally survives.
+    private func clearLoadedColorsWithoutSelection() {
+        guard selectedPrinterProfileID == nil, !colorsLoadedFromProject else { return }
+        clearLoadedColors()
     }
 
     /// Once stale colors are cleared, keep the selection only if the current
