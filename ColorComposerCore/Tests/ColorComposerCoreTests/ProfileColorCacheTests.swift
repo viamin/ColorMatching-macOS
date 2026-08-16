@@ -598,6 +598,37 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }
 
+    func testRemoveAllLeavesUnmarkedEmptyServerPrefixedDirectoriesInPlace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+        let foreignDirectory = directory.appendingPathComponent("server-foreign", isDirectory: true)
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+
+        try cache.removeAll()
+
+        var isDirectory: ObjCBool = false
+        XCTAssertTrue(FileManager.default.fileExists(atPath: foreignDirectory.path, isDirectory: &isDirectory))
+        XCTAssertTrue(isDirectory.boolValue)
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
+    func testRemoveAllLeavesSymbolicLinkServerPrefixedDirectoriesInPlace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+        let foreignDirectory = directory.appendingPathComponent("foreign-cache", isDirectory: true)
+        let linkedDirectory = directory.appendingPathComponent("server-foreign", isDirectory: true)
+        let foreignFile = foreignDirectory.appendingPathComponent("profile-1.json")
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+        try Data("keep me".utf8).write(to: foreignFile)
+        try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        try cache.removeAll()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: linkedDirectory.path))
+        XCTAssertEqual(try String(contentsOf: foreignFile), "keep me")
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
     func testRemoveAllSucceedsWhenNothingIsCached() throws {
         let cache = ProfileColorCache(directory: directory)
 
