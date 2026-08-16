@@ -69,7 +69,7 @@ final class ColorCatalog {
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
-            if selectedPrinterProfileID == nil {
+            if needsProfileSelection(from: fetchedProfiles) {
                 setSelectedPrinterProfileID(fetchedProfiles.first?.id, fetchColors: false)
             }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
@@ -96,6 +96,11 @@ final class ColorCatalog {
         fetchesColorsOnProfileSelection = fetchColors
         selectedPrinterProfileID = id
         fetchesColorsOnProfileSelection = previousBehavior
+    }
+
+    private func needsProfileSelection(from profiles: [PrinterProfileDTO]) -> Bool {
+        guard let selectedPrinterProfileID else { return true }
+        return !profiles.contains { $0.id == selectedPrinterProfileID }
     }
 
     private func fetchColorsIfPossible() async {
