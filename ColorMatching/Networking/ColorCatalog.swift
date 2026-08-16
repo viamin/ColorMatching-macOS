@@ -207,6 +207,7 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
             let selectionChanged = reconcileSelectedProfile(with: fetchedProfiles)
+            clearLoadedColorsIfSelectionChanged()
             clearLoadedColorsWithoutSelection()
             clearCacheBackedServerIfUnused()
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
@@ -457,6 +458,16 @@ final class ColorCatalog {
         return loadedColorsProfileID == selectedPrinterProfileID
             && loadedColorsBelongToCurrentServer
             && !colors.isEmpty
+    }
+
+    /// When the active selection changes to another concrete profile, any
+    /// colors left from the previous profile become stale immediately and
+    /// should drop before the replacement fetch completes.
+    private func clearLoadedColorsIfSelectionChanged() {
+        guard let selectedPrinterProfileID,
+              loadedColorsProfileID != nil,
+              loadedColorsProfileID != selectedPrinterProfileID else { return }
+        clearLoadedColors()
     }
 
     /// A successful refresh can legitimately leave no selectable profile.
