@@ -220,6 +220,21 @@ final class ColorCatalog {
         printerProfiles.sort { $0.id < $1.id }
     }
 
+    /// A live color fetch can return fresher metadata for the selected
+    /// profile than the on-screen list currently has (for example replacing a
+    /// placeholder or stale cached entry). Refresh just that visible row
+    /// without claiming to have reloaded the full profile list.
+    private func refreshVisiblePrinterProfile(_ profile: PrinterProfileDTO?) {
+        guard let profile else { return }
+        if let index = printerProfiles.firstIndex(where: { $0.id == profile.id }) {
+            printerProfiles[index] = profile
+            return
+        }
+        guard selectedPrinterProfileID == profile.id else { return }
+        printerProfiles.append(profile)
+        printerProfiles.sort { $0.id < $1.id }
+    }
+
     /// The picker changes selection synchronously, before any replacement fetch
     /// completes. Clear live/cached colors that no longer match immediately so
     /// the UI does not show profile A's palette while profile B (or None) is
@@ -380,6 +395,7 @@ final class ColorCatalog {
     ) {
         let fetchedAt = Date()
         let sanitizedProfile = sanitizedProfile(profile, for: profileID)
+        refreshVisiblePrinterProfile(sanitizedProfile)
         colors = dtos.compactMap { $0.toDomain() }
         colorsForProfile = sanitizedProfile
         lastRefresh = fetchedAt
