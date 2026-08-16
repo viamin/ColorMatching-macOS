@@ -235,14 +235,12 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
             clearLoadedColorsIfServerChanged()
-            let selectionChanged = reconcileSelectedProfile(with: fetchedProfiles)
+            _ = reconcileSelectedProfile(with: fetchedProfiles)
             clearLoadedColorsIfSelectionChanged()
             clearLoadedColorsWithoutSelection()
             clearCacheBackedServerIfUnused()
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
-            if !selectionChanged {
-                await fetchColorsIfPossible()
-            }
+            await fetchColorsIfPossible()
         } catch {
             // A failure of an abandoned request says nothing about the
             // newly configured server — only a fresh request may report.
@@ -468,14 +466,14 @@ final class ColorCatalog {
     private func reconcileSelectedProfile(with profiles: [PrinterProfileDTO]) -> Bool {
         guard let selectedPrinterProfileID else {
             let replacement = profiles.first?.id
-            selectedPrinterProfileID = replacement
+            restoreSelectedPrinterProfileID(replacement)
             return replacement != nil
         }
         let profileIDs = Set(profiles.map(\.id))
         guard !profileIDs.contains(selectedPrinterProfileID) else { return false }
         let replacement = profiles.first?.id
         let changed = replacement != selectedPrinterProfileID
-        self.selectedPrinterProfileID = replacement
+        restoreSelectedPrinterProfileID(replacement)
         return changed
     }
 
