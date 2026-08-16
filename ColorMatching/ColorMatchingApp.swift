@@ -17,9 +17,7 @@ struct ColorMatchingApp: App {
                 Button("New Project") { newProject() }.keyboardShortcut("n")
                 Button("Open Project…") { openProject() }.keyboardShortcut("o")
             }
-            // Replaces the default ⌘P print item so the File menu carries only
-            // one Print… command, bound to the generated composition.
-            CommandGroup(replacing: .printItem) {
+            CommandGroup(after: .saveItem) {
                 Button("Save Project") { saveProject() }.keyboardShortcut("s")
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
@@ -28,6 +26,10 @@ struct ColorMatchingApp: App {
                 Button("Export Composite…") { exportComposite() }
                     .keyboardShortcut("e", modifiers: [.command, .shift])
                     .disabled(!model.hasResult)
+            }
+            // Replaces the default ⌘P print item so the File menu carries only
+            // one Print… command, bound to the generated composition.
+            CommandGroup(replacing: .printItem) {
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
                     .disabled(!model.hasResult)
             }
