@@ -378,6 +378,18 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }
 
+    func testRemoveAllKeepsTheCacheRootDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+
+        try cache.removeAll()
+
+        var isDirectory: ObjCBool = false
+        XCTAssertTrue(FileManager.default.fileExists(atPath: directory.path, isDirectory: &isDirectory))
+        XCTAssertTrue(isDirectory.boolValue)
+        XCTAssertTrue(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).isEmpty)
+    }
+
     func testRemoveAllSucceedsWhenNothingIsCached() throws {
         let cache = ProfileColorCache(directory: directory)
 

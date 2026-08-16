@@ -139,10 +139,19 @@ public struct ProfileColorCache: Sendable {
     }
 
     /// Removes every cached profile. A missing cache directory is a no-op.
+    /// The cache root itself stays in place so clearing an explicit custom
+    /// directory never removes more than this cache's own contents.
     public func removeAll() throws {
         let fileManager = FileManager.default
-        guard fileManager.fileExists(atPath: directory.path) else { return }
-        try fileManager.removeItem(at: directory)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory) else { return }
+        guard isDirectory.boolValue else {
+            try fileManager.removeItem(at: directory)
+            return
+        }
+        for item in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) {
+            try fileManager.removeItem(at: item)
+        }
     }
 
     // MARK: - Internals
