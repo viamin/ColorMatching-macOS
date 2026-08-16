@@ -3,6 +3,7 @@ import ColorComposerCore
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    let addImages: () -> Void
 
     var body: some View {
         @Bindable var model = model
@@ -19,9 +20,7 @@ struct ContentView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
-                    FilePanels.openImages { urls in
-                        model.appendImages(from: urls)
-                    }
+                    addImages()
                 } label: {
                     Label("Add Images", systemImage: "photo.on.rectangle.angled")
                 }

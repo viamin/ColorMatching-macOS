@@ -4,45 +4,28 @@ import UniformTypeIdentifiers
 
 @main
 struct ColorMatchingApp: App {
-    @State private var model = AppModel()
-
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(model)
-                .frame(minWidth: 1100, minHeight: 720)
+            DocumentSceneView()
         }
         .commands {
-            CommandGroup(replacing: .newItem) {
-                Button("New Project") { newProject() }.keyboardShortcut("n")
-                Button("Open Project…") { openProject() }.keyboardShortcut("o")
-            }
-            CommandGroup(replacing: .saveItem) {
-                Button("Save Project") { saveProject() }.keyboardShortcut("s")
-                Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
-                Divider()
-                // ⇧⌘E matches Apple's Export convention (Notes, Pages); plain ⌘E
-                // would shadow the system-wide "Use Selection for Find".
-                Button("Export Composite…") { exportComposite() }
-                    .keyboardShortcut("e", modifiers: [.command, .shift])
-                    .disabled(!model.canExportComposite)
-                if model.tilingEnabled {
-                    Divider()
-                    Button("Export Tiles…") { exportTiles() }
-                        .disabled(!model.canExportTiles)
-                    Button("Print Tiles") { model.printTiles() }
-                        .disabled(!model.canExportTiles)
-                }
-            }
-            // Replaces the default ⌘P print item so the File menu carries only
-            // one Print… command, bound to the generated composition.
-            CommandGroup(replacing: .printItem) {
-                Button("Print…") { model.printComposite() }.keyboardShortcut("p")
-                    .disabled(!model.canExportComposite)
-            }
+            DocumentCommands()
             PreviewCommands()
-            WorkflowCommands(model: model, addImages: addImages)
+            WorkflowCommands()
         }
+    }
+}
+
+private struct DocumentSceneView: View {
+    @State private var model = AppModel()
+
+    var body: some View {
+        ContentView(addImages: addImages)
+            .environment(model)
+            .frame(minWidth: 1100, minHeight: 720)
+            // Route menu shortcuts through the frontmost window's document
+            // state instead of a process-wide model shared by every scene.
+            .focusedSceneValue(\.documentCommandContext, commandContext)
     }
 
     private func newProject() {
@@ -92,20 +75,110 @@ struct ColorMatchingApp: App {
             model.appendImages(from: urls)
         }
     }
+
+    private var commandContext: DocumentCommandContext {
+        DocumentCommandContext(
+            newProject: newProject,
+            openProject: openProject,
+            saveProject: saveProject,
+            saveProjectAs: saveProjectAs,
+            exportComposite: exportComposite,
+            exportTiles: exportTiles,
+            printComposite: model.printComposite,
+            printTiles: model.printTiles,
+            addImages: addImages,
+            generate: model.runSolve,
+            tilingEnabled: model.tilingEnabled,
+            canGenerate: model.canGenerate,
+            canExportComposite: model.canExportComposite,
+            canExportTiles: model.canExportTiles
+        )
+    }
+}
+
+private struct DocumentCommandContext {
+    let newProject: () -> Void
+    let openProject: () -> Void
+    let saveProject: () -> Void
+    let saveProjectAs: () -> Void
+    let exportComposite: () -> Void
+    let exportTiles: () -> Void
+    let printComposite: () -> Void
+    let printTiles: () -> Void
+    let addImages: () -> Void
+    let generate: () -> Void
+    let tilingEnabled: Bool
+    let canGenerate: Bool
+    let canExportComposite: Bool
+    let canExportTiles: Bool
+}
+
+private struct DocumentCommandContextKey: FocusedValueKey {
+    typealias Value = DocumentCommandContext
+}
+
+extension FocusedValues {
+    var documentCommandContext: DocumentCommandContext? {
+        get { self[DocumentCommandContextKey.self] }
+        set { self[DocumentCommandContextKey.self] = newValue }
+    }
+}
+
+private struct DocumentCommands: Commands {
+    @FocusedValue(\.documentCommandContext) private var context
+
+    var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button("New Project") { context?.newProject() }
+                .keyboardShortcut("n")
+                .disabled(context == nil)
+            Button("Open Project…") { context?.openProject() }
+                .keyboardShortcut("o")
+                .disabled(context == nil)
+        }
+        CommandGroup(replacing: .saveItem) {
+            Button("Save Project") { context?.saveProject() }
+                .keyboardShortcut("s")
+                .disabled(context == nil)
+            Button("Save Project As…") { context?.saveProjectAs() }
+                .keyboardShortcut("s", modifiers: [.command, .option])
+                .disabled(context == nil)
+            Divider()
+            // ⇧⌘E matches Apple's Export convention (Notes, Pages); plain ⌘E
+            // would shadow the system-wide "Use Selection for Find".
+            Button("Export Composite…") { context?.exportComposite() }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .disabled(!(context?.canExportComposite ?? false))
+            if context?.tilingEnabled == true {
+                Divider()
+                Button("Export Tiles…") { context?.exportTiles() }
+                    .disabled(!(context?.canExportTiles ?? false))
+                Button("Print Tiles") { context?.printTiles() }
+                    .disabled(!(context?.canExportTiles ?? false))
+            }
+        }
+        // Replaces the default ⌘P print item so the File menu carries only
+        // one Print… command, bound to the generated composition.
+        CommandGroup(replacing: .printItem) {
+            Button("Print…") { context?.printComposite() }
+                .keyboardShortcut("p")
+                .disabled(!(context?.canExportComposite ?? false))
+        }
+    }
 }
 
 private struct WorkflowCommands: Commands {
-    let model: AppModel
-    let addImages: () -> Void
+    @FocusedValue(\.documentCommandContext) private var context
 
     var body: some Commands {
         CommandMenu("Actions") {
-            Button("Add Images…") { addImages() }
+            Button("Add Images…") { context?.addImages() }
                 .keyboardShortcut("o", modifiers: [.command, .option])
+                .disabled(context == nil)
 
-            Button("Generate") { model.runSolve() }
+            Button("Generate") { context?.generate() }
                 .keyboardShortcut(.return, modifiers: [.command])
-                .disabled(!model.canGenerate)
+                .disabled(!(context?.canGenerate ?? false))
         }
     }
 }
