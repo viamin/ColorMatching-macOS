@@ -396,6 +396,18 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNoThrow(try cache.removeAll())
     }
 
+    func testRemoveAllDoesNotDeleteANonDirectoryRoot() throws {
+        let rootFile = directory.appendingPathComponent("cache-root")
+        try Data("not a directory".utf8).write(to: rootFile)
+        let cache = ProfileColorCache(directory: rootFile)
+
+        XCTAssertThrowsError(try cache.removeAll()) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .rootIsNotDirectory)
+        }
+
+        XCTAssertEqual(try String(contentsOf: rootFile), "not a directory")
+    }
+
     /// Clear Cache followed by a later successful fetch must be able to
     /// repopulate the cache: `removeAll` deletes the directory, so `store`
     /// has to recreate it.

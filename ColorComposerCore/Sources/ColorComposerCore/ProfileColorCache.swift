@@ -68,6 +68,10 @@ public extension CachedProfileColors {
 /// them would spread that contract across collaborators without reducing
 /// any complexity.
 public struct ProfileColorCache: Sendable {
+    public enum CacheError: Error {
+        case rootIsNotDirectory
+    }
+
     /// Root directory holding one subdirectory per server, each with one
     /// `profile-<id>.json` per cached profile.
     public let directory: URL
@@ -146,8 +150,7 @@ public struct ProfileColorCache: Sendable {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory) else { return }
         guard isDirectory.boolValue else {
-            try fileManager.removeItem(at: directory)
-            return
+            throw CacheError.rootIsNotDirectory
         }
         for item in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) {
             try fileManager.removeItem(at: item)
