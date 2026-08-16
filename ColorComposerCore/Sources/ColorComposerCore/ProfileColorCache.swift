@@ -262,7 +262,7 @@ public struct ProfileColorCache: Sendable {
               let data = try? Data(contentsOf: url),
               let entry = decode(data) else { return nil }
         return CachedProfileColors(
-            serverBaseUrl: entry.serverBaseUrl,
+            serverBaseUrl: Self.normalizedServerBaseUrl(entry.serverBaseUrl),
             profileId: entry.profileId,
             profile: sanitizedProfile(entry.profile, for: entry.profileId),
             colors: entry.colors,

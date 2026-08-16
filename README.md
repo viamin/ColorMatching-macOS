@@ -74,8 +74,7 @@ The Xcode project is **generated, not committed** — `project.yml` is the sourc
 Colors and their measured illuminant responses are fetched from `color_matching`'s versioned API:
 
 - `GET /api/v1/printer_profiles`
-- `GET /api/v1/palettes`
-- `GET /api/v1/colors?printer_profile_id=N&palette_id=M`
+- `GET /api/v1/colors?printer_profile_id=N`
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
 
