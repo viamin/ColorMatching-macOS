@@ -129,7 +129,9 @@ final class ColorCatalog {
         // Decide after cached colors are gone: otherwise a cached palette
         // being cleared could incorrectly keep its now-invisible profile
         // selected even though no live or project colors remain.
-        if !keepsActiveSelectionWithoutCachedProfiles {
+        if keepsActiveSelectionWithoutCachedProfiles {
+            ensureVisiblePrinterProfile(selectedPrinterProfileID)
+        } else {
             clearSelectedProfileIfUnavailable()
         }
         clearCacheBackedServerIfUnused()
@@ -447,7 +449,9 @@ final class ColorCatalog {
             printerProfiles = []
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
-            if !keepsActiveSelectionWithoutCachedProfiles {
+            if keepsActiveSelectionWithoutCachedProfiles {
+                ensureVisiblePrinterProfile(selectedPrinterProfileID)
+            } else {
                 restoreSelectedPrinterProfileID(nil)
             }
             clearCacheBackedServerIfUnused()
