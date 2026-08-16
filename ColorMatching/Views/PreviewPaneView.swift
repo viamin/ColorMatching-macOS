@@ -82,7 +82,7 @@ enum LightingCompareMode: Hashable, CaseIterable, Identifiable {
 
 struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
-    @State private var previewMode: PreviewMode = .composite
+    @Binding var previewMode: PreviewMode
     @State private var compareMode: LightingCompareMode = .predicted
 
     var body: some View {
@@ -98,10 +98,6 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
-        // Scene focus keeps the binding available to menu commands for the
-        // frontmost window without promoting a per-window UI choice into the
-        // shared application model.
-        .focusedSceneValue(\.previewModeBinding, $previewMode)
         .onChange(of: previewMode) { oldMode, newMode in
             resetCompareModeIfNeeded(from: oldMode, to: newMode)
         }

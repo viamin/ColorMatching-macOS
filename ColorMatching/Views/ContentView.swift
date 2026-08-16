@@ -3,6 +3,7 @@ import ColorComposerCore
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @State private var previewMode: PreviewMode = .composite
     let addImages: () -> Void
 
     var body: some View {
@@ -11,11 +12,13 @@ struct ContentView: View {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340)
         } detail: {
-            PreviewPaneView()
-                // Rebuild the preview pane whenever the current document is
-                // replaced, so preview-tab and compare selections reset to the
-                // default Composite / Predicted state for that project.
-                .id(model.previewStateID)
+            PreviewPaneView(previewMode: $previewMode)
+        }
+        // Keep preview shortcuts active for the whole frontmost document
+        // window, even while focus is in the sidebar or toolbar.
+        .focusedSceneValue(\.previewModeBinding, $previewMode)
+        .onChange(of: model.previewStateID) {
+            previewMode = .composite
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
