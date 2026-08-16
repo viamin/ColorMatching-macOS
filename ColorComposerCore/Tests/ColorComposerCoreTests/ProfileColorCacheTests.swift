@@ -330,6 +330,19 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1])
     }
 
+    func testAllEntriesIgnoresNonCanonicalProfileFileNames() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try cache.store(try makeEntry(profileID: 1))
+
+        let canonical = serverDirectory.appendingPathComponent("profile-1.json")
+        let nonCanonical = serverDirectory.appendingPathComponent("profile-01.json")
+        try Data(contentsOf: canonical).write(to: nonCanonical)
+
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1])
+    }
+
     func testAllEntriesIncludesEntriesWithoutProfileMetadata() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 4))

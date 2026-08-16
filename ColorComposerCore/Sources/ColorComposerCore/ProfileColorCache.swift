@@ -161,7 +161,9 @@ public struct ProfileColorCache: Sendable {
     private static func profileID(fromFileURL url: URL) -> Int? {
         let stem = url.deletingPathExtension().lastPathComponent
         guard url.pathExtension == "json", stem.hasPrefix(fileStemPrefix) else { return nil }
-        return Int(stem.dropFirst(fileStemPrefix.count))
+        let rawID = String(stem.dropFirst(fileStemPrefix.count))
+        guard let profileID = Int(rawID), rawID == String(profileID) else { return nil }
+        return profileID
     }
 
     private static func directoryName(for serverBaseUrl: String) -> String {
