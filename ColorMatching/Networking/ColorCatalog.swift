@@ -175,10 +175,12 @@ final class ColorCatalog {
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
-            reconcileSelectedProfile(with: fetchedProfiles)
+            let selectionChanged = reconcileSelectedProfile(with: fetchedProfiles)
             clearCacheBackedServerIfUnused()
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
-            await fetchColorsIfPossible()
+            if !selectionChanged {
+                await fetchColorsIfPossible()
+            }
         } catch {
             // A failure of an abandoned request says nothing about the
             // newly configured server — only a fresh request may report.
@@ -351,7 +353,7 @@ final class ColorCatalog {
         printerProfilesAreCached = true
         loadedPrinterProfilesServer = server
         cacheBackedServer = server
-        reconcileSelectedProfile(with: cachedProfiles)
+        _ = reconcileSelectedProfile(with: cachedProfiles)
     }
 
     private static func cacheTimestamp(_ date: Date) -> String {
@@ -361,14 +363,17 @@ final class ColorCatalog {
     /// Keeps the current selection only while the profile list still contains
     /// it; otherwise picks the first available profile so the picker and the
     /// next color fetch stay in sync with the list on screen.
-    private func reconcileSelectedProfile(with profiles: [PrinterProfileDTO]) {
+    private func reconcileSelectedProfile(with profiles: [PrinterProfileDTO]) -> Bool {
         guard let selectedPrinterProfileID else {
-            selectedPrinterProfileID = profiles.first?.id
-            return
+            let replacement = profiles.first?.id
+            selectedPrinterProfileID = replacement
+            return replacement != nil
         }
         let profileIDs = Set(profiles.map(\.id))
-        guard !profileIDs.contains(selectedPrinterProfileID) else { return }
-        self.selectedPrinterProfileID = profiles.first?.id
+        guard !profileIDs.contains(selectedPrinterProfileID) else { return false }
+        let replacement = profiles.first?.id
+        self.selectedPrinterProfileID = replacement
+        return replacement != selectedPrinterProfileID
     }
 
     private var keepsProfilesForCurrentServer: Bool {
