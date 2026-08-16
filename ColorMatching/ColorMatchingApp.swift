@@ -6,6 +6,7 @@ private enum SceneIDs {
     static let document = "document"
 }
 
+@MainActor
 @Observable
 private final class PendingProjectOpen {
     static let shared = PendingProjectOpen()
@@ -162,7 +163,7 @@ extension FocusedValues {
 private struct DocumentCommands: Commands {
     @FocusedValue(\.documentCommandContext) private var context
     @Environment(\.openWindow) private var openWindow
-    @State private var pendingProjectOpen = PendingProjectOpen.shared
+    private let pendingProjectOpen = PendingProjectOpen.shared
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
