@@ -182,8 +182,15 @@ final class ColorCatalog {
     // MARK: - Color loading
 
     private func fetchColorsIfPossible() async {
-        guard let client, let profileID = selectedPrinterProfileID else { return }
+        // Retiring precedes the selection guard: clearing the selection —
+        // picking "None", loading a project with no profile — is still an
+        // action on the configured server, so another server's stale cached
+        // profiles and colors must drop even though no fetch follows. (It
+        // also precedes capturing `profileID` because retiring may clear the
+        // selection; fetching afterwards would only be discarded.)
+        guard let client else { return }
         retireStaleCacheBackedState()
+        guard let profileID = selectedPrinterProfileID else { return }
         let requestedServer = client.baseURL.absoluteString
         isWorking = true
         defer { isWorking = false }
