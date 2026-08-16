@@ -2,10 +2,14 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+private enum SceneIDs {
+    static let document = "document"
+}
+
 @main
 struct ColorMatchingApp: App {
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: SceneIDs.document) {
             DocumentSceneView()
         }
         .commands {
@@ -126,12 +130,12 @@ extension FocusedValues {
 
 private struct DocumentCommands: Commands {
     @FocusedValue(\.documentCommandContext) private var context
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("New Project") { context?.newProject() }
+            Button("New Project") { newProject() }
                 .keyboardShortcut("n")
-                .disabled(context == nil)
             Button("Open Project…") { context?.openProject() }
                 .keyboardShortcut("o")
                 .disabled(context == nil)
@@ -164,6 +168,14 @@ private struct DocumentCommands: Commands {
                 .keyboardShortcut("p")
                 .disabled(!(context?.canExportComposite ?? false))
         }
+    }
+
+    private func newProject() {
+        if let context {
+            context.newProject()
+            return
+        }
+        openWindow(id: SceneIDs.document)
     }
 }
 
