@@ -53,7 +53,7 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
             "Preview shortcuts support at most nine tabs."
         )
         guard let index = Self.orderedModes.firstIndex(of: self) else {
-            return "0"
+            preconditionFailure("Preview mode must appear in orderedModes.")
         }
         return KeyEquivalent(Character(String(index + 1)))
     }
