@@ -263,7 +263,9 @@ final class AppModel {
             return
         }
         guard let grids = sourceGrids(for: active) else {
+            let errorMessage = lastError
             clearGeneratedOutput()
+            lastError = errorMessage
             return
         }
 
