@@ -52,11 +52,6 @@ private struct DocumentSceneView: View {
             }
     }
 
-    private func newProject() {
-        model.cancelPendingWork()
-        model = AppModel()
-    }
-
     private func openProject() {
         FilePanels.openProject { url in
             do { try model.loadProject(from: url) }
@@ -111,7 +106,6 @@ private struct DocumentSceneView: View {
 
     private var commandContext: DocumentCommandContext {
         DocumentCommandContext(
-            newProject: newProject,
             openProject: openProject,
             saveProject: saveProject,
             saveProjectAs: saveProjectAs,
@@ -130,7 +124,6 @@ private struct DocumentSceneView: View {
 }
 
 private struct DocumentCommandContext {
-    let newProject: () -> Void
     let openProject: () -> Void
     let saveProject: () -> Void
     let saveProjectAs: () -> Void
@@ -199,10 +192,6 @@ private struct DocumentCommands: Commands {
     }
 
     private func newProject() {
-        if let context {
-            context.newProject()
-            return
-        }
         openWindow(id: SceneIDs.document)
     }
 
