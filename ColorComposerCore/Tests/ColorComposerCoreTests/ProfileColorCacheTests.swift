@@ -61,6 +61,13 @@ final class ProfileColorCacheTests: XCTestCase {
         return directory.appendingPathComponent("server-\(safe)", isDirectory: true)
     }
 
+    private func createOwnedServerDirectory(for serverBaseUrl: String = defaultServer) throws -> URL {
+        let serverDirectory = serverDirectory(for: serverBaseUrl)
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try Data().write(to: serverDirectory.appendingPathComponent(".profile-color-cache"))
+        return serverDirectory
+    }
+
     func testStoreThenReadRoundTripsEntry() throws {
         let cache = ProfileColorCache(directory: directory)
         let entry = try makeEntry(profileID: 2, colorIDs: [10, 11])
@@ -724,8 +731,7 @@ final class ProfileColorCacheTests: XCTestCase {
     /// never matches), where every stored entry would silently count as a miss.
     func testDecodesHandWrittenSnakeCaseCacheFile() throws {
         let cache = ProfileColorCache(directory: directory)
-        let serverDirectory = serverDirectory()
-        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        let serverDirectory = try createOwnedServerDirectory()
         let json = """
             {"server_base_url":"http://localhost:4000",
             "profile_id":6,
