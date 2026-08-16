@@ -48,6 +48,10 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
     }
 
     var shortcutKey: KeyEquivalent {
+        precondition(
+            Self.orderedModes.count <= 9,
+            "Preview shortcuts support at most nine tabs."
+        )
         guard let index = Self.orderedModes.firstIndex(of: self) else {
             return "0"
         }
