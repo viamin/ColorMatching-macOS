@@ -183,6 +183,14 @@ final class ColorCatalog {
         )
     }
 
+    /// The API response is an external boundary: if it carries profile
+    /// metadata for another id, treat that metadata as absent rather than
+    /// showing one profile's details for another profile's colors.
+    private func sanitizedProfile(_ profile: PrinterProfileDTO?, for profileID: Int) -> PrinterProfileDTO? {
+        guard let profile, profile.id == profileID else { return nil }
+        return profile
+    }
+
     /// A saved project can refer to a profile id that the current on-screen
     /// list does not include yet (or no longer includes). Keep that selection
     /// representable in the picker until a later refresh replaces it with the
@@ -347,8 +355,9 @@ final class ColorCatalog {
         server: String
     ) {
         let fetchedAt = Date()
+        let sanitizedProfile = sanitizedProfile(profile, for: profileID)
         colors = dtos.compactMap { $0.toDomain() }
-        colorsForProfile = profile
+        colorsForProfile = sanitizedProfile
         lastRefresh = fetchedAt
         loadedColorsProfileID = profileID
         loadedColorsServer = server
@@ -361,7 +370,7 @@ final class ColorCatalog {
         try? cache.store(CachedProfileColors(
             serverBaseUrl: server,
             profileId: profileID,
-            profile: profile,
+            profile: sanitizedProfile,
             colors: dtos,
             fetchedAt: fetchedAt
         ))
