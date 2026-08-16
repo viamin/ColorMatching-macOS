@@ -322,6 +322,7 @@ final class ColorCatalog {
         let belongsToCurrentServer = colorsLoadedFromProject || loadedColorsServer == cacheServer
         guard loadedColorsProfileID == profileID, belongsToCurrentServer, !colors.isEmpty else {
             clearLoadedColors()
+            clearSelectedProfileIfUnavailable()
             connectionMessage = "\(reason)."
             return
         }
@@ -384,6 +385,17 @@ final class ColorCatalog {
     private var keepsActiveSelectionWithoutCachedProfiles: Bool {
         guard let selectedPrinterProfileID else { return false }
         return loadedColorsProfileID == selectedPrinterProfileID && !colors.isEmpty
+    }
+
+    /// Once stale colors are cleared, keep the selection only if the current
+    /// on-screen profile list still contains it. Otherwise the picker holds an
+    /// invisible id from another server, which no longer describes any state
+    /// the user can see or save.
+    private func clearSelectedProfileIfUnavailable() {
+        guard let selectedPrinterProfileID else { return }
+        let profileIDs = Set(printerProfiles.map(\.id))
+        guard !profileIDs.contains(selectedPrinterProfileID) else { return }
+        self.selectedPrinterProfileID = nil
     }
 
     private func clearLoadedColors() {
