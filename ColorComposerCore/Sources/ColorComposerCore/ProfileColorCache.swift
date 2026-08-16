@@ -193,7 +193,7 @@ public struct ProfileColorCache: Sendable {
         if path == "/" {
             components.percentEncodedPath = ""
         } else if !path.isEmpty {
-            let trimmedPath = String(path.dropLast(while: { $0 == "/" }))
+            let trimmedPath = Self.trimmingTrailingSlashes(from: path)
             components.percentEncodedPath = trimmedPath.allSatisfy({ $0 == "/" }) ? "" : trimmedPath
         }
 
@@ -206,6 +206,14 @@ public struct ProfileColorCache: Sendable {
         case "https": return port == 443
         default: return false
         }
+    }
+
+    private static func trimmingTrailingSlashes(from path: String) -> String {
+        var trimmedPath = path
+        while trimmedPath.last == "/" {
+            trimmedPath.removeLast()
+        }
+        return trimmedPath
     }
 
     private func normalized(_ entry: CachedProfileColors) -> CachedProfileColors {
