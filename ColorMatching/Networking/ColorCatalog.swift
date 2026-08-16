@@ -536,13 +536,15 @@ final class ColorCatalog {
     }
 
     /// A failed refresh must not replace fresher live colors already on screen
-    /// with an older disk snapshot for the same profile and server.
+    /// with an older disk snapshot for the same profile and server. That
+    /// includes a successful live fetch that returned zero colors: the empty
+    /// result is still the freshest known server state for that profile.
     private func keepsLiveColors(_ profileID: Int) -> Bool {
         !colorsLoadedFromProject
             && !isServingFromCache
             && loadedColorsProfileID == profileID
             && loadedColorsServer == cacheServer
-            && !colors.isEmpty
+            && hasLoadedColorState
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
@@ -559,12 +561,14 @@ final class ColorCatalog {
     }
 
     /// Keeps colors already on screen only when they belong to the selected
-    /// profile, come from the current server (or from a loaded project), and
-    /// there are colors to keep; another profile's leftovers, another
-    /// server's live fetch, or an empty palette are cleared. The cache badge
-    /// is left untouched — kept colors keep their true provenance.
+    /// profile and still describe current state. A live fetch from the current
+    /// server stays authoritative even when it returned zero colors; project
+    /// snapshots and cached colors only stay when they still contain colors to
+    /// show. Another profile's leftovers or another server's live fetch are
+    /// cleared. The cache badge is left untouched — kept colors keep their
+    /// true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        guard loadedColorsProfileID == profileID, loadedColorsBelongToCurrentServer, !colors.isEmpty else {
+        guard shouldKeepLoadedColors(profileID: profileID) else {
             clearLoadedColors()
             clearSelectedProfileIfUnavailable()
             connectionMessage = "\(reason)."
@@ -579,6 +583,14 @@ final class ColorCatalog {
             kept = "loaded colors"
         }
         connectionMessage = "\(reason) — keeping \(kept)."
+    }
+
+    private func shouldKeepLoadedColors(profileID: Int) -> Bool {
+        guard loadedColorsProfileID == profileID, loadedColorsBelongToCurrentServer else { return false }
+        if colorsLoadedFromProject || isServingFromCache {
+            return !colors.isEmpty
+        }
+        return hasLoadedColorState
     }
 
     /// Offline cold start: offer cached profiles in the picker so a profile
