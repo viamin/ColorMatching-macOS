@@ -169,7 +169,7 @@ final class AppModel {
     private(set) var errorStatistics: ErrorStatistics?
     private(set) var isSolving = false
     private(set) var lastError: String?
-    private(set) var previewStateID = UUID()
+    private(set) var documentStateID = UUID()
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
@@ -195,7 +195,6 @@ final class AppModel {
         clearGeneratedOutput()
         solveQueued = false
         solveGeneration += 1
-        previewStateID = UUID()
     }
 
     /// Handles edits to any solver input. Existing output is invalidated
@@ -623,7 +622,7 @@ final class AppModel {
         pendingAutoRegenerate = false
         solveQueued = false
         solveGeneration += 1
-        previewStateID = UUID()
+        documentStateID = UUID()
     }
 
     private func clearGeneratedOutput() {

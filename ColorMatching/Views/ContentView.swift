@@ -17,7 +17,9 @@ struct ContentView: View {
         // Keep preview shortcuts active for the whole frontmost document
         // window, even while focus is in the sidebar or toolbar.
         .focusedSceneValue(\.previewModeBinding, $previewMode)
-        .onChange(of: model.previewStateID) {
+        // Reset the selected preview only when this window loads a different
+        // document. Normal input edits should preserve the chosen tab.
+        .onChange(of: model.documentStateID) {
             previewMode = .composite
         }
         .toolbar {
