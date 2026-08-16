@@ -166,7 +166,10 @@ private struct DocumentCommands: Commands {
             Button("Open Project…") { openProject() }
                 .keyboardShortcut("o")
         }
-        CommandGroup(replacing: .saveItem) {
+        // Keep the system File-menu items anchored around `.saveItem`; this PR
+        // only needs to add project/export shortcuts, not replace future
+        // standard commands the app may gain.
+        CommandGroup(after: .saveItem) {
             Button("Save Project") { context?.saveProject() }
                 .keyboardShortcut("s")
                 .disabled(context == nil)
