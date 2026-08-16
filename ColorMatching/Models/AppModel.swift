@@ -113,6 +113,7 @@ final class AppModel {
 
     private var solveTask: Task<Void, Never>?
     private var debounceTask: Task<Void, Never>?
+    private var pendingAutoRegenerate = false
 
     /// Schedules a debounced background solve. Safe to call on every settings
     /// change — earlier pending solves are canceled, so only the latest input
@@ -131,6 +132,7 @@ final class AppModel {
         debounceTask?.cancel()
         debounceTask = nil
         solveTask?.cancel()
+        pendingAutoRegenerate = false
         let task = Task { [weak self] in
             guard let self else { return }
             await self.generate()
@@ -147,6 +149,7 @@ final class AppModel {
         solveTask?.cancel()
         solveTask = nil
         isSolving = false
+        pendingAutoRegenerate = false
     }
 
     // MARK: - Result
@@ -182,13 +185,19 @@ final class AppModel {
     /// Handles edits to any solver input. Existing output is invalidated
     /// immediately; when auto-regenerate is enabled, a fresh solve is queued.
     /// Keep the pipeline alive across repeated edits while a debounced or
-    /// in-flight solve is already pending, otherwise a later edit could cancel
-    /// that work and leave the document with no replacement result.
+    /// in-flight solve is already pending, or while an async palette refresh is
+    /// still in flight, otherwise a later edit could cancel that work and leave
+    /// the document with no replacement result.
     func handleUpstreamChange() {
         let shouldAutoRegenerate = autoRegenerate &&
-            (hasResult || isSolving || debounceTask != nil || solveTask != nil)
+            (hasResult || isSolving || debounceTask != nil || solveTask != nil || pendingAutoRegenerate)
         invalidateGeneratedOutput()
-        guard shouldAutoRegenerate, canGenerate else { return }
+        guard shouldAutoRegenerate else { return }
+        guard canGenerate else {
+            pendingAutoRegenerate = true
+            return
+        }
+        pendingAutoRegenerate = false
         scheduleDebouncedSolve()
     }
 
@@ -573,6 +582,7 @@ final class AppModel {
         isSolving = false
         lastError = nil
         solvedGamut = nil
+        pendingAutoRegenerate = false
         previewStateID = UUID()
     }
 
