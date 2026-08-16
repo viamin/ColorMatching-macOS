@@ -237,6 +237,7 @@ struct CompositionSettingsSection: View {
         .onChange(of: model.weights) { model.handleUpstreamChange() }
         .onChange(of: model.logicalWidth) { model.handleUpstreamChange() }
         .onChange(of: model.logicalHeight) { model.handleUpstreamChange() }
+        .onChange(of: model.pixelsPerCell) { model.handleUpstreamChange() }
         .onChange(of: model.scorerKind) { model.handleUpstreamChange() }
     }
 
