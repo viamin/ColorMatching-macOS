@@ -52,7 +52,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 
 | Shortcut | Action |
 | --- | --- |
-| ⌘1 – ⌘8 | Switch preview tab, numbered in on-screen order (Composite, Error Map, Gamut, White, Red, Green, Blue, LPS) |
+| ⌘1 – ⌘8 | Switch the preview tab in the frontmost window, numbered in on-screen order (Composite, Error Map, Gamut, White, Red, Green, Blue, LPS) |
 | ⌘↩ | Generate (requires colors loaded from the server) |
 | ⌘O / ⌘⌥O | Open Project… / Add Images… |
 | ⌘S / ⌘⌥S | Save Project / Save Project As… |
