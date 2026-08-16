@@ -159,7 +159,10 @@ final class ColorCatalog {
         if shouldClearStaleColors {
             colors = []
         }
-        defer { isWorking = false }
+        defer {
+            guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
+            isWorking = false
+        }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
