@@ -11,15 +11,15 @@ private enum SceneIDs {
 private final class PendingProjectOpen {
     static let shared = PendingProjectOpen()
 
-    private var pendingURL: URL?
+    private var pendingURLs: [URL] = []
 
     func stage(_ url: URL) {
-        pendingURL = url
+        pendingURLs.append(url)
     }
 
     func consume() -> URL? {
-        defer { pendingURL = nil }
-        return pendingURL
+        guard !pendingURLs.isEmpty else { return nil }
+        return pendingURLs.removeFirst()
     }
 }
 
