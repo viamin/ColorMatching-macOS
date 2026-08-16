@@ -238,7 +238,10 @@ final class ColorCatalog {
         loadedColorsProfileID = profileID
         loadedColorsServer = nil
         colorsLoadedFromProject = true
-        lastRefresh = Date()
+        // A document snapshot is neither a live refresh nor a cached fetch, so
+        // leave the timestamp empty rather than mislabeling "right now" as the
+        // age of server-derived data.
+        lastRefresh = nil
         isServingFromCache = false
         clearCacheBackedServerIfUnused()
         connectionMessage = "Loaded \(projectColors.count) color(s) from project."

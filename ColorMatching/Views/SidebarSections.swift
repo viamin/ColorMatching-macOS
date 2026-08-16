@@ -55,6 +55,11 @@ struct ProfileSection: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .help("The last fetch failed, so these colors were loaded from the local cache and may be stale.")
+            } else if catalog.colorsLoadedFromProject {
+                Label("Loaded from project snapshot", systemImage: "doc.badge.clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("These colors came from the opened project file rather than a live server fetch.")
             }
             if let refreshed = catalog.lastRefresh {
                 LabeledContent(
