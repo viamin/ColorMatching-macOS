@@ -188,24 +188,11 @@ private struct PreviewCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Preview") {
-            // Keep numbering explicit in the menu so the visible order always
-            // matches the documented shortcuts and the LightingCondition test.
-            Button(PreviewMode.composite.menuTitle) { setPreview(.composite) }.keyboardShortcut("1")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.errorMap.menuTitle) { setPreview(.errorMap) }.keyboardShortcut("2")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.gamut.menuTitle) { setPreview(.gamut) }.keyboardShortcut("3")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.lighting(.white).menuTitle) { setPreview(.lighting(.white)) }.keyboardShortcut("4")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.lighting(.red).menuTitle) { setPreview(.lighting(.red)) }.keyboardShortcut("5")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.lighting(.green).menuTitle) { setPreview(.lighting(.green)) }.keyboardShortcut("6")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.lighting(.blue).menuTitle) { setPreview(.lighting(.blue)) }.keyboardShortcut("7")
-                .disabled(!hasFocusedPreview)
-            Button(PreviewMode.lighting(.lps).menuTitle) { setPreview(.lighting(.lps)) }.keyboardShortcut("8")
-                .disabled(!hasFocusedPreview)
+            ForEach(PreviewMode.orderedModes) { mode in
+                Button(mode.menuTitle) { setPreview(mode) }
+                    .keyboardShortcut(mode.shortcutKey)
+                    .disabled(!hasFocusedPreview)
+            }
         }
     }
 

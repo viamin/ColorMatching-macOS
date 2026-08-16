@@ -29,9 +29,13 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
         }
     }
 
-    static var allCases: [PreviewMode] {
+    /// Explicit preview order shared by the segmented control and the Preview
+    /// menu shortcuts, so those two entry points cannot drift apart.
+    static var orderedModes: [PreviewMode] {
         [.composite, .errorMap, .gamut] + LightingCondition.all.map { .lighting($0) }
     }
+
+    static var allCases: [PreviewMode] { orderedModes }
 
     /// Title in the Preview menu. Numbered menu items mirror `allCases` so
     /// ⌘1–⌘8 always select the Nth visible tab; `label`'s "Preview ·" prefix
@@ -40,6 +44,19 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
         switch self {
         case .composite, .errorMap, .gamut: return label
         case .lighting(let condition): return condition.displayName
+        }
+    }
+
+    var shortcutKey: KeyEquivalent {
+        switch self {
+        case .composite: return "1"
+        case .errorMap: return "2"
+        case .gamut: return "3"
+        case .lighting(.white): return "4"
+        case .lighting(.red): return "5"
+        case .lighting(.green): return "6"
+        case .lighting(.blue): return "7"
+        case .lighting(.lps): return "8"
         }
     }
 }
