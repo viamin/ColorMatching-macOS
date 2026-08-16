@@ -209,14 +209,14 @@ final class ColorCatalog {
         }
     }
 
-    /// Drops every cached color fetch. Cache-backed state on screen — colors
-    /// served from the cache, profiles offered from it — is cleared too;
-    /// live-fetched and project-loaded colors are unaffected.
+    /// Drops every cached profile list and color fetch. Cache-backed state on
+    /// screen — colors served from the cache, profiles offered from it — is
+    /// cleared too; live-fetched and project-loaded colors are unaffected.
     func clearCache() {
         do {
             try cache.removeAll()
             dropCacheBackedState()
-            connectionMessage = "Cleared cached colors."
+            connectionMessage = "Cleared cached profiles and colors."
         } catch {
             connectionMessage = "Could not clear the color cache."
         }
