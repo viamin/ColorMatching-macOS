@@ -166,7 +166,7 @@ final class AppModel {
     var hasResult: Bool { result != nil }
     var canGenerate: Bool {
         let active = weights.activeConditions
-        return !catalog.colors.isEmpty &&
+        return catalog.hasLoadedColorsForSelection &&
             !active.isEmpty &&
             active.allSatisfy(hasAssignedSource)
     }

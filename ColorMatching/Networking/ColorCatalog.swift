@@ -15,10 +15,13 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
+    private(set) var loadedPrinterProfileID: Int?
 
     var selectedPrinterProfileID: Int? {
         didSet {
             guard fetchesColorsOnProfileSelection else { return }
+            loadedPrinterProfileID = nil
+            colorsForProfile = nil
             Task { await fetchColorsIfPossible() }
         }
     }
@@ -39,6 +42,9 @@ final class ColorCatalog {
     }
 
     var isConfigured: Bool { client != nil }
+    var hasLoadedColorsForSelection: Bool {
+        !colors.isEmpty && loadedPrinterProfileID == selectedPrinterProfileID
+    }
 
     // MARK: - Actions
 
@@ -86,6 +92,7 @@ final class ColorCatalog {
     func restoreProjectPalette(printerProfileID: Int?, colors: [PaletteColor]) {
         setSelectedPrinterProfileID(printerProfileID, fetchColors: false)
         self.colors = colors
+        loadedPrinterProfileID = printerProfileID
         colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
         lastRefresh = Date()
         connectionMessage = "Loaded \(colors.count) color(s) from project."
@@ -106,10 +113,13 @@ final class ColorCatalog {
     private func fetchColorsIfPossible() async {
         guard let client, let profileID = selectedPrinterProfileID else { return }
         isWorking = true
+        loadedPrinterProfileID = nil
+        colorsForProfile = nil
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             colors = dtos.compactMap { $0.toDomain() }
+            loadedPrinterProfileID = profileID
             colorsForProfile = profile
             lastRefresh = Date()
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
