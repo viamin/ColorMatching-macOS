@@ -251,6 +251,10 @@ final class ColorCatalog {
             // A failure of an abandoned request says nothing about the
             // newly configured server — only a fresh request may report.
             guard cacheServer == requestedServer else { return }
+            // When the user has switched servers, an offline refresh must not
+            // leave the previous server's live colors on screen under the new
+            // server's profile list or "no profiles" state.
+            clearLoadedColorsIfServerChanged()
             serveCachedProfilesIfUnavailable()
             handleFetchFailure(error, fallbackMessage: "Could not reach the server.")
         }
