@@ -160,6 +160,7 @@ final class AppModel {
     private(set) var errorStatistics: ErrorStatistics?
     private(set) var isSolving = false
     private(set) var lastError: String?
+    private(set) var previewStateID = UUID()
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
@@ -533,7 +534,9 @@ final class AppModel {
     private func clearDerivedState() {
         result = nil
         errorStatistics = nil
+        isSolving = false
         lastError = nil
         solvedGamut = nil
+        previewStateID = UUID()
     }
 }

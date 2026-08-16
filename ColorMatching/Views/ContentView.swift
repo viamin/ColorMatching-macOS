@@ -5,17 +5,16 @@ struct ContentView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let modelIdentity = ObjectIdentifier(model)
         @Bindable var model = model
         NavigationSplitView {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340)
         } detail: {
             PreviewPaneView()
-                // A brand-new project swaps in a new AppModel; rebuilding the
-                // preview pane resets its per-window tab/compare state to the
-                // default Composite / Predicted selection for that project.
-                .id(modelIdentity)
+                // Rebuild the preview pane whenever the current document is
+                // replaced, so preview-tab and compare selections reset to the
+                // default Composite / Predicted state for that project.
+                .id(model.previewStateID)
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
