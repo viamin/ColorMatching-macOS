@@ -13,6 +13,8 @@ private final class PendingProjectOpen {
 
     private var pendingURLs: [URL] = []
 
+    private init() {}
+
     func stage(_ url: URL) {
         pendingURLs.append(url)
     }

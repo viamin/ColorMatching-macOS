@@ -69,19 +69,14 @@ struct ProfileSection: View {
 // MARK: - Source images
 
 struct SourceImagesSection: View {
-    @Environment(AppModel.self) private var model
+    let addImages: () -> Void
 
     var body: some View {
-        @Bindable var model = model
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Source images").font(.headline)
                 Spacer()
-                Button {
-                    FilePanels.openImages { urls in
-                        model.appendImages(from: urls)
-                    }
-                } label: {
+                Button(action: addImages) {
                     Label("Add", systemImage: "plus")
                 }
                 .buttonStyle(.borderless)

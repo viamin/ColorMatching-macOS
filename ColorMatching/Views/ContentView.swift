@@ -9,7 +9,7 @@ struct ContentView: View {
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
-            SidebarView()
+            SidebarView(addImages: addImages)
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340)
         } detail: {
             PreviewPaneView(previewMode: $previewMode)
@@ -77,6 +77,7 @@ struct ContentView: View {
 
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
+    let addImages: () -> Void
 
     var body: some View {
         @Bindable var model = model
@@ -84,7 +85,7 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 16) {
                 ServerConfigurationSection()
                 ProfileSection()
-                SourceImagesSection()
+                SourceImagesSection(addImages: addImages)
                 CompositionSettingsSection()
                 TilingSettingsSection()
             }
