@@ -460,19 +460,10 @@ final class AppModel {
     private func applySnapshot(_ s: ProjectDocument) {
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        catalog.colors = s.colorSnapshot.map { $0.toColor() }
-        // The snapshot carries no profile metadata, so the on-screen colors
-        // describe no fetched profile; a later live fetch fills it back in.
-        catalog.colorsForProfile = nil
-        catalog.loadedColorsProfileID = s.printerProfileID
-        catalog.loadedColorsServer = nil
-        catalog.colorsLoadedFromProject = true
-        catalog.lastRefresh = Date()
-        catalog.isServingFromCache = false
-        catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
-        // Selection goes last: its didSet launches a color fetch whose
-        // failure path must already see the project-palette state above.
-        catalog.selectedPrinterProfileID = s.printerProfileID
+        catalog.loadProjectColors(
+            s.colorSnapshot.map { $0.toColor() },
+            profileID: s.printerProfileID
+        )
 
         weights = s.weights
         scorerKind = s.scorerKind

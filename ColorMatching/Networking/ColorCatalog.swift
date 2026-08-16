@@ -203,6 +203,31 @@ final class ColorCatalog {
         }
     }
 
+    /// Applies a project's embedded palette snapshot. If the currently shown
+    /// profile list belongs to another server, drop it so the picker does not
+    /// keep offering stale profiles that no longer match the configured server.
+    func loadProjectColors(_ projectColors: [PaletteColor], profileID: Int?) {
+        if loadedPrinterProfilesServer != cacheServer {
+            printerProfiles = []
+            printerProfilesAreCached = false
+            loadedPrinterProfilesServer = nil
+        }
+        colors = projectColors
+        // The snapshot carries no profile metadata, so the on-screen colors
+        // describe no fetched profile; a later live fetch fills it back in.
+        colorsForProfile = nil
+        loadedColorsProfileID = profileID
+        loadedColorsServer = nil
+        colorsLoadedFromProject = true
+        lastRefresh = Date()
+        isServingFromCache = false
+        clearCacheBackedServerIfUnused()
+        connectionMessage = "Loaded \(projectColors.count) color(s) from project."
+        // Selection goes last: its didSet launches a color fetch whose
+        // failure path must already see the project-palette state above.
+        selectedPrinterProfileID = profileID
+    }
+
     // MARK: - Color loading
 
     private func fetchColorsIfPossible() async {
