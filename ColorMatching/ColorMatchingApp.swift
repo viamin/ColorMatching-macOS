@@ -117,6 +117,7 @@ private struct PreviewCommands: Commands {
 private struct PreviewTabShortcut: ViewModifier {
     let digit: Int
 
+    @ViewBuilder
     func body(content: Content) -> some View {
         if (1...9).contains(digit) {
             content.keyboardShortcut(KeyEquivalent(Character("\(digit)")))
