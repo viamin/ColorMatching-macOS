@@ -16,6 +16,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
             catalog.configure(baseURL: URL(string: newValue), token: serverToken)
+            invalidateGeneratedOutput()
         }
     }
 
@@ -24,6 +25,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
+            invalidateGeneratedOutput()
         }
     }
 
