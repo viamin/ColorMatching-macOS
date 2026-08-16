@@ -159,12 +159,7 @@ final class ColorCatalog {
         isWorking = inFlightRequests > 0
     }
 
-    private func setSelectedPrinterProfileID(_ profileID: Int?, fetchColors: Bool) {
-        guard !fetchColors else {
-            selectedPrinterProfileID = profileID
-            return
-        }
-
+    private func restoreSelectedPrinterProfileID(_ profileID: Int?) {
         suppressesSelectionFetch = true
         defer { suppressesSelectionFetch = false }
         selectedPrinterProfileID = profileID
@@ -265,7 +260,7 @@ final class ColorCatalog {
         connectionMessage = "Loaded \(projectColors.count) color(s) from project."
         // Opening a project restores its embedded snapshot exactly; a manual
         // refresh can replace it with live server data later.
-        setSelectedPrinterProfileID(profileID, fetchColors: false)
+        restoreSelectedPrinterProfileID(profileID)
     }
 
     // MARK: - Color loading
@@ -492,6 +487,7 @@ final class ColorCatalog {
         loadedColorsServer = nil
         colorsLoadedFromProject = false
         isServingFromCache = false
+        clearCacheBackedServerIfUnused()
     }
 
     /// Colors eligible for the solver given the currently active channels.
