@@ -131,10 +131,10 @@ private struct PreviewCommands: Commands {
     /// Keeps the command menu explicit and avoids trapping if the preview list
     /// ever grows beyond single-digit shortcuts.
     private func previewShortcut(for digit: Int) -> KeyEquivalent? {
-        guard let scalar = UnicodeScalar(48 + digit), (1...9).contains(digit) else {
+        guard (1...9).contains(digit), let character = String(digit).first else {
             return nil
         }
-        return KeyEquivalent(Character(scalar))
+        return KeyEquivalent(character)
     }
 }
 
