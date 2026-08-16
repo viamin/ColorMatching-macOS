@@ -11,12 +11,10 @@ private enum SceneIDs {
 private final class PendingProjectOpen {
     static let shared = PendingProjectOpen()
 
-    private(set) var requestID = UUID()
     private var pendingURL: URL?
 
     func stage(_ url: URL) {
         pendingURL = url
-        requestID = UUID()
     }
 
     func consume() -> URL? {
@@ -41,7 +39,6 @@ struct ColorMatchingApp: App {
 
 private struct DocumentSceneView: View {
     @State private var model = AppModel()
-    @State private var pendingProjectOpen = PendingProjectOpen.shared
 
     var body: some View {
         ContentView(addImages: addImages)
@@ -51,9 +48,6 @@ private struct DocumentSceneView: View {
             // state instead of a process-wide model shared by every scene.
             .focusedSceneValue(\.documentCommandContext, commandContext)
             .task {
-                consumePendingProjectIfNeeded()
-            }
-            .onChange(of: pendingProjectOpen.requestID) { _, _ in
                 consumePendingProjectIfNeeded()
             }
     }
@@ -107,7 +101,10 @@ private struct DocumentSceneView: View {
     }
 
     private func consumePendingProjectIfNeeded() {
-        guard let url = pendingProjectOpen.consume() else { return }
+        // Only a newly created scene should consume a staged open request.
+        // Existing windows observing a shared "pending open" signal can race the
+        // new window and load the project into the wrong document.
+        guard let url = PendingProjectOpen.shared.consume() else { return }
         do { try model.loadProject(from: url) }
         catch { NSApp.presentError(error) }
     }
