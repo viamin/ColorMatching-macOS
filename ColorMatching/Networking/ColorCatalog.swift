@@ -478,11 +478,13 @@ final class ColorCatalog {
 
     /// When the active selection changes to another concrete profile, any
     /// colors left from the previous profile become stale immediately and
-    /// should drop before the replacement fetch completes.
+    /// should drop before the replacement fetch completes. That includes a
+    /// loaded project snapshot with no associated profile id: once the user
+    /// picks a concrete profile, those colors no longer describe the
+    /// selection shown in the picker.
     private func clearLoadedColorsIfSelectionChanged() {
-        guard let selectedPrinterProfileID,
-              loadedColorsProfileID != nil,
-              loadedColorsProfileID != selectedPrinterProfileID else { return }
+        guard let selectedPrinterProfileID, !colors.isEmpty else { return }
+        guard loadedColorsProfileID != selectedPrinterProfileID else { return }
         clearLoadedColors()
     }
 
