@@ -50,13 +50,9 @@ final class AppModel {
     func loadLayer(_ index: Int, from url: URL) -> Bool {
         guard index >= 0 && index < layers.count else { return false }
         do {
-            // Assign the default channel before the layer becomes "loaded" so
-            // the row's UI observers do not fire a second invalidation for the
-            // same image import.
-            if layers[index].assignedCondition == nil {
-                layers[index].assignedCondition = nextUnassignedCondition()
-            }
+            let defaultCondition = layers[index].assignedCondition ?? nextUnassignedCondition()
             let (data, filename, _) = try ImageUtilities.load(from: url)
+            layers[index].assignedCondition = defaultCondition
             layers[index].imageData = data
             layers[index].filename = filename
             lastError = nil
