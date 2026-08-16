@@ -285,6 +285,7 @@ final class ColorCatalog {
             return
         }
         retireStaleCacheBackedState()
+        retireStaleProfileListForServerAction()
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         beginRequest()
         defer { endRequest() }
