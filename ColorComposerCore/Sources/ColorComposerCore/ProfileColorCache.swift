@@ -40,14 +40,14 @@ public extension CachedProfileColors {
     /// rgb, unparseable hex) — yields none, and so is nothing to serve
     /// offline: callers report the failure plainly instead of claiming to
     /// show cached colors over an empty palette.
-    var domainColors: [PaletteColor] {
+    public var domainColors: [PaletteColor] {
         colors.compactMap { $0.toDomain() }
     }
 
     /// `true` when the cached fetch still contains at least one usable color
     /// to serve offline. Cached profiles without any convertible colors are
     /// not useful fallbacks and should stay out of the offline picker too.
-    var hasServableColors: Bool {
+    public var hasServableColors: Bool {
         colors.contains { $0.toDomain() != nil }
     }
 }
