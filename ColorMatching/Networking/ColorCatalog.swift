@@ -428,7 +428,7 @@ final class ColorCatalog {
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
             if !keepsActiveSelectionWithoutCachedProfiles {
-                selectedPrinterProfileID = nil
+                restoreSelectedPrinterProfileID(nil)
             }
             clearCacheBackedServerIfUnused()
             return
@@ -503,7 +503,7 @@ final class ColorCatalog {
         guard let selectedPrinterProfileID else { return }
         let profileIDs = Set(printerProfiles.map(\.id))
         guard !profileIDs.contains(selectedPrinterProfileID) else { return }
-        self.selectedPrinterProfileID = nil
+        restoreSelectedPrinterProfileID(nil)
     }
 
     private func clearLoadedColors() {
