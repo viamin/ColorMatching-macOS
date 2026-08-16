@@ -130,7 +130,7 @@ final class ColorCatalog {
         // Decide after cached colors are gone: otherwise a cached palette
         // being cleared could incorrectly keep its now-invisible profile
         // selected even though no live or project colors remain.
-        if keepsActiveSelectionWithoutCachedProfiles {
+        if keepsActiveSelectionVisible {
             ensureVisiblePrinterProfile(selectedPrinterProfileID)
         } else {
             clearSelectedProfileIfUnavailable()
@@ -478,6 +478,9 @@ final class ColorCatalog {
         printerProfilesAreCached = true
         loadedPrinterProfilesServer = server
         cacheBackedServer = server
+        if keepsActiveSelectionVisible {
+            ensureVisiblePrinterProfile(selectedPrinterProfileID)
+        }
         _ = reconcileSelectedProfile(with: cachedProfiles)
     }
 
@@ -509,7 +512,7 @@ final class ColorCatalog {
         colorsLoadedFromProject || loadedColorsServer == cacheServer
     }
 
-    private var keepsActiveSelectionWithoutCachedProfiles: Bool {
+    private var keepsActiveSelectionVisible: Bool {
         guard let selectedPrinterProfileID else { return false }
         return loadedColorsProfileID == selectedPrinterProfileID
             && loadedColorsBelongToCurrentServer
