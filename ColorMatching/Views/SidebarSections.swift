@@ -69,6 +69,7 @@ struct ProfileSection: View {
 // MARK: - Source images
 
 struct SourceImagesSection: View {
+    @Environment(AppModel.self) private var model
     let addImages: () -> Void
 
     var body: some View {
