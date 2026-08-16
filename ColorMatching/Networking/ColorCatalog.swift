@@ -26,7 +26,10 @@ final class ColorCatalog {
     var colorsForProfile: PrinterProfileDTO?
 
     var selectedPrinterProfileID: Int? {
-        didSet { Task { await fetchColorsIfPossible() } }
+        didSet {
+            guard !suppressesSelectionFetch else { return }
+            Task { await fetchColorsIfPossible() }
+        }
     }
 
     var lastRefresh: Date?
@@ -56,6 +59,12 @@ final class ColorCatalog {
     /// selection, whose `didSet` launches a color fetch). Track the count so a
     /// finishing request does not re-enable the UI while another is still live.
     private var inFlightRequests = 0
+    /// Internal state changes sometimes need to update the selection without
+    /// triggering an immediate fetch. Opening a saved project is the key case:
+    /// the document should restore its embedded palette snapshot exactly as
+    /// saved, not opportunistically replace it with whatever the server now
+    /// returns for the same profile.
+    private var suppressesSelectionFetch = false
     /// True when `printerProfiles` were offered from the offline cache because
     /// the server could not be reached at all.
     private var printerProfilesAreCached = false
@@ -150,6 +159,17 @@ final class ColorCatalog {
         isWorking = inFlightRequests > 0
     }
 
+    private func setSelectedPrinterProfileID(_ profileID: Int?, fetchColors: Bool) {
+        guard !fetchColors else {
+            selectedPrinterProfileID = profileID
+            return
+        }
+
+        suppressesSelectionFetch = true
+        defer { suppressesSelectionFetch = false }
+        selectedPrinterProfileID = profileID
+    }
+
     // MARK: - Actions
 
     func testConnection() async {
@@ -242,9 +262,9 @@ final class ColorCatalog {
         isServingFromCache = false
         clearCacheBackedServerIfUnused()
         connectionMessage = "Loaded \(projectColors.count) color(s) from project."
-        // Selection goes last: its didSet launches a color fetch whose
-        // failure path must already see the project-palette state above.
-        selectedPrinterProfileID = profileID
+        // Opening a project restores its embedded snapshot exactly; a manual
+        // refresh can replace it with live server data later.
+        setSelectedPrinterProfileID(profileID, fetchColors: false)
     }
 
     // MARK: - Color loading
