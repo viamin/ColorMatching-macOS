@@ -324,6 +324,18 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
     }
 
+    func testEntryThroughSymbolicLinkRootCountsAsMiss() throws {
+        let realRoot = directory.appendingPathComponent("real-cache-root", isDirectory: true)
+        let linkedRoot = directory.appendingPathComponent("cache-root-link", isDirectory: true)
+        let cache = ProfileColorCache(directory: linkedRoot)
+        try FileManager.default.createDirectory(at: realRoot, withIntermediateDirectories: true)
+        let realRootCache = ProfileColorCache(directory: realRoot)
+        try realRootCache.store(try makeEntry(profileID: 5))
+        try FileManager.default.createSymbolicLink(at: linkedRoot, withDestinationURL: realRoot)
+
+        XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
+    }
+
     func testEntryFromUnmarkedServerDirectoryCountsAsMiss() throws {
         let cache = ProfileColorCache(directory: directory)
         let serverDirectory = serverDirectory()
@@ -398,6 +410,18 @@ final class ProfileColorCacheTests: XCTestCase {
             to: foreignDirectory.appendingPathComponent("profile-5.json")
         )
         try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
+    func testAllEntriesThroughSymbolicLinkRootIsEmpty() throws {
+        let realRoot = directory.appendingPathComponent("real-cache-root", isDirectory: true)
+        let linkedRoot = directory.appendingPathComponent("cache-root-link", isDirectory: true)
+        let cache = ProfileColorCache(directory: linkedRoot)
+        try FileManager.default.createDirectory(at: realRoot, withIntermediateDirectories: true)
+        let realRootCache = ProfileColorCache(directory: realRoot)
+        try realRootCache.store(try makeEntry(profileID: 5))
+        try FileManager.default.createSymbolicLink(at: linkedRoot, withDestinationURL: realRoot)
 
         XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }

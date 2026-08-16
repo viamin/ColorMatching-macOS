@@ -104,7 +104,8 @@ public struct ProfileColorCache: Sendable {
     /// a miss).
     public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
-        guard isOwnedCacheDirectory(directory(for: normalizedServerBaseUrl)) else { return nil }
+        guard hasOwnedRootDirectory(),
+              isOwnedCacheDirectory(directory(for: normalizedServerBaseUrl)) else { return nil }
         guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: normalizedServerBaseUrl)),
               entry.profileId == profileID,
               Self.normalizedServerBaseUrl(entry.serverBaseUrl) == normalizedServerBaseUrl else { return nil }
@@ -118,7 +119,7 @@ public struct ProfileColorCache: Sendable {
     public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
         let serverDirectory = directory(for: normalizedServerBaseUrl)
-        guard isOwnedCacheDirectory(serverDirectory) else { return [] }
+        guard hasOwnedRootDirectory(), isOwnedCacheDirectory(serverDirectory) else { return [] }
         let files = (try? FileManager.default.contentsOfDirectory(
             at: serverDirectory,
             includingPropertiesForKeys: nil
@@ -302,6 +303,13 @@ public struct ProfileColorCache: Sendable {
 
     private func ensureOwnershipMarker(in directory: URL) throws {
         try Data().write(to: directory.appendingPathComponent(Self.markerFilename), options: .atomic)
+    }
+
+    private func hasOwnedRootDirectory() -> Bool {
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory) else { return true }
+        return isDirectory.boolValue && isOwnedDirectory(directory)
     }
 
     private func isOwnedDirectory(_ url: URL) -> Bool {
