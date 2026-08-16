@@ -45,8 +45,8 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
+        invalidateLoadedData()
         guard let baseURL else {
-            cancelPendingWork()
             client = nil
             return
         }
@@ -183,5 +183,16 @@ final class ColorCatalog {
     func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {
         let required = Set(activeConditions)
         return colors.filter { $0.hasMeasurements(for: required) }
+    }
+
+    private func invalidateLoadedData() {
+        cancelPendingWork()
+        printerProfiles = []
+        setSelectedPrinterProfileID(nil, fetchColors: false)
+        colors = []
+        colorsForProfile = nil
+        loadedPrinterProfileID = nil
+        lastRefresh = nil
+        connectionMessage = nil
     }
 }
