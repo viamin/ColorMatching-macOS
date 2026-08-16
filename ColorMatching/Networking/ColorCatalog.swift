@@ -613,7 +613,14 @@ final class ColorCatalog {
         printerProfilesAreCached = true
         loadedPrinterProfilesServer = server
         cacheBackedServer = server
-        _ = reconcileSelectedProfile(with: cachedProfiles)
+        let selectionChanged = reconcileSelectedProfile(with: cachedProfiles)
+        // Refreshing from the cache can silently move the picker to another
+        // profile; clear any now-mismatched colors here so this fallback path
+        // stays correct even if a caller later changes the surrounding order.
+        if selectionChanged {
+            clearLoadedColorsIfSelectionChanged()
+            clearLoadedColorsWithoutSelection()
+        }
     }
 
     private static func cacheTimestamp(_ date: Date) -> String {
