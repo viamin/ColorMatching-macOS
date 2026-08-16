@@ -147,7 +147,12 @@ final class AppModel {
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
-    var canGenerate: Bool { !catalog.colors.isEmpty }
+    var canGenerate: Bool {
+        let active = weights.activeConditions
+        return !catalog.colors.isEmpty &&
+            !active.isEmpty &&
+            active.allSatisfy(hasAssignedSource)
+    }
     var canExportComposite: Bool { hasResult }
     var canExportTiles: Bool { tilingEnabled && hasResult }
 
@@ -241,6 +246,10 @@ final class AppModel {
             grids[condition] = grid
         }
         return grids
+    }
+
+    private func hasAssignedSource(for condition: LightingCondition) -> Bool {
+        layers.contains { $0.hasImage && $0.assignedCondition == condition }
     }
 
     // MARK: - Derived images
