@@ -134,12 +134,7 @@ private struct PreviewCommands: Commands {
     }
 
     private var hasFocusedPreview: Bool {
-        switch previewModeBinding {
-        case .some:
-            return true
-        case .none:
-            return false
-        }
+        previewModeBinding != nil
     }
 
     /// Keeps the command menu explicit and avoids trapping if the preview list

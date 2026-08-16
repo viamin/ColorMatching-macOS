@@ -115,14 +115,6 @@ final class AppModel {
     private var debounceTask: Task<Void, Never>?
     private var pendingAutoRegenerate = false
 
-    /// Schedules a debounced background solve. Safe to call on every settings
-    /// change — earlier pending solves are canceled, so only the latest input
-    /// produces a result.
-    func scheduleAutoRegenerate() {
-        guard autoRegenerate, hasResult, canGenerate else { return }
-        scheduleDebouncedSolve()
-    }
-
     /// Cancels any in-flight solve and starts a new one. Both the manual
     /// Generate action and the debounced auto-regenerate pipeline go through
     /// here so the prior task is always canceled *before* the new task is
