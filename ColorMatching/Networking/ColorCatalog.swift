@@ -201,6 +201,13 @@ final class ColorCatalog {
         )
     }
 
+    private func visiblePrinterProfile(for profileID: Int) -> PrinterProfileDTO {
+        guard let colorsForProfile, colorsForProfile.id == profileID else {
+            return placeholderProfile(id: profileID)
+        }
+        return colorsForProfile
+    }
+
     /// The API response is an external boundary: if it carries profile
     /// metadata for another id, treat that metadata as absent rather than
     /// showing one profile's details for another profile's colors.
@@ -216,7 +223,7 @@ final class ColorCatalog {
     private func ensureVisiblePrinterProfile(_ profileID: Int?) {
         guard let profileID else { return }
         guard !includesProfile(profileID) else { return }
-        printerProfiles.append(placeholderProfile(id: profileID))
+        printerProfiles.append(visiblePrinterProfile(for: profileID))
         printerProfiles.sort { $0.id < $1.id }
     }
 
@@ -471,6 +478,7 @@ final class ColorCatalog {
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
+        refreshVisiblePrinterProfile(cached.profile)
         colors = cached.domainColors
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
