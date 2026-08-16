@@ -25,6 +25,7 @@ final class ColorCatalog {
             guard fetchesColorsOnProfileSelection else { return }
             cancelPendingWork()
             clearLoadedPalette()
+            connectionMessage = selectedPrinterProfileID == nil ? nil : "Loading colors..."
             let version = operationVersion
             colorFetchTask = Task { [weak self] in
                 await self?.fetchColorsIfPossible(version: version)
