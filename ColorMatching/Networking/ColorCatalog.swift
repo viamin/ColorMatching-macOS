@@ -174,6 +174,15 @@ final class ColorCatalog {
         printerProfiles.contains { $0.id == profileID }
     }
 
+    private func placeholderProfile(id: Int) -> PrinterProfileDTO {
+        PrinterProfileDTO(
+            id: id,
+            printerMakeModel: nil,
+            paperType: nil,
+            inkType: nil
+        )
+    }
+
     /// A saved project can refer to a profile id that the current on-screen
     /// list does not include yet (or no longer includes). Keep that selection
     /// representable in the picker until a later refresh replaces it with the
@@ -181,12 +190,7 @@ final class ColorCatalog {
     private func ensureVisiblePrinterProfile(_ profileID: Int?) {
         guard let profileID else { return }
         guard !includesProfile(profileID) else { return }
-        printerProfiles.append(PrinterProfileDTO(
-            id: profileID,
-            printerMakeModel: nil,
-            paperType: nil,
-            inkType: nil
-        ))
+        printerProfiles.append(placeholderProfile(id: profileID))
     }
 
     /// The picker changes selection synchronously, before any replacement fetch
@@ -441,7 +445,14 @@ final class ColorCatalog {
             connectionMessage = "\(reason)."
             return
         }
-        let kept = colorsLoadedFromProject ? "colors loaded from the project" : "loaded colors"
+        let kept: String
+        if colorsLoadedFromProject {
+            kept = "colors loaded from the project"
+        } else if isServingFromCache {
+            kept = "cached colors"
+        } else {
+            kept = "loaded colors"
+        }
         connectionMessage = "\(reason) — keeping \(kept)."
     }
 
@@ -455,12 +466,7 @@ final class ColorCatalog {
         var cachedProfiles = cache.allEntries(serverBaseUrl: server)
             .filter(\.hasServableColors)
             .map { entry in
-                entry.profile ?? PrinterProfileDTO(
-                    id: entry.profileId,
-                    printerMakeModel: nil,
-                    paperType: nil,
-                    inkType: nil
-                )
+                entry.profile ?? placeholderProfile(id: entry.profileId)
             }
         guard !cachedProfiles.isEmpty else {
             printerProfiles = []
@@ -475,12 +481,8 @@ final class ColorCatalog {
             return
         }
         if keepsActiveSelectionVisible, let selectedPrinterProfileID, !cachedProfiles.contains(where: { $0.id == selectedPrinterProfileID }) {
-            cachedProfiles.append(PrinterProfileDTO(
-                id: selectedPrinterProfileID,
-                printerMakeModel: nil,
-                paperType: nil,
-                inkType: nil
-            ))
+            cachedProfiles.append(placeholderProfile(id: selectedPrinterProfileID))
+            cachedProfiles.sort { $0.id < $1.id }
         }
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true
