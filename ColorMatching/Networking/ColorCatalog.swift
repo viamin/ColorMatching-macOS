@@ -106,11 +106,13 @@ final class ColorCatalog {
             printerProfiles = []
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
-            // Keep a selection the loaded project set: it is the document's
-            // own profile, not a pick from the cached list. Clearing it would
-            // make the fetch this drop preempts discard its result, and the
-            // project would re-save with no profile.
-            if !colorsLoadedFromProject { selectedPrinterProfileID = nil }
+            // Keep a selection while the on-screen colors still belong to it:
+            // project and live colors remain valid after cache eviction, so
+            // clearing the profile here would detach them from their profile
+            // and make the next save lose that association.
+            if !keepsActiveSelectionWithoutCachedProfiles {
+                selectedPrinterProfileID = nil
+            }
         }
         if isServingFromCache {
             clearLoadedColors()
@@ -366,6 +368,11 @@ final class ColorCatalog {
 
     private var keepsProfilesForCurrentServer: Bool {
         !printerProfiles.isEmpty && loadedPrinterProfilesServer == cacheServer
+    }
+
+    private var keepsActiveSelectionWithoutCachedProfiles: Bool {
+        guard let selectedPrinterProfileID else { return false }
+        return loadedColorsProfileID == selectedPrinterProfileID && !colors.isEmpty
     }
 
     private func clearLoadedColors() {
