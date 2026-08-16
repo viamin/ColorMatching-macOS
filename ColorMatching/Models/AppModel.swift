@@ -53,6 +53,7 @@ final class AppModel {
             let (data, filename, _) = try ImageUtilities.load(from: url)
             layers[index].imageData = data
             layers[index].filename = filename
+            lastError = nil
             // Auto-assign a condition if none yet, preferring unused ones.
             if layers[index].assignedCondition == nil {
                 layers[index].assignedCondition = nextUnassignedCondition()
