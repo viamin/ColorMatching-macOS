@@ -305,6 +305,16 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
     }
 
+    func testEntryFromUnmarkedServerDirectoryCountsAsMiss() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try encode(try makeEntry(profileID: 5))
+            .write(to: serverDirectory.appendingPathComponent("profile-5.json"))
+
+        XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
+    }
+
     func testAllEntriesSkipsCorruptFilesAndSortsByProfile() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
@@ -369,6 +379,16 @@ final class ProfileColorCacheTests: XCTestCase {
             to: foreignDirectory.appendingPathComponent("profile-5.json")
         )
         try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
+    func testAllEntriesSkipsUnmarkedServerDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try encode(try makeEntry(profileID: 5))
+            .write(to: serverDirectory.appendingPathComponent("profile-5.json"))
 
         XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }
@@ -526,6 +546,38 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertFalse(
             FileManager.default.fileExists(
                 atPath: foreignDirectory.appendingPathComponent("profile-5.json").path
+            )
+        )
+    }
+
+    func testStoreRejectsANonEmptyUnmarkedServerDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try Data("foreign".utf8).write(to: serverDirectory.appendingPathComponent("notes.txt"))
+
+        XCTAssertThrowsError(try cache.store(try makeEntry(profileID: 5))) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .serverDirectoryIsNotOwned)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: serverDirectory.appendingPathComponent("notes.txt").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: serverDirectory.appendingPathComponent(".profile-color-cache").path
+            )
+        )
+    }
+
+    func testStoreClaimsAnEmptyPreexistingServerDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+
+        try cache.store(try makeEntry(profileID: 5))
+
+        XCTAssertEqual(cache.entry(for: 5, serverBaseUrl: defaultServer)?.profileId, 5)
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: serverDirectory.appendingPathComponent(".profile-color-cache").path
             )
         )
     }

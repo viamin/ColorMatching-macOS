@@ -71,6 +71,7 @@ public struct ProfileColorCache: Sendable {
     public enum CacheError: Error, Equatable {
         case rootIsNotDirectory
         case serverDirectoryIsNotDirectory
+        case serverDirectoryIsNotOwned
     }
 
     private static let directoryPrefix = "server-"
@@ -103,7 +104,7 @@ public struct ProfileColorCache: Sendable {
     /// a miss).
     public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
-        guard isOwnedDirectory(directory(for: normalizedServerBaseUrl)) else { return nil }
+        guard isOwnedCacheDirectory(directory(for: normalizedServerBaseUrl)) else { return nil }
         guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: normalizedServerBaseUrl)),
               entry.profileId == profileID,
               Self.normalizedServerBaseUrl(entry.serverBaseUrl) == normalizedServerBaseUrl else { return nil }
@@ -117,7 +118,7 @@ public struct ProfileColorCache: Sendable {
     public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
         let serverDirectory = directory(for: normalizedServerBaseUrl)
-        guard isOwnedDirectory(serverDirectory) else { return [] }
+        guard isOwnedCacheDirectory(serverDirectory) else { return [] }
         let files = (try? FileManager.default.contentsOfDirectory(
             at: serverDirectory,
             includingPropertiesForKeys: nil
@@ -199,10 +200,7 @@ public struct ProfileColorCache: Sendable {
     }
 
     private func isCacheDirectory(_ url: URL) -> Bool {
-        guard url.lastPathComponent.hasPrefix(Self.directoryPrefix),
-              isOwnedDirectory(url),
-              isMarkerFile(url.appendingPathComponent(Self.markerFilename)) else { return false }
-        return true
+        url.lastPathComponent.hasPrefix(Self.directoryPrefix) && isOwnedCacheDirectory(url)
     }
 
     /// Cache keys should ignore harmless URL spelling differences like a
@@ -273,6 +271,9 @@ public struct ProfileColorCache: Sendable {
         guard isDirectory.boolValue, isOwnedDirectory(url) else {
             throw CacheError.serverDirectoryIsNotDirectory
         }
+        guard isOwnedCacheDirectory(url) || isEmptyDirectory(url) else {
+            throw CacheError.serverDirectoryIsNotOwned
+        }
     }
 
     private func ensureOwnershipMarker(in directory: URL) throws {
@@ -283,6 +284,14 @@ public struct ProfileColorCache: Sendable {
         guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
               values.isSymbolicLink != true else { return false }
         return values.isDirectory == true
+    }
+
+    private func isOwnedCacheDirectory(_ url: URL) -> Bool {
+        isOwnedDirectory(url) && isMarkerFile(url.appendingPathComponent(Self.markerFilename))
+    }
+
+    private func isEmptyDirectory(_ url: URL) -> Bool {
+        ((try? FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)) ?? []).isEmpty
     }
 
     private func isMarkerFile(_ url: URL) -> Bool {
