@@ -25,20 +25,20 @@ struct ColorMatchingApp: App {
                 // would shadow the system-wide "Use Selection for Find".
                 Button("Export Composite…") { exportComposite() }
                     .keyboardShortcut("e", modifiers: [.command, .shift])
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canExportComposite)
                 if model.tilingEnabled {
                     Divider()
                     Button("Export Tiles…") { exportTiles() }
-                        .disabled(!model.hasResult)
+                        .disabled(!model.canExportTiles)
                     Button("Print Tiles") { model.printTiles() }
-                        .disabled(!model.hasResult)
+                        .disabled(!model.canExportTiles)
                 }
             }
             // Replaces the default ⌘P print item so the File menu carries only
             // one Print… command, bound to the generated composition.
             CommandGroup(replacing: .printItem) {
                 Button("Print…") { model.printComposite() }.keyboardShortcut("p")
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canExportComposite)
             }
             PreviewCommands()
             WorkflowCommands(model: model, addImages: addImages)
@@ -104,7 +104,7 @@ private struct WorkflowCommands: Commands {
 
             Button("Generate") { model.runSolve() }
                 .keyboardShortcut(.return, modifiers: [.command])
-                .disabled(model.catalog.colors.isEmpty)
+                .disabled(!model.canGenerate)
         }
     }
 }

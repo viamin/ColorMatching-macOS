@@ -27,7 +27,7 @@ struct ContentView: View {
                 } label: {
                     Label("Generate", systemImage: "wand.and.stars")
                 }
-                .disabled(model.catalog.colors.isEmpty)
+                .disabled(!model.canGenerate)
 
                 Button {
                     FilePanels.exportImage { url in
@@ -37,14 +37,14 @@ struct ContentView: View {
                 } label: {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
-                .disabled(!model.hasResult)
+                .disabled(!model.canExportComposite)
 
                 Button {
                     model.printComposite()
                 } label: {
                     Label("Print", systemImage: "printer")
                 }
-                .disabled(!model.hasResult)
+                .disabled(!model.canExportComposite)
 
                 if model.tilingEnabled {
                     Button {
@@ -55,14 +55,14 @@ struct ContentView: View {
                     } label: {
                         Label("Export Tiles", systemImage: "square.grid.3x3")
                     }
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canExportTiles)
 
                     Button {
                         model.printTiles()
                     } label: {
                         Label("Print Tiles", systemImage: "printer.filled.and.paper")
                     }
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canExportTiles)
                 }
             }
         }

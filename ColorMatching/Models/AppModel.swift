@@ -147,6 +147,9 @@ final class AppModel {
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
+    var canGenerate: Bool { !catalog.colors.isEmpty }
+    var canExportComposite: Bool { hasResult }
+    var canExportTiles: Bool { tilingEnabled && hasResult }
 
     var eligibleColorCount: Int {
         catalog.eligibleColors(activeConditions: weights.activeConditions).count
