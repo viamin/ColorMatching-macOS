@@ -596,11 +596,15 @@ final class ColorCatalog {
         colorsLoadedFromProject || loadedColorsServer == cacheServer
     }
 
+    /// Keep the active selection representable whenever the on-screen state
+    /// still belongs to that profile, even if its palette is empty. A
+    /// zero-color live fetch or loaded project snapshot still carries real
+    /// profile ownership that later retries and refreshes should preserve.
     private var keepsActiveSelectionVisible: Bool {
         guard let selectedPrinterProfileID else { return false }
         return loadedColorsProfileID == selectedPrinterProfileID
             && loadedColorsBelongToCurrentServer
-            && !colors.isEmpty
+            && hasLoadedColorState
     }
 
     /// When no cached profile list exists for the current server, still keep
