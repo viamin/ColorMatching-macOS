@@ -46,7 +46,7 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
-        invalidateLoadedData()
+        invalidateLoadedData(preserveSelectedProfile: true)
         guard let baseURL else {
             client = nil
             return
@@ -235,10 +235,13 @@ final class ColorCatalog {
         lastRefresh = nil
     }
 
-    private func invalidateLoadedData() {
+    private func invalidateLoadedData(preserveSelectedProfile: Bool) {
+        // Keep the profile selection sticky across server/token edits so a
+        // refresh can repopulate the same profile when it still exists.
+        let preservedSelectedPrinterProfileID = preserveSelectedProfile ? selectedPrinterProfileID : nil
         cancelPendingWork()
         printerProfiles = []
-        setSelectedPrinterProfileID(nil, fetchColors: false)
+        setSelectedPrinterProfileID(preservedSelectedPrinterProfileID, fetchColors: false)
         clearLoadedPalette()
         connectionMessage = nil
     }
