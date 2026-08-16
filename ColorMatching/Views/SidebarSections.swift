@@ -242,6 +242,37 @@ struct CompositionSettingsSection: View {
     }
 }
 
+// MARK: - Large-format tiling
+
+struct TilingSettingsSection: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        @Bindable var model = model
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Large-format tiling").font(.headline)
+
+            Toggle("Split into page-sized tiles", isOn: $model.tilingEnabled)
+
+            if model.tilingEnabled {
+                HStack {
+                    Stepper("Tile size (mm): \(Int(model.tileWidthMM))", value: $model.tileWidthMM, in: 10...2000, step: 5)
+                    Stepper("× \(Int(model.tileHeightMM))", value: $model.tileHeightMM, in: 10...2000, step: 5)
+                }
+                Stepper("Overlap (mm): \(Int(model.tileOverlapMM))", value: $model.tileOverlapMM, in: 0...200, step: 1)
+
+                if let tiles = model.tilePlan {
+                    let columns = Set(tiles.map(\.column)).count
+                    let rows = Set(tiles.map(\.row)).count
+                    Text("\(tiles.count) tile(s) — \(columns) × \(rows)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
 private struct WeightSlider: View {
     let label: String
     @Binding var value: Double
