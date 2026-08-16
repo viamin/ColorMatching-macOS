@@ -74,6 +74,7 @@ public struct ProfileColorCache: Sendable {
     }
 
     private static let directoryPrefix = "server-"
+    private static let markerFilename = ".profile-color-cache"
 
     /// Root directory holding one subdirectory per server, each with one
     /// `profile-<id>.json` per cached profile.
@@ -141,6 +142,7 @@ public struct ProfileColorCache: Sendable {
         let normalizedEntry = normalized(entry)
         let serverDirectory = directory(for: normalizedEntry.serverBaseUrl)
         try ensureWritableDirectory(serverDirectory)
+        try ensureOwnershipMarker(in: serverDirectory)
         try encode(normalizedEntry).write(
             to: fileURL(for: normalizedEntry.profileId, serverBaseUrl: normalizedEntry.serverBaseUrl),
             options: .atomic
@@ -198,7 +200,8 @@ public struct ProfileColorCache: Sendable {
 
     private func isCacheDirectory(_ url: URL) -> Bool {
         guard url.lastPathComponent.hasPrefix(Self.directoryPrefix),
-              isOwnedDirectory(url) else { return false }
+              isOwnedDirectory(url),
+              isMarkerFile(url.appendingPathComponent(Self.markerFilename)) else { return false }
         return true
     }
 
@@ -272,10 +275,20 @@ public struct ProfileColorCache: Sendable {
         }
     }
 
+    private func ensureOwnershipMarker(in directory: URL) throws {
+        try Data().write(to: directory.appendingPathComponent(Self.markerFilename), options: .atomic)
+    }
+
     private func isOwnedDirectory(_ url: URL) -> Bool {
         guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
               values.isSymbolicLink != true else { return false }
         return values.isDirectory == true
+    }
+
+    private func isMarkerFile(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
+              values.isSymbolicLink != true else { return false }
+        return values.isRegularFile == true
     }
 
     private func isRegularFile(_ url: URL) -> Bool {

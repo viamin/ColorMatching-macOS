@@ -460,6 +460,21 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }
 
+    func testRemoveAllLeavesForeignServerPrefixedDirectoriesInPlace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+        let foreignDirectory = directory.appendingPathComponent("server-foreign", isDirectory: true)
+        let foreignFile = foreignDirectory.appendingPathComponent("profile-1.json")
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+        try Data("keep me".utf8).write(to: foreignFile)
+
+        try cache.removeAll()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: foreignDirectory.path))
+        XCTAssertEqual(try String(contentsOf: foreignFile), "keep me")
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
     func testRemoveAllSucceedsWhenNothingIsCached() throws {
         let cache = ProfileColorCache(directory: directory)
 
