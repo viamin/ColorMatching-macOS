@@ -154,7 +154,7 @@ final class ColorCatalog {
             guard cacheServer == requestedServer else { return }
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
-            if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
+            reconcileSelectedProfile(with: fetchedProfiles)
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
         } catch {
@@ -310,13 +310,24 @@ final class ColorCatalog {
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true
         cacheBackedServer = server
-        if selectedPrinterProfileID == nil {
-            selectedPrinterProfileID = cachedProfiles.first?.id
-        }
+        reconcileSelectedProfile(with: cachedProfiles)
     }
 
     private static func cacheTimestamp(_ date: Date) -> String {
         date.formatted(.dateTime.month().day().hour().minute())
+    }
+
+    /// Keeps the current selection only while the profile list still contains
+    /// it; otherwise picks the first available profile so the picker and the
+    /// next color fetch stay in sync with the list on screen.
+    private func reconcileSelectedProfile(with profiles: [PrinterProfileDTO]) {
+        guard let selectedPrinterProfileID else {
+            selectedPrinterProfileID = profiles.first?.id
+            return
+        }
+        let profileIDs = Set(profiles.map(\.id))
+        guard !profileIDs.contains(selectedPrinterProfileID) else { return }
+        self.selectedPrinterProfileID = profiles.first?.id
     }
 
     private func clearLoadedColors() {
