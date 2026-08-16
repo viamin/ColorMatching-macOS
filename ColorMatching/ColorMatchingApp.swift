@@ -17,7 +17,7 @@ struct ColorMatchingApp: App {
                 Button("New Project") { newProject() }.keyboardShortcut("n")
                 Button("Open Project…") { openProject() }.keyboardShortcut("o")
             }
-            CommandGroup(after: .saveItem) {
+            CommandGroup(replacing: .saveItem) {
                 Button("Save Project") { saveProject() }.keyboardShortcut("s")
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
