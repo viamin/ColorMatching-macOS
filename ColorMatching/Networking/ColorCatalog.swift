@@ -27,6 +27,7 @@ final class ColorCatalog {
             loadedPrinterProfileID = nil
             colors = []
             colorsForProfile = nil
+            lastRefresh = nil
             let version = operationVersion
             colorFetchTask = Task { [weak self] in
                 await self?.fetchColorsIfPossible(version: version)
