@@ -465,6 +465,7 @@ final class AppModel {
         // describe no fetched profile; a later live fetch fills it back in.
         catalog.colorsForProfile = nil
         catalog.loadedColorsProfileID = s.printerProfileID
+        catalog.loadedColorsServer = nil
         catalog.colorsLoadedFromProject = true
         catalog.lastRefresh = Date()
         catalog.isServingFromCache = false

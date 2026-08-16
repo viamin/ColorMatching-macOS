@@ -40,6 +40,10 @@ final class ColorCatalog {
     /// loaded from a project or an earlier fetch survive, another profile's
     /// leftovers are cleared as stale.
     var loadedColorsProfileID: Int?
+    /// Server whose fetch produced the on-screen `colors`, or `nil` when they
+    /// came from a loaded project snapshot. A failed fetch keeps live/server
+    /// colors only when they belong to the currently configured server.
+    var loadedColorsServer: String?
     /// True when `colors` are the loaded project's embedded palette snapshot
     /// (set by the app model when a `.cmpj` is opened). A failed fetch keeps
     /// them even when a cache entry exists: a saved document's palette is the
@@ -219,6 +223,7 @@ final class ColorCatalog {
         colorsForProfile = profile
         lastRefresh = fetchedAt
         loadedColorsProfileID = profileID
+        loadedColorsServer = server
         colorsLoadedFromProject = false
         isServingFromCache = false
         connectionMessage = "Loaded \(colors.count) color(s) for this profile."
@@ -280,6 +285,7 @@ final class ColorCatalog {
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
         loadedColorsProfileID = profileID
+        loadedColorsServer = cached.serverBaseUrl
         colorsLoadedFromProject = false
         isServingFromCache = true
         cacheBackedServer = cacheServer
@@ -287,11 +293,13 @@ final class ColorCatalog {
     }
 
     /// Keeps colors already on screen only when they belong to the selected
-    /// profile and there are colors to keep; another profile's leftovers —
-    /// or an empty palette — are cleared. The cache badge is left untouched —
-    /// kept colors keep their true provenance.
+    /// profile, come from the current server (or from a loaded project), and
+    /// there are colors to keep; another profile's leftovers, another
+    /// server's live fetch, or an empty palette are cleared. The cache badge
+    /// is left untouched — kept colors keep their true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        guard loadedColorsProfileID == profileID, !colors.isEmpty else {
+        let belongsToCurrentServer = colorsLoadedFromProject || loadedColorsServer == cacheServer
+        guard loadedColorsProfileID == profileID, belongsToCurrentServer, !colors.isEmpty else {
             clearLoadedColors()
             connectionMessage = "\(reason)."
             return
@@ -335,6 +343,7 @@ final class ColorCatalog {
         colorsForProfile = nil
         lastRefresh = nil
         loadedColorsProfileID = nil
+        loadedColorsServer = nil
         colorsLoadedFromProject = false
         isServingFromCache = false
     }
