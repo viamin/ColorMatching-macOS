@@ -44,6 +44,10 @@ struct ProfileSection: View {
                 ForEach(catalog.printerProfiles) { profile in
                     Text(profileLabel(profile)).tag(Int?.some(profile.id))
                 }
+                if let missingSelectedProfileID {
+                    Text("Saved profile #\(missingSelectedProfileID)")
+                        .tag(Int?.some(missingSelectedProfileID))
+                }
             }
 
             LabeledContent("Colors loaded", value: "\(catalog.colors.count)")
@@ -60,6 +64,12 @@ struct ProfileSection: View {
     private func profileLabel(_ profile: PrinterProfileDTO) -> String {
         let parts = [profile.printerMakeModel, profile.paperType].compactMap { $0 }
         return parts.isEmpty ? "Profile #\(profile.id)" : parts.joined(separator: " · ")
+    }
+
+    private var missingSelectedProfileID: Int? {
+        guard let selectedProfileID = model.catalog.selectedPrinterProfileID else { return nil }
+        guard !model.catalog.printerProfiles.contains(where: { $0.id == selectedProfileID }) else { return nil }
+        return selectedProfileID
     }
 }
 
