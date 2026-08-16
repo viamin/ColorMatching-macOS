@@ -16,14 +16,18 @@ final class ColorCatalog {
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
     private(set) var loadedPrinterProfileID: Int?
+    private var colorFetchTask: Task<Void, Never>?
 
     var selectedPrinterProfileID: Int? {
         didSet {
             guard fetchesColorsOnProfileSelection else { return }
+            cancelPendingWork()
             loadedPrinterProfileID = nil
             colors = []
             colorsForProfile = nil
-            Task { await fetchColorsIfPossible() }
+            colorFetchTask = Task { [weak self] in
+                await self?.fetchColorsIfPossible()
+            }
         }
     }
 
@@ -34,8 +38,13 @@ final class ColorCatalog {
     private var client: PaletteAPIClient?
     private var fetchesColorsOnProfileSelection = true
 
+    deinit {
+        cancelPendingWork()
+    }
+
     func configure(baseURL: URL?, token: String?) {
         guard let baseURL else {
+            cancelPendingWork()
             client = nil
             return
         }
@@ -48,6 +57,13 @@ final class ColorCatalog {
     }
 
     // MARK: - Actions
+
+    /// Prevents stale palette loads from mutating the current selection or a
+    /// just-opened project after the user has moved on.
+    func cancelPendingWork() {
+        colorFetchTask?.cancel()
+        colorFetchTask = nil
+    }
 
     func testConnection() async {
         guard let client else {
@@ -91,6 +107,7 @@ final class ColorCatalog {
     /// Restores the saved palette and selected profile from a project document
     /// without immediately replacing the embedded colors from the server.
     func restoreProjectPalette(printerProfileID: Int?, colors: [PaletteColor]) {
+        cancelPendingWork()
         setSelectedPrinterProfileID(printerProfileID, fetchColors: false)
         self.colors = colors
         loadedPrinterProfileID = printerProfileID

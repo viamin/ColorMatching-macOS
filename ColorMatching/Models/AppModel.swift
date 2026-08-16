@@ -147,6 +147,7 @@ final class AppModel {
     /// Stops any pending debounce or in-flight solve before the project's state
     /// is replaced, so stale work cannot write results into the next document.
     func cancelPendingWork() {
+        catalog.cancelPendingWork()
         debounceTask?.cancel()
         debounceTask = nil
         solveTask?.cancel()
