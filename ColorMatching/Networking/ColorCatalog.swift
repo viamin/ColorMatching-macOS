@@ -69,7 +69,9 @@ final class ColorCatalog {
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
-            if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
+            if selectedPrinterProfileID == nil {
+                setSelectedPrinterProfileID(fetchedProfiles.first?.id, fetchColors: false)
+            }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
         } catch let error as PaletteAPIError {
@@ -82,14 +84,18 @@ final class ColorCatalog {
     /// Restores the saved palette and selected profile from a project document
     /// without immediately replacing the embedded colors from the server.
     func restoreProjectPalette(printerProfileID: Int?, colors: [PaletteColor]) {
-        fetchesColorsOnProfileSelection = false
-        defer { fetchesColorsOnProfileSelection = true }
-
-        selectedPrinterProfileID = printerProfileID
+        setSelectedPrinterProfileID(printerProfileID, fetchColors: false)
         self.colors = colors
         colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
         lastRefresh = Date()
         connectionMessage = "Loaded \(colors.count) color(s) from project."
+    }
+
+    private func setSelectedPrinterProfileID(_ id: Int?, fetchColors: Bool) {
+        let previousBehavior = fetchesColorsOnProfileSelection
+        fetchesColorsOnProfileSelection = fetchColors
+        selectedPrinterProfileID = id
+        fetchesColorsOnProfileSelection = previousBehavior
     }
 
     private func fetchColorsIfPossible() async {
