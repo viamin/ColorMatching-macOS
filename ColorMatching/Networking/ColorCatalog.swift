@@ -376,7 +376,9 @@ final class ColorCatalog {
         // The clause is continued with an em-dash in the composed messages
         // below; the branches that show it standing alone restore the period.
         let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
-        if let cached = servableCacheEntry(for: profileID) {
+        if keepsLiveColors(profileID) {
+            keepOrClearLoadedColors(profileID: profileID, reason: clause)
+        } else if let cached = servableCacheEntry(for: profileID) {
             serve(cached, profileID: profileID, reason: clause)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
@@ -402,6 +404,16 @@ final class ColorCatalog {
     /// screen, so the cache may still serve offline.
     private func keepsProjectColors(_ profileID: Int) -> Bool {
         colorsLoadedFromProject && loadedColorsProfileID == profileID && !colors.isEmpty
+    }
+
+    /// A failed refresh must not replace fresher live colors already on screen
+    /// with an older disk snapshot for the same profile and server.
+    private func keepsLiveColors(_ profileID: Int) -> Bool {
+        !colorsLoadedFromProject
+            && !isServingFromCache
+            && loadedColorsProfileID == profileID
+            && loadedColorsServer == cacheServer
+            && !colors.isEmpty
     }
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
