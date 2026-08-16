@@ -61,6 +61,9 @@ final class ColorCatalog {
     /// selection, whose `didSet` launches a color fetch). Track the count so a
     /// finishing request does not re-enable the UI while another is still live.
     private var inFlightRequests = 0
+    private var connectionRequestID = 0
+    private var profileRefreshRequestID = 0
+    private var colorFetchRequestID = 0
     /// Internal state changes sometimes need to update the selection without
     /// triggering an immediate fetch. Opening a saved project is the key case:
     /// the document should restore its embedded palette snapshot exactly as
@@ -182,6 +185,21 @@ final class ColorCatalog {
         isWorking = inFlightRequests > 0
     }
 
+    private func nextConnectionRequestID() -> Int {
+        connectionRequestID += 1
+        return connectionRequestID
+    }
+
+    private func nextProfileRefreshRequestID() -> Int {
+        profileRefreshRequestID += 1
+        return profileRefreshRequestID
+    }
+
+    private func nextColorFetchRequestID() -> Int {
+        colorFetchRequestID += 1
+        return colorFetchRequestID
+    }
+
     private func restoreSelectedPrinterProfileID(_ profileID: Int?) {
         suppressesSelectionFetch = true
         defer { suppressesSelectionFetch = false }
@@ -263,16 +281,17 @@ final class ColorCatalog {
         retireStaleProfileListForServerAction()
         clearLoadedColorsIfServerChanged()
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
+        let requestID = nextConnectionRequestID()
         beginRequest()
         defer { endRequest() }
         do {
             try await client.testConnection()
             // A late result describes the server it was sent to, which may no
             // longer be configured; only a fresh request may report.
-            guard cacheServer == requestedServer else { return }
+            guard cacheServer == requestedServer, connectionRequestID == requestID else { return }
             connectionMessage = "Connected."
         } catch {
-            guard cacheServer == requestedServer else { return }
+            guard cacheServer == requestedServer, connectionRequestID == requestID else { return }
             connectionMessage = (error as? PaletteAPIError)?.errorDescription
                 ?? "Could not reach the server."
         }
@@ -287,13 +306,14 @@ final class ColorCatalog {
         retireStaleCacheBackedState()
         retireStaleProfileListForServerAction()
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
+        let requestID = nextProfileRefreshRequestID()
         beginRequest()
         defer { endRequest() }
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             // The server may have changed while the request was in flight;
             // the previous server's late response must not populate state.
-            guard cacheServer == requestedServer else { return }
+            guard cacheServer == requestedServer, profileRefreshRequestID == requestID else { return }
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = requestedServer
@@ -307,7 +327,7 @@ final class ColorCatalog {
         } catch {
             // A failure of an abandoned request says nothing about the
             // newly configured server — only a fresh request may report.
-            guard cacheServer == requestedServer else { return }
+            guard cacheServer == requestedServer, profileRefreshRequestID == requestID else { return }
             // When the user has switched servers, an offline refresh must not
             // leave the previous server's live colors on screen under the new
             // server's profile list or "no profiles" state.
@@ -385,6 +405,7 @@ final class ColorCatalog {
         clearLoadedColorsIfServerChanged()
         guard let profileID = selectedPrinterProfileID else { return }
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
+        let requestID = nextColorFetchRequestID()
         beginRequest()
         defer { endRequest() }
         do {
@@ -393,10 +414,14 @@ final class ColorCatalog {
             // in flight; a late response for another profile must not
             // overwrite it, and another server's response must be neither
             // shown nor cached under the current server.
-            guard selectedPrinterProfileID == profileID, cacheServer == requestedServer else { return }
+            guard selectedPrinterProfileID == profileID,
+                  cacheServer == requestedServer,
+                  colorFetchRequestID == requestID else { return }
             applyFetched(dtos: dtos, profile: profile, profileID: profileID, server: requestedServer)
         } catch {
-            guard selectedPrinterProfileID == profileID, cacheServer == requestedServer else { return }
+            guard selectedPrinterProfileID == profileID,
+                  cacheServer == requestedServer,
+                  colorFetchRequestID == requestID else { return }
             handleFetchFailure(error, fallbackMessage: "Could not load colors.")
         }
     }
