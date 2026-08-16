@@ -68,7 +68,7 @@ public extension CachedProfileColors {
 /// them would spread that contract across collaborators without reducing
 /// any complexity.
 public struct ProfileColorCache: Sendable {
-    public enum CacheError: Error {
+    public enum CacheError: Error, Equatable {
         case rootIsNotDirectory
     }
 
