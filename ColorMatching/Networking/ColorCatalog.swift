@@ -363,8 +363,7 @@ final class ColorCatalog {
     /// server's live fetch, or an empty palette are cleared. The cache badge
     /// is left untouched — kept colors keep their true provenance.
     private func keepOrClearLoadedColors(profileID: Int, reason: String) {
-        let belongsToCurrentServer = colorsLoadedFromProject || loadedColorsServer == cacheServer
-        guard loadedColorsProfileID == profileID, belongsToCurrentServer, !colors.isEmpty else {
+        guard loadedColorsProfileID == profileID, loadedColorsBelongToCurrentServer, !colors.isEmpty else {
             clearLoadedColors()
             clearSelectedProfileIfUnavailable()
             connectionMessage = "\(reason)."
@@ -426,9 +425,15 @@ final class ColorCatalog {
         !printerProfiles.isEmpty && loadedPrinterProfilesServer == cacheServer
     }
 
+    private var loadedColorsBelongToCurrentServer: Bool {
+        colorsLoadedFromProject || loadedColorsServer == cacheServer
+    }
+
     private var keepsActiveSelectionWithoutCachedProfiles: Bool {
         guard let selectedPrinterProfileID else { return false }
-        return loadedColorsProfileID == selectedPrinterProfileID && !colors.isEmpty
+        return loadedColorsProfileID == selectedPrinterProfileID
+            && loadedColorsBelongToCurrentServer
+            && !colors.isEmpty
     }
 
     /// Once stale colors are cleared, keep the selection only if the current
