@@ -55,6 +55,11 @@ final class ColorCatalog {
     /// True when `printerProfiles` were offered from the offline cache because
     /// the server could not be reached at all.
     private var printerProfilesAreCached = false
+    /// Server whose profile list is currently on screen, whether it came from
+    /// a live refresh or the offline cache. Used so a failed refresh for one
+    /// server can replace another server's stale list with the current
+    /// server's cached profiles — or clear the stale list when none exist.
+    private var loadedPrinterProfilesServer: String?
     /// The server whose cache-backed state (cached profiles, cached colors) is
     /// currently on screen, or `nil` when none is. Only consulted while some
     /// cache-backed state is actually on screen — `retireStaleCacheBackedState`
@@ -100,6 +105,7 @@ final class ColorCatalog {
         if printerProfilesAreCached {
             printerProfiles = []
             printerProfilesAreCached = false
+            loadedPrinterProfilesServer = nil
             // Keep a selection the loaded project set: it is the document's
             // own profile, not a pick from the cached list. Clearing it would
             // make the fetch this drop preempts discard its result, and the
@@ -158,6 +164,7 @@ final class ColorCatalog {
             guard cacheServer == requestedServer else { return }
             printerProfiles = fetchedProfiles
             printerProfilesAreCached = false
+            loadedPrinterProfilesServer = requestedServer
             reconcileSelectedProfile(with: fetchedProfiles)
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             await fetchColorsIfPossible()
@@ -310,13 +317,20 @@ final class ColorCatalog {
 
     /// Offline cold start: offer cached profiles in the picker so a profile
     /// can be selected (and its colors then served from the cache) with no
-    /// server round-trip at all.
+    /// server round-trip at all. If another server's profiles are on screen
+    /// and there is no cache for the current one, clear that stale list so the
+    /// picker does not mislabel it as belonging to the current server.
     private func serveCachedProfilesIfUnavailable() {
-        guard printerProfiles.isEmpty, let server = cacheServer else { return }
+        guard let server = cacheServer, !keepsProfilesForCurrentServer else { return }
         let cachedProfiles = cache.allEntries(serverBaseUrl: server).compactMap(\.profile)
-        guard !cachedProfiles.isEmpty else { return }
+        guard !cachedProfiles.isEmpty else {
+            printerProfiles = []
+            loadedPrinterProfilesServer = nil
+            return
+        }
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true
+        loadedPrinterProfilesServer = server
         cacheBackedServer = server
         reconcileSelectedProfile(with: cachedProfiles)
     }
@@ -336,6 +350,10 @@ final class ColorCatalog {
         let profileIDs = Set(profiles.map(\.id))
         guard !profileIDs.contains(selectedPrinterProfileID) else { return }
         self.selectedPrinterProfileID = profiles.first?.id
+    }
+
+    private var keepsProfilesForCurrentServer: Bool {
+        !printerProfiles.isEmpty && loadedPrinterProfilesServer == cacheServer
     }
 
     private func clearLoadedColors() {
