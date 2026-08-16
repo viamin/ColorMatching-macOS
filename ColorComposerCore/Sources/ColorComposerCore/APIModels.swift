@@ -8,6 +8,18 @@ public struct PrinterProfileDTO: Codable, Identifiable, Sendable, Equatable {
     public let printerMakeModel: String?
     public let paperType: String?
     public let inkType: String?
+
+    public init(
+        id: Int,
+        printerMakeModel: String?,
+        paperType: String?,
+        inkType: String?
+    ) {
+        self.id = id
+        self.printerMakeModel = printerMakeModel
+        self.paperType = paperType
+        self.inkType = inkType
+    }
 }
 
 

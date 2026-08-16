@@ -403,7 +403,14 @@ final class ColorCatalog {
         guard let server = cacheServer, !keepsProfilesForCurrentServer else { return }
         let cachedProfiles = cache.allEntries(serverBaseUrl: server)
             .filter(\.hasServableColors)
-            .compactMap(\.profile)
+            .map { entry in
+                entry.profile ?? PrinterProfileDTO(
+                    id: entry.profileId,
+                    printerMakeModel: nil,
+                    paperType: nil,
+                    inkType: nil
+                )
+            }
         guard !cachedProfiles.isEmpty else {
             printerProfiles = []
             printerProfilesAreCached = false
