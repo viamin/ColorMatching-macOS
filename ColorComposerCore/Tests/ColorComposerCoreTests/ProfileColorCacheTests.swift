@@ -104,6 +104,18 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 1, serverBaseUrl: defaultServer))
     }
 
+    func testEntryIgnoresASymbolicLinkCacheFile() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = try createOwnedServerDirectory()
+        let foreignFile = directory.appendingPathComponent("foreign-profile.json")
+        let linkedFile = serverDirectory.appendingPathComponent("profile-6.json")
+        try Data("foreign".utf8).write(to: foreignFile)
+        try FileManager.default.createSymbolicLink(at: linkedFile, withDestinationURL: foreignFile)
+
+        XCTAssertNil(cache.entry(for: 6, serverBaseUrl: defaultServer))
+        XCTAssertEqual(try String(contentsOf: foreignFile), "foreign")
+    }
+
     func testStoreOverwritesPreviousFetch() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3, colorIDs: [1], fetchedAt: Date(timeIntervalSince1970: 100)))
@@ -131,6 +143,18 @@ final class ProfileColorCacheTests: XCTestCase {
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://one.example:4000").map(\.profileId), [1])
         XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://two.example:4000").map(\.profileId), [2])
+    }
+
+    func testAllEntriesIgnoresASymbolicLinkCacheFile() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = try createOwnedServerDirectory()
+        let foreignFile = directory.appendingPathComponent("foreign-profile.json")
+        let linkedFile = serverDirectory.appendingPathComponent("profile-6.json")
+        try Data("foreign".utf8).write(to: foreignFile)
+        try FileManager.default.createSymbolicLink(at: linkedFile, withDestinationURL: foreignFile)
+
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+        XCTAssertEqual(try String(contentsOf: foreignFile), "foreign")
     }
 
     func testTwoServersKeepSeparateEntriesForTheSameProfileID() throws {
