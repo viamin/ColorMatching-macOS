@@ -52,6 +52,14 @@ final class ProfileColorCacheTests: XCTestCase {
         )
     }
 
+    private func serverDirectory(for serverBaseUrl: String = defaultServer) -> URL {
+        let safe = Data(serverBaseUrl.utf8).base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
+        return directory.appendingPathComponent("server-\(safe)", isDirectory: true)
+    }
+
     func testStoreThenReadRoundTripsEntry() throws {
         let cache = ProfileColorCache(directory: directory)
         let entry = try makeEntry(profileID: 2, colorIDs: [10, 11])
@@ -150,9 +158,10 @@ final class ProfileColorCacheTests: XCTestCase {
 
     func testCorruptCacheFileCountsAsMiss() throws {
         let cache = ProfileColorCache(directory: directory)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
         try Data("not json".utf8)
-            .write(to: directory.appendingPathComponent("profile-5.json"))
+            .write(to: serverDirectory.appendingPathComponent("profile-5.json"))
 
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
     }
@@ -160,9 +169,10 @@ final class ProfileColorCacheTests: XCTestCase {
     func testEntryWhoseStoredIDDisagreesWithFilenameCountsAsMiss() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
+        let serverDirectory = serverDirectory()
         try FileManager.default.moveItem(
-            at: directory.appendingPathComponent("profile-3.json"),
-            to: directory.appendingPathComponent("profile-5.json")
+            at: serverDirectory.appendingPathComponent("profile-3.json"),
+            to: serverDirectory.appendingPathComponent("profile-5.json")
         )
 
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
@@ -173,8 +183,9 @@ final class ProfileColorCacheTests: XCTestCase {
         try cache.store(try makeEntry(profileID: 3))
         try cache.store(try makeEntry(profileID: 1))
         try cache.store(try makeEntry(profileID: 2))
+        let serverDirectory = serverDirectory()
         try Data("not json".utf8)
-            .write(to: directory.appendingPathComponent("profile-9.json"))
+            .write(to: serverDirectory.appendingPathComponent("profile-9.json"))
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1, 2, 3])
     }
@@ -182,9 +193,10 @@ final class ProfileColorCacheTests: XCTestCase {
     func testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
+        let serverDirectory = serverDirectory()
         try FileManager.default.moveItem(
-            at: directory.appendingPathComponent("profile-3.json"),
-            to: directory.appendingPathComponent("profile-5.json")
+            at: serverDirectory.appendingPathComponent("profile-3.json"),
+            to: serverDirectory.appendingPathComponent("profile-5.json")
         )
         try cache.store(try makeEntry(profileID: 2))
 
@@ -193,10 +205,11 @@ final class ProfileColorCacheTests: XCTestCase {
 
     func testAllEntriesIgnoresFilesOutsideTheNamingContract() throws {
         let cache = ProfileColorCache(directory: directory)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
         try cache.store(try makeEntry(profileID: 1))
         for foreign in ["notes.txt", "profile-abc.json", ".DS_Store"] {
-            try Data("not json".utf8).write(to: directory.appendingPathComponent(foreign))
+            try Data("not json".utf8).write(to: serverDirectory.appendingPathComponent(foreign))
         }
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1])
@@ -310,7 +323,8 @@ final class ProfileColorCacheTests: XCTestCase {
     /// never matches), where every stored entry would silently count as a miss.
     func testDecodesHandWrittenSnakeCaseCacheFile() throws {
         let cache = ProfileColorCache(directory: directory)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let serverDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
         let json = """
             {"server_base_url":"http://localhost:4000",
             "profile_id":6,
@@ -319,7 +333,7 @@ final class ProfileColorCacheTests: XCTestCase {
             "responses":{"red":{"brightness":0.5}}}],
             "fetched_at":"2023-11-14T22:13:20Z"}
             """
-        try Data(json.utf8).write(to: directory.appendingPathComponent("profile-6.json"))
+        try Data(json.utf8).write(to: serverDirectory.appendingPathComponent("profile-6.json"))
 
         let entry = try XCTUnwrap(cache.entry(for: 6, serverBaseUrl: "http://localhost:4000"))
 
