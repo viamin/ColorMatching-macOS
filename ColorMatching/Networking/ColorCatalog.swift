@@ -52,9 +52,10 @@ final class ColorCatalog {
     /// the server could not be reached at all.
     private var printerProfilesAreCached = false
     /// The server whose cache-backed state (cached profiles, cached colors) is
-    /// currently on screen, or `nil` when none is. Compared against
-    /// `cacheServer` to tell a genuine server change from the server merely
-    /// being reconfigured — see `retireStaleCacheBackedState`.
+    /// currently on screen, or `nil` when none is. Only consulted while some
+    /// cache-backed state is actually on screen — `retireStaleCacheBackedState`
+    /// checks the flags first — so a value left over from state a later live
+    /// fetch replaced is never read; the next drop clears it.
     private var cacheBackedServer: String?
 
     init(cache: ProfileColorCache = ProfileColorCache()) {
@@ -77,7 +78,8 @@ final class ColorCatalog {
     /// genuinely different server's stale offline data is retired before it
     /// can be shown as (or mistaken for) the new server's own.
     private func retireStaleCacheBackedState() {
-        guard cacheBackedServer != cacheServer else { return }
+        guard printerProfilesAreCached || isServingFromCache,
+              cacheBackedServer != cacheServer else { return }
         dropCacheBackedState()
     }
 
@@ -87,13 +89,18 @@ final class ColorCatalog {
     /// is retracted, with the colors it described — no path composes one
     /// about cached profiles, so a profiles-only drop keeps messages that
     /// still describe the colors on screen (a plain failure reason, a loaded
-    /// project's palette).
+    /// project's palette). The loaded project's profile selection survives
+    /// too: it was chosen by the document, not picked from the cached list.
     private func dropCacheBackedState() {
         guard printerProfilesAreCached || isServingFromCache else { return }
         if printerProfilesAreCached {
             printerProfiles = []
             printerProfilesAreCached = false
-            selectedPrinterProfileID = nil
+            // Keep a selection the loaded project set: it is the document's
+            // own profile, not a pick from the cached list. Clearing it would
+            // make the fetch this drop preempts discard its result, and the
+            // project would re-save with no profile.
+            if !colorsLoadedFromProject { selectedPrinterProfileID = nil }
         }
         if isServingFromCache {
             clearLoadedColors()
