@@ -492,6 +492,7 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        clearDerivedState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
         catalog.selectedPrinterProfileID = s.printerProfileID
@@ -525,5 +526,12 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
+    }
+
+    private func clearDerivedState() {
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
     }
 }
