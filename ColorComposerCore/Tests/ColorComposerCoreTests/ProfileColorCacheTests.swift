@@ -419,6 +419,21 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertTrue(try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).isEmpty)
     }
 
+    func testRemoveAllLeavesUnrelatedRootChildrenInPlace() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 1))
+        let unrelatedFile = directory.appendingPathComponent("notes.txt")
+        let unrelatedDirectory = directory.appendingPathComponent("Exports", isDirectory: true)
+        try Data("keep me".utf8).write(to: unrelatedFile)
+        try FileManager.default.createDirectory(at: unrelatedDirectory, withIntermediateDirectories: true)
+
+        try cache.removeAll()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unrelatedFile.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unrelatedDirectory.path))
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
+    }
+
     func testRemoveAllSucceedsWhenNothingIsCached() throws {
         let cache = ProfileColorCache(directory: directory)
 

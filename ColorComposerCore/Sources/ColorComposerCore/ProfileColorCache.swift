@@ -72,6 +72,8 @@ public struct ProfileColorCache: Sendable {
         case rootIsNotDirectory
     }
 
+    private static let directoryPrefix = "server-"
+
     /// Root directory holding one subdirectory per server, each with one
     /// `profile-<id>.json` per cached profile.
     public let directory: URL
@@ -143,8 +145,9 @@ public struct ProfileColorCache: Sendable {
     }
 
     /// Removes every cached profile. A missing cache directory is a no-op.
-    /// The cache root itself stays in place so clearing an explicit custom
-    /// directory never removes more than this cache's own contents.
+    /// The cache root itself stays in place, and only this cache's own
+    /// server directories are removed, so clearing an explicit custom
+    /// directory never deletes unrelated siblings.
     public func removeAll() throws {
         let fileManager = FileManager.default
         var isDirectory: ObjCBool = false
@@ -152,7 +155,10 @@ public struct ProfileColorCache: Sendable {
         guard isDirectory.boolValue else {
             throw CacheError.rootIsNotDirectory
         }
-        for item in try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) {
+        for item in try fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey]
+        ) where isCacheDirectory(item) {
             try fileManager.removeItem(at: item)
         }
     }
@@ -184,7 +190,14 @@ public struct ProfileColorCache: Sendable {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "=", with: "")
-        return "server-\(safe)"
+        return "\(Self.directoryPrefix)\(safe)"
+    }
+
+    private func isCacheDirectory(_ url: URL) -> Bool {
+        guard url.lastPathComponent.hasPrefix(Self.directoryPrefix),
+              let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
+              values.isSymbolicLink != true else { return false }
+        return values.isDirectory == true
     }
 
     /// Cache keys should ignore harmless URL spelling differences like a
