@@ -177,7 +177,7 @@ final class AppModel {
             return
         }
         guard !catalog.colors.isEmpty else {
-            lastError = "Load colors from the server first."
+            lastError = "Load colors from the server, cache, or a project first."
             return
         }
         guard let grids = sourceGrids(for: active) else { return }
