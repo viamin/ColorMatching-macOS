@@ -98,6 +98,10 @@ final class ColorCatalog {
             connectionMessage = "Set a server URL first."
             return
         }
+        // Treat an explicit refresh as the new source of truth. Without this,
+        // an older profile-triggered color fetch can finish during the refresh
+        // and still look "current", racing the refreshed palette into the UI.
+        cancelPendingWork()
         let version = operationVersion
         isWorking = true
         defer {
