@@ -116,26 +116,25 @@ private struct PreviewCommands: Commands {
     var body: some Commands {
         CommandMenu("Preview") {
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
-                Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
-                    .modifier(PreviewTabShortcut(digit: index + 1))
-                    .disabled(previewModeBinding == nil)
+                if let shortcut = previewShortcut(for: index + 1) {
+                    Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
+                        .keyboardShortcut(shortcut)
+                        .disabled(previewModeBinding == nil)
+                } else {
+                    Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
+                        .disabled(previewModeBinding == nil)
+                }
             }
         }
     }
-}
 
-/// Attaches the ⌘<digit> equivalent only when `digit` is a single character;
-/// `KeyEquivalent(Character:)` would trap for multi-digit numbers.
-private struct PreviewTabShortcut: ViewModifier {
-    let digit: Int
-
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if (1...9).contains(digit) {
-            content.keyboardShortcut(KeyEquivalent(Character("\(digit)")))
-        } else {
-            content
+    /// Keeps the command menu explicit and avoids trapping if the preview list
+    /// ever grows beyond single-digit shortcuts.
+    private func previewShortcut(for digit: Int) -> KeyEquivalent? {
+        guard let scalar = UnicodeScalar(48 + digit), (1...9).contains(digit) else {
+            return nil
         }
+        return KeyEquivalent(Character(scalar))
     }
 }
 
