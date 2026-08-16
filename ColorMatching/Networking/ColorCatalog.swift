@@ -279,6 +279,10 @@ final class ColorCatalog {
     /// cleared too; live-fetched and project-loaded colors are unaffected.
     @MainActor
     func clearCache() {
+        guard !isWorking else {
+            connectionMessage = "Wait for the current request to finish before clearing the cache."
+            return
+        }
         do {
             try cache.removeAll()
             dropCacheBackedState()
