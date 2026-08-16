@@ -16,7 +16,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
             catalog.configure(baseURL: URL(string: newValue), token: serverToken)
-            invalidateGeneratedOutput()
+            handleCatalogConfigurationChange()
         }
     }
 
@@ -25,7 +25,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
-            invalidateGeneratedOutput()
+            handleCatalogConfigurationChange()
         }
     }
 
@@ -214,6 +214,16 @@ final class AppModel {
         }
         pendingAutoRegenerate = false
         scheduleDebouncedSolve()
+    }
+
+    /// Server settings changes discard the loaded palette immediately, but if a
+    /// solve was previously visible we still want the next successful refresh to
+    /// restore it automatically when auto-regenerate is enabled.
+    private func handleCatalogConfigurationChange() {
+        let shouldAutoRegenerate = autoRegenerate &&
+            (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
+        invalidateGeneratedOutput()
+        pendingAutoRegenerate = shouldAutoRegenerate
     }
 
     var eligibleColorCount: Int {
