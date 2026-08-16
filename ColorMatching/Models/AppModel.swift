@@ -175,6 +175,7 @@ final class AppModel {
     var canGenerate: Bool {
         let active = weights.activeConditions
         return catalog.hasLoadedColorsForSelection &&
+            !catalog.colors.isEmpty &&
             !active.isEmpty &&
             active.allSatisfy(hasAssignedSource)
     }
@@ -253,6 +254,11 @@ final class AppModel {
         guard catalog.hasLoadedColorsForSelection else {
             clearGeneratedOutput()
             lastError = "Load colors for the selected profile before generating."
+            return
+        }
+        guard !catalog.colors.isEmpty else {
+            clearGeneratedOutput()
+            lastError = "The selected profile has no colors to generate with."
             return
         }
         guard let grids = sourceGrids(for: active) else {
