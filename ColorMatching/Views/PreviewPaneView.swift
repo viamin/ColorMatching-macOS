@@ -85,8 +85,8 @@ struct PreviewPaneView: View {
         // frontmost window without promoting a per-window UI choice into the
         // shared application model.
         .focusedSceneValue(\.previewModeBinding, $previewMode)
-        .onChange(of: previewMode) { _, newMode in
-            resetCompareModeIfNeeded(for: newMode)
+        .onChange(of: previewMode) { oldMode, newMode in
+            resetCompareModeIfNeeded(from: oldMode, to: newMode)
         }
     }
 
@@ -169,8 +169,12 @@ struct PreviewPaneView: View {
         PreviewImage(image: image)
     }
 
-    private func resetCompareModeIfNeeded(for mode: PreviewMode) {
-        guard case .lighting(let condition) = mode, model.hasSource(for: condition) else {
+    private func resetCompareModeIfNeeded(from oldMode: PreviewMode, to newMode: PreviewMode) {
+        guard case .lighting(let condition) = newMode, model.hasSource(for: condition) else {
+            compareMode = .predicted
+            return
+        }
+        guard case .lighting(let previousCondition) = oldMode, previousCondition == condition else {
             compareMode = .predicted
             return
         }
