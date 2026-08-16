@@ -292,6 +292,19 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 3, serverBaseUrl: "http://two.example:4000"))
     }
 
+    func testEntryThroughSymbolicLinkServerDirectoryCountsAsMiss() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let foreignDirectory = directory.appendingPathComponent("foreign-cache", isDirectory: true)
+        let linkedDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+        try encode(try makeEntry(profileID: 5)).write(
+            to: foreignDirectory.appendingPathComponent("profile-5.json")
+        )
+        try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
+    }
+
     func testAllEntriesSkipsCorruptFilesAndSortsByProfile() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
@@ -345,6 +358,19 @@ final class ProfileColorCacheTests: XCTestCase {
         try cache.store(try makeEntry(profileID: 2, serverBaseUrl: "http://two.example:4000"))
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://two.example:4000").map(\.profileId), [2])
+    }
+
+    func testAllEntriesSkipsSymbolicLinkServerDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let foreignDirectory = directory.appendingPathComponent("foreign-cache", isDirectory: true)
+        let linkedDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+        try encode(try makeEntry(profileID: 5)).write(
+            to: foreignDirectory.appendingPathComponent("profile-5.json")
+        )
+        try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        XCTAssertTrue(cache.allEntries(serverBaseUrl: defaultServer).isEmpty)
     }
 
     func testAllEntriesIgnoresFilesOutsideTheNamingContract() throws {
@@ -450,6 +476,43 @@ final class ProfileColorCacheTests: XCTestCase {
         }
 
         XCTAssertEqual(try String(contentsOf: rootFile), "not a directory")
+    }
+
+    func testRemoveAllDoesNotDeleteASymbolicLinkRoot() throws {
+        let targetRoot = directory.appendingPathComponent("real-cache-root", isDirectory: true)
+        let linkedRoot = directory.appendingPathComponent("cache-root-link", isDirectory: true)
+        let foreignCacheDirectory = targetRoot.appendingPathComponent("server-foreign", isDirectory: true)
+        try FileManager.default.createDirectory(at: foreignCacheDirectory, withIntermediateDirectories: true)
+        try Data("keep me".utf8).write(to: foreignCacheDirectory.appendingPathComponent("profile-1.json"))
+        try FileManager.default.createSymbolicLink(at: linkedRoot, withDestinationURL: targetRoot)
+        let cache = ProfileColorCache(directory: linkedRoot)
+
+        XCTAssertThrowsError(try cache.removeAll()) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .rootIsNotDirectory)
+        }
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: foreignCacheDirectory.path))
+        XCTAssertEqual(
+            try String(contentsOf: foreignCacheDirectory.appendingPathComponent("profile-1.json")),
+            "keep me"
+        )
+    }
+
+    func testStoreRejectsASymbolicLinkServerDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let foreignDirectory = directory.appendingPathComponent("foreign-cache", isDirectory: true)
+        let linkedDirectory = serverDirectory()
+        try FileManager.default.createDirectory(at: foreignDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: linkedDirectory, withDestinationURL: foreignDirectory)
+
+        XCTAssertThrowsError(try cache.store(try makeEntry(profileID: 5))) { error in
+            XCTAssertEqual(error as? ProfileColorCache.CacheError, .serverDirectoryIsNotDirectory)
+        }
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: foreignDirectory.appendingPathComponent("profile-5.json").path
+            )
+        )
     }
 
     /// Clear Cache followed by a later successful fetch must be able to

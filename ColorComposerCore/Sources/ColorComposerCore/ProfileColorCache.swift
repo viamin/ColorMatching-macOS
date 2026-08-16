@@ -70,6 +70,7 @@ public extension CachedProfileColors {
 public struct ProfileColorCache: Sendable {
     public enum CacheError: Error, Equatable {
         case rootIsNotDirectory
+        case serverDirectoryIsNotDirectory
     }
 
     private static let directoryPrefix = "server-"
@@ -101,6 +102,7 @@ public struct ProfileColorCache: Sendable {
     /// a miss).
     public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
+        guard isOwnedDirectory(directory(for: normalizedServerBaseUrl)) else { return nil }
         guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: normalizedServerBaseUrl)),
               entry.profileId == profileID,
               Self.normalizedServerBaseUrl(entry.serverBaseUrl) == normalizedServerBaseUrl else { return nil }
@@ -114,6 +116,7 @@ public struct ProfileColorCache: Sendable {
     public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
         let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
         let serverDirectory = directory(for: normalizedServerBaseUrl)
+        guard isOwnedDirectory(serverDirectory) else { return [] }
         let files = (try? FileManager.default.contentsOfDirectory(
             at: serverDirectory,
             includingPropertiesForKeys: nil
@@ -137,7 +140,7 @@ public struct ProfileColorCache: Sendable {
     public func store(_ entry: CachedProfileColors) throws {
         let normalizedEntry = normalized(entry)
         let serverDirectory = directory(for: normalizedEntry.serverBaseUrl)
-        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try ensureWritableDirectory(serverDirectory)
         try encode(normalizedEntry).write(
             to: fileURL(for: normalizedEntry.profileId, serverBaseUrl: normalizedEntry.serverBaseUrl),
             options: .atomic
@@ -152,7 +155,7 @@ public struct ProfileColorCache: Sendable {
         let fileManager = FileManager.default
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory) else { return }
-        guard isDirectory.boolValue else {
+        guard isDirectory.boolValue, isOwnedDirectory(directory) else {
             throw CacheError.rootIsNotDirectory
         }
         for item in try fileManager.contentsOfDirectory(
@@ -195,9 +198,8 @@ public struct ProfileColorCache: Sendable {
 
     private func isCacheDirectory(_ url: URL) -> Bool {
         guard url.lastPathComponent.hasPrefix(Self.directoryPrefix),
-              let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
-              values.isSymbolicLink != true else { return false }
-        return values.isDirectory == true
+              isOwnedDirectory(url) else { return false }
+        return true
     }
 
     /// Cache keys should ignore harmless URL spelling differences like a
@@ -257,6 +259,23 @@ public struct ProfileColorCache: Sendable {
         guard isRegularFile(url),
               let data = try? Data(contentsOf: url) else { return nil }
         return decode(data)
+    }
+
+    private func ensureWritableDirectory(_ url: URL) throws {
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+            return try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+        guard isDirectory.boolValue, isOwnedDirectory(url) else {
+            throw CacheError.serverDirectoryIsNotDirectory
+        }
+    }
+
+    private func isOwnedDirectory(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
+              values.isSymbolicLink != true else { return false }
+        return values.isDirectory == true
     }
 
     private func isRegularFile(_ url: URL) -> Bool {
