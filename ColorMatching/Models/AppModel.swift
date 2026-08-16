@@ -181,8 +181,12 @@ final class AppModel {
 
     /// Handles edits to any solver input. Existing output is invalidated
     /// immediately; when auto-regenerate is enabled, a fresh solve is queued.
+    /// Keep the pipeline alive across repeated edits while a debounced or
+    /// in-flight solve is already pending, otherwise a later edit could cancel
+    /// that work and leave the document with no replacement result.
     func handleUpstreamChange() {
-        let shouldAutoRegenerate = autoRegenerate && hasResult
+        let shouldAutoRegenerate = autoRegenerate &&
+            (hasResult || isSolving || debounceTask != nil || solveTask != nil)
         invalidateGeneratedOutput()
         guard shouldAutoRegenerate, canGenerate else { return }
         scheduleDebouncedSolve()
