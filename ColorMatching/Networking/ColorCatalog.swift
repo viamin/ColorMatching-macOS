@@ -168,6 +168,8 @@ final class ColorCatalog {
         guard let client, let profileID = selectedPrinterProfileID else { return }
         isWorking = true
         let shouldClearStaleColors = loadedPrinterProfileID != profileID
+        let previousColorsForProfile = colorsForProfile
+        let previousLoadedPrinterProfileID = loadedPrinterProfileID
         loadedPrinterProfileID = nil
         loadedProjectPaletteWithoutProfile = false
         colorsForProfile = nil
@@ -188,9 +190,21 @@ final class ColorCatalog {
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         } catch let error as PaletteAPIError {
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
+            restoreLoadedProfileIfNeeded(
+                shouldClearStaleColors: shouldClearStaleColors,
+                profileID: profileID,
+                previousLoadedPrinterProfileID: previousLoadedPrinterProfileID,
+                previousColorsForProfile: previousColorsForProfile
+            )
             connectionMessage = error.errorDescription
         } catch {
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
+            restoreLoadedProfileIfNeeded(
+                shouldClearStaleColors: shouldClearStaleColors,
+                profileID: profileID,
+                previousLoadedPrinterProfileID: previousLoadedPrinterProfileID,
+                previousColorsForProfile: previousColorsForProfile
+            )
             connectionMessage = "Could not load colors."
         }
     }
@@ -217,5 +231,16 @@ final class ColorCatalog {
         setSelectedPrinterProfileID(nil, fetchColors: false)
         clearLoadedPalette()
         connectionMessage = nil
+    }
+
+    private func restoreLoadedProfileIfNeeded(
+        shouldClearStaleColors: Bool,
+        profileID: Int,
+        previousLoadedPrinterProfileID: Int?,
+        previousColorsForProfile: PrinterProfileDTO?
+    ) {
+        guard !shouldClearStaleColors, previousLoadedPrinterProfileID == profileID else { return }
+        loadedPrinterProfileID = profileID
+        colorsForProfile = previousColorsForProfile
     }
 }
