@@ -572,6 +572,20 @@ final class ColorCatalog {
         !printerProfiles.isEmpty && loadedPrinterProfilesServer == cacheServer
     }
 
+    /// Loaded color state includes metadata too, not just non-empty palettes:
+    /// a zero-color fetch still stamps `lastRefresh`, server/profile ownership,
+    /// and possibly cache provenance, all of which become stale when the
+    /// selection or configured server changes.
+    private var hasLoadedColorState: Bool {
+        !colors.isEmpty
+            || colorsForProfile != nil
+            || loadedColorsProfileID != nil
+            || loadedColorsServer != nil
+            || lastRefresh != nil
+            || colorsLoadedFromProject
+            || isServingFromCache
+    }
+
     private var loadedColorsBelongToCurrentServer: Bool {
         colorsLoadedFromProject || loadedColorsServer == cacheServer
     }
@@ -597,7 +611,7 @@ final class ColorCatalog {
     /// picks a concrete profile, those colors no longer describe the
     /// selection shown in the picker.
     private func clearLoadedColorsIfSelectionChanged() {
-        guard let selectedPrinterProfileID, !colors.isEmpty else { return }
+        guard let selectedPrinterProfileID, hasLoadedColorState else { return }
         guard loadedColorsProfileID != selectedPrinterProfileID else { return }
         clearLoadedColors()
     }
@@ -616,7 +630,7 @@ final class ColorCatalog {
     /// profile id happens to exist on both servers. A loaded project snapshot
     /// still survives because it is the user's chosen document state.
     private func clearLoadedColorsIfServerChanged() {
-        guard !colorsLoadedFromProject, !colors.isEmpty else { return }
+        guard !colorsLoadedFromProject, hasLoadedColorState else { return }
         guard let loadedColorsServer, loadedColorsServer != cacheServer else { return }
         clearLoadedColors()
     }
