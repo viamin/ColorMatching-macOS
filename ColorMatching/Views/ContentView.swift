@@ -45,6 +45,25 @@ struct ContentView: View {
                     Label("Print", systemImage: "printer")
                 }
                 .disabled(!model.hasResult)
+
+                if model.tilingEnabled {
+                    Button {
+                        FilePanels.chooseDirectory { url in
+                            do { try model.exportTiles(to: url) }
+                            catch { NSAlert(error: error).runModal() }
+                        }
+                    } label: {
+                        Label("Export Tiles", systemImage: "square.grid.3x3")
+                    }
+                    .disabled(!model.hasResult)
+
+                    Button {
+                        model.printTiles()
+                    } label: {
+                        Label("Print Tiles", systemImage: "printer.filled.and.paper")
+                    }
+                    .disabled(!model.hasResult)
+                }
             }
         }
     }
@@ -61,6 +80,7 @@ struct SidebarView: View {
                 ProfileSection()
                 SourceImagesSection()
                 CompositionSettingsSection()
+                TilingSettingsSection()
             }
             .padding()
         }

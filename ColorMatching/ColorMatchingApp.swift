@@ -26,6 +26,13 @@ struct ColorMatchingApp: App {
                 Button("Export Composite…") { exportComposite() }
                     .keyboardShortcut("e", modifiers: [.command, .shift])
                     .disabled(!model.hasResult)
+                if model.tilingEnabled {
+                    Divider()
+                    Button("Export Tiles…") { exportTiles() }
+                        .disabled(!model.hasResult)
+                    Button("Print Tiles") { model.printTiles() }
+                        .disabled(!model.hasResult)
+                }
             }
             // Replaces the default ⌘P print item so the File menu carries only
             // one Print… command, bound to the generated composition.
@@ -68,6 +75,13 @@ struct ColorMatchingApp: App {
     private func exportComposite() {
         FilePanels.exportImage { url in
             do { try model.exportComposite(to: url) }
+            catch { NSApp.presentError(error) }
+        }
+    }
+
+    private func exportTiles() {
+        FilePanels.chooseDirectory { url in
+            do { try model.exportTiles(to: url) }
             catch { NSApp.presentError(error) }
         }
     }
@@ -158,5 +172,16 @@ enum FilePanels {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         if panel.runModal() == .OK { onComplete(panel.urls) }
+    }
+
+    /// Prompts for a destination folder, used to export one image file per
+    /// tile for large-format artwork.
+    static func chooseDirectory(onComplete: @escaping (URL) -> Void) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let url = panel.url { onComplete(url) }
     }
 }
