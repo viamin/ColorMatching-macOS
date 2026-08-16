@@ -48,7 +48,7 @@ public extension CachedProfileColors {
     /// to serve offline. Cached profiles without any convertible colors are
     /// not useful fallbacks and should stay out of the offline picker too.
     var hasServableColors: Bool {
-        !domainColors.isEmpty
+        colors.contains { $0.toDomain() != nil }
     }
 }
 
