@@ -113,19 +113,26 @@ final class ColorCatalog {
     private func fetchColorsIfPossible() async {
         guard let client, let profileID = selectedPrinterProfileID else { return }
         isWorking = true
+        let shouldClearStaleColors = loadedPrinterProfileID != profileID
         loadedPrinterProfileID = nil
         colorsForProfile = nil
+        if shouldClearStaleColors {
+            colors = []
+        }
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            guard selectedPrinterProfileID == profileID else { return }
             colors = dtos.compactMap { $0.toDomain() }
             loadedPrinterProfileID = profileID
             colorsForProfile = profile
             lastRefresh = Date()
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         } catch let error as PaletteAPIError {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = error.errorDescription
         } catch {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = "Could not load colors."
         }
     }
