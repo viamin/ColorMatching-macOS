@@ -204,6 +204,16 @@ final class ColorCatalog {
         return colorFetchRequestID
     }
 
+    /// Loading a saved project snapshot is a local state restore, not a
+    /// network refresh. Any in-flight request that started before that restore
+    /// must be ignored when it finishes, even if the caller did not happen to
+    /// reconfigure the catalog first.
+    private func invalidateOutstandingRequests() {
+        connectionRequestID += 1
+        profileRefreshRequestID += 1
+        colorFetchRequestID += 1
+    }
+
     private func restoreSelectedPrinterProfileID(_ profileID: Int?) {
         suppressesSelectionFetch = true
         defer { suppressesSelectionFetch = false }
@@ -382,6 +392,7 @@ final class ColorCatalog {
     /// keep offering stale profiles that no longer match the configured server.
     @MainActor
     func loadProjectColors(_ projectColors: [PaletteColor], profileID: Int?) {
+        invalidateOutstandingRequests()
         if loadedPrinterProfilesServer != cacheServer {
             printerProfiles = []
             printerProfilesAreCached = false
