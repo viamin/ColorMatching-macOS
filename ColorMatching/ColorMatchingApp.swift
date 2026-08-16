@@ -116,15 +116,29 @@ private struct PreviewCommands: Commands {
     var body: some Commands {
         CommandMenu("Preview") {
             ForEach(Array(PreviewMode.allCases.enumerated()), id: \.element) { (index, mode) in
-                if let shortcut = previewShortcut(for: index + 1) {
-                    Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
-                        .keyboardShortcut(shortcut)
-                        .disabled(previewModeBinding == nil)
-                } else {
-                    Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
-                        .disabled(previewModeBinding == nil)
-                }
+                previewButton(for: mode, shortcutIndex: index + 1)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func previewButton(for mode: PreviewMode, shortcutIndex: Int) -> some View {
+        if let shortcut = previewShortcut(for: shortcutIndex) {
+            Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
+                .keyboardShortcut(shortcut)
+                .disabled(!hasFocusedPreview)
+        } else {
+            Button(mode.menuTitle) { previewModeBinding?.wrappedValue = mode }
+                .disabled(!hasFocusedPreview)
+        }
+    }
+
+    private var hasFocusedPreview: Bool {
+        switch previewModeBinding {
+        case .some:
+            return true
+        case .none:
+            return false
         }
     }
 
