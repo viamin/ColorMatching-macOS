@@ -52,6 +52,10 @@ final class ColorCatalog {
 
     private var client: PaletteAPIClient?
     private let cache: ProfileColorCache
+    /// Multiple request paths can overlap (for example a refresh updating the
+    /// selection, whose `didSet` launches a color fetch). Track the count so a
+    /// finishing request does not re-enable the UI while another is still live.
+    private var inFlightRequests = 0
     /// True when `printerProfiles` were offered from the offline cache because
     /// the server could not be reached at all.
     private var printerProfilesAreCached = false
@@ -139,6 +143,16 @@ final class ColorCatalog {
         client.map { ProfileColorCache.normalizedServerBaseUrl($0.baseURL.absoluteString) }
     }
 
+    private func beginRequest() {
+        inFlightRequests += 1
+        isWorking = true
+    }
+
+    private func endRequest() {
+        inFlightRequests = max(0, inFlightRequests - 1)
+        isWorking = inFlightRequests > 0
+    }
+
     // MARK: - Actions
 
     func testConnection() async {
@@ -148,8 +162,8 @@ final class ColorCatalog {
         }
         retireStaleCacheBackedState()
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
-        isWorking = true
-        defer { isWorking = false }
+        beginRequest()
+        defer { endRequest() }
         do {
             try await client.testConnection()
             // A late result describes the server it was sent to, which may no
@@ -170,8 +184,8 @@ final class ColorCatalog {
         }
         retireStaleCacheBackedState()
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
-        isWorking = true
-        defer { isWorking = false }
+        beginRequest()
+        defer { endRequest() }
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             // The server may have changed while the request was in flight;
@@ -246,8 +260,8 @@ final class ColorCatalog {
         retireStaleCacheBackedState()
         guard let profileID = selectedPrinterProfileID else { return }
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
-        isWorking = true
-        defer { isWorking = false }
+        beginRequest()
+        defer { endRequest() }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             // The selection or server may have changed while the request was
