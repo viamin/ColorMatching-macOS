@@ -452,7 +452,7 @@ final class ColorCatalog {
     /// picker does not mislabel it as belonging to the current server.
     private func serveCachedProfilesIfUnavailable() {
         guard let server = cacheServer, !keepsProfilesForCurrentServer else { return }
-        let cachedProfiles = cache.allEntries(serverBaseUrl: server)
+        var cachedProfiles = cache.allEntries(serverBaseUrl: server)
             .filter(\.hasServableColors)
             .map { entry in
                 entry.profile ?? PrinterProfileDTO(
@@ -474,13 +474,18 @@ final class ColorCatalog {
             clearCacheBackedServerIfUnused()
             return
         }
+        if keepsActiveSelectionVisible, let selectedPrinterProfileID, !cachedProfiles.contains(where: { $0.id == selectedPrinterProfileID }) {
+            cachedProfiles.append(PrinterProfileDTO(
+                id: selectedPrinterProfileID,
+                printerMakeModel: nil,
+                paperType: nil,
+                inkType: nil
+            ))
+        }
         printerProfiles = cachedProfiles
         printerProfilesAreCached = true
         loadedPrinterProfilesServer = server
         cacheBackedServer = server
-        if keepsActiveSelectionVisible {
-            ensureVisiblePrinterProfile(selectedPrinterProfileID)
-        }
         _ = reconcileSelectedProfile(with: cachedProfiles)
     }
 
