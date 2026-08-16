@@ -190,8 +190,8 @@ public struct ProfileColorCache: Sendable {
         if path == "/" {
             components.percentEncodedPath = ""
         } else if !path.isEmpty {
-            components.percentEncodedPath = String(path.drop(while: { $0 == "/" }).dropLast(while: { $0 == "/" }))
-            components.percentEncodedPath = "/\(components.percentEncodedPath)"
+            let trimmedPath = String(path.drop(while: { $0 == "/" }).dropLast(while: { $0 == "/" }))
+            components.percentEncodedPath = trimmedPath.isEmpty ? "" : "/\(trimmedPath)"
         }
 
         return components.string ?? serverBaseUrl
