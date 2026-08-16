@@ -94,9 +94,10 @@ public struct ProfileColorCache: Sendable {
     /// stored profile id or server disagrees with the request — all count as
     /// a miss).
     public func entry(for profileID: Int, serverBaseUrl: String) -> CachedProfileColors? {
-        guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: serverBaseUrl)),
+        let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
+        guard let entry = entry(at: fileURL(for: profileID, serverBaseUrl: normalizedServerBaseUrl)),
               entry.profileId == profileID,
-              entry.serverBaseUrl == serverBaseUrl else { return nil }
+              Self.normalizedServerBaseUrl(entry.serverBaseUrl) == normalizedServerBaseUrl else { return nil }
         return entry
     }
 
@@ -105,7 +106,8 @@ public struct ProfileColorCache: Sendable {
     /// matching stored id and server are returned. Used to offer cached
     /// profiles in the picker when the server cannot be reached at all.
     public func allEntries(serverBaseUrl: String) -> [CachedProfileColors] {
-        let serverDirectory = directory(for: serverBaseUrl)
+        let normalizedServerBaseUrl = Self.normalizedServerBaseUrl(serverBaseUrl)
+        let serverDirectory = directory(for: normalizedServerBaseUrl)
         let files = (try? FileManager.default.contentsOfDirectory(
             at: serverDirectory,
             includingPropertiesForKeys: nil
@@ -115,7 +117,7 @@ public struct ProfileColorCache: Sendable {
                 guard let id = Self.profileID(fromFileURL: url),
                       let entry = entry(at: url),
                       entry.profileId == id,
-                      entry.serverBaseUrl == serverBaseUrl else { return nil }
+                      Self.normalizedServerBaseUrl(entry.serverBaseUrl) == normalizedServerBaseUrl else { return nil }
                 return entry
             }
             .sorted { $0.profileId < $1.profileId }
@@ -127,10 +129,11 @@ public struct ProfileColorCache: Sendable {
     /// servers' entries for the same profile id live in different
     /// subdirectories and do not overwrite one another.
     public func store(_ entry: CachedProfileColors) throws {
-        let serverDirectory = directory(for: entry.serverBaseUrl)
+        let normalizedEntry = normalized(entry)
+        let serverDirectory = directory(for: normalizedEntry.serverBaseUrl)
         try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
-        try encode(entry).write(
-            to: fileURL(for: entry.profileId, serverBaseUrl: entry.serverBaseUrl),
+        try encode(normalizedEntry).write(
+            to: fileURL(for: normalizedEntry.profileId, serverBaseUrl: normalizedEntry.serverBaseUrl),
             options: .atomic
         )
     }
@@ -168,6 +171,36 @@ public struct ProfileColorCache: Sendable {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "=", with: "")
         return "server-\(safe)"
+    }
+
+    /// Cache keys should ignore harmless URL spelling differences like a
+    /// trailing slash or host capitalization, so one logical server maps to
+    /// one cache namespace.
+    private static func normalizedServerBaseUrl(_ serverBaseUrl: String) -> String {
+        guard var components = URLComponents(string: serverBaseUrl) else { return serverBaseUrl }
+        components.host = components.host?.lowercased()
+        components.query = nil
+        components.fragment = nil
+
+        let path = components.percentEncodedPath
+        if path == "/" {
+            components.percentEncodedPath = ""
+        } else if !path.isEmpty {
+            components.percentEncodedPath = String(path.drop(while: { $0 == "/" }).dropLast(while: { $0 == "/" }))
+            components.percentEncodedPath = "/\(components.percentEncodedPath)"
+        }
+
+        return components.string ?? serverBaseUrl
+    }
+
+    private func normalized(_ entry: CachedProfileColors) -> CachedProfileColors {
+        CachedProfileColors(
+            serverBaseUrl: Self.normalizedServerBaseUrl(entry.serverBaseUrl),
+            profileId: entry.profileId,
+            profile: entry.profile,
+            colors: entry.colors,
+            fetchedAt: entry.fetchedAt
+        )
     }
 
     private func entry(at url: URL) -> CachedProfileColors? {
