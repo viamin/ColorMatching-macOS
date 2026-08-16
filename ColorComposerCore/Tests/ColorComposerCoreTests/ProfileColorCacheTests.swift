@@ -252,6 +252,20 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
     }
 
+    func testSymbolicLinkCacheFileCountsAsMiss() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        let foreignFile = directory.appendingPathComponent("foreign-profile.json")
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try encode(try makeEntry(profileID: 5)).write(to: foreignFile)
+        try FileManager.default.createSymbolicLink(
+            at: serverDirectory.appendingPathComponent("profile-5.json"),
+            withDestinationURL: foreignFile
+        )
+
+        XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
+    }
+
     func testEntryWhoseStoredIDDisagreesWithFilenameCountsAsMiss() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
@@ -288,6 +302,21 @@ final class ProfileColorCacheTests: XCTestCase {
             .write(to: serverDirectory.appendingPathComponent("profile-9.json"))
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1, 2, 3])
+    }
+
+    func testAllEntriesSkipsSymbolicLinkCacheFiles() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = serverDirectory()
+        let foreignFile = directory.appendingPathComponent("foreign-profile.json")
+        try FileManager.default.createDirectory(at: serverDirectory, withIntermediateDirectories: true)
+        try cache.store(try makeEntry(profileID: 1))
+        try encode(try makeEntry(profileID: 9)).write(to: foreignFile)
+        try FileManager.default.createSymbolicLink(
+            at: serverDirectory.appendingPathComponent("profile-9.json"),
+            withDestinationURL: foreignFile
+        )
+
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [1])
     }
 
     func testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename() throws {
@@ -519,5 +548,12 @@ final class ProfileColorCacheTests: XCTestCase {
         let entry = try XCTUnwrap(cache.entry(for: 6, serverBaseUrl: "http://localhost:4000/colors"))
 
         XCTAssertEqual(entry.serverBaseUrl, "http://localhost:4000/colors")
+    }
+
+    private func encode(_ entry: CachedProfileColors) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(entry)
     }
 }

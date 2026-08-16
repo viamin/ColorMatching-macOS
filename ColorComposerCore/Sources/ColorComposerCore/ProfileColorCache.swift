@@ -241,8 +241,15 @@ public struct ProfileColorCache: Sendable {
     }
 
     private func entry(at url: URL) -> CachedProfileColors? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
+        guard isRegularFile(url),
+              let data = try? Data(contentsOf: url) else { return nil }
         return decode(data)
+    }
+
+    private func isRegularFile(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
+              values.isSymbolicLink != true else { return false }
+        return values.isRegularFile == true
     }
 
     private func encode(_ entry: CachedProfileColors) throws -> Data {
