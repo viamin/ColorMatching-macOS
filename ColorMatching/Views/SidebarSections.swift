@@ -156,10 +156,22 @@ struct SourceLayerRow: View {
         }
         .padding(6)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
-        .onChange(of: layer.inverted) { model.handleUpstreamChange() }
-        .onChange(of: layer.scalingMode) { model.handleUpstreamChange() }
-        .onChange(of: layer.assignedCondition) { model.handleUpstreamChange() }
-        .onChange(of: layer.colorSpace) { model.handleUpstreamChange() }
+        .onChange(of: layer.inverted) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.scalingMode) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.assignedCondition) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.colorSpace) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
     }
 }
 
