@@ -194,6 +194,7 @@ final class AppModel {
         clearGeneratedOutput()
         solveQueued = false
         solveGeneration += 1
+        previewStateID = UUID()
     }
 
     /// Handles edits to any solver input. Existing output is invalidated
