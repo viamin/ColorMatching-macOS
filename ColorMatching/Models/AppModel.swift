@@ -116,7 +116,7 @@ final class AppModel {
     /// change — earlier pending solves are canceled, so only the latest input
     /// produces a result.
     func scheduleAutoRegenerate() {
-        guard autoRegenerate, hasResult, !catalog.colors.isEmpty else { return }
+        guard autoRegenerate, hasResult, canGenerate else { return }
 
         debounceTask?.cancel()
         debounceTask = Task { [weak self] in
@@ -134,6 +134,8 @@ final class AppModel {
     /// launched — and so `solveTask` never points to the task currently
     /// executing `generate()` (which would cancel itself).
     func runSolve() {
+        debounceTask?.cancel()
+        debounceTask = nil
         solveTask?.cancel()
         let task = Task { [weak self] in
             guard let self else { return }
