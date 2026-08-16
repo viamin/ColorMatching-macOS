@@ -167,13 +167,17 @@ final class ColorCatalog {
         selectedPrinterProfileID = profileID
     }
 
+    private func includesProfile(_ profileID: Int) -> Bool {
+        printerProfiles.contains { $0.id == profileID }
+    }
+
     /// A saved project can refer to a profile id that the current on-screen
     /// list does not include yet (or no longer includes). Keep that selection
     /// representable in the picker until a later refresh replaces it with the
     /// server's current list.
     private func ensureVisiblePrinterProfile(_ profileID: Int?) {
         guard let profileID else { return }
-        guard !printerProfiles.map(\.id).contains(profileID) else { return }
+        guard !includesProfile(profileID) else { return }
         printerProfiles.append(PrinterProfileDTO(
             id: profileID,
             printerMakeModel: nil,
@@ -469,8 +473,7 @@ final class ColorCatalog {
             restoreSelectedPrinterProfileID(replacement)
             return replacement != nil
         }
-        let profileIDs = Set(profiles.map(\.id))
-        guard !profileIDs.contains(selectedPrinterProfileID) else { return false }
+        guard !profiles.contains(where: { $0.id == selectedPrinterProfileID }) else { return false }
         let replacement = profiles.first?.id
         let changed = replacement != selectedPrinterProfileID
         restoreSelectedPrinterProfileID(replacement)
@@ -529,8 +532,7 @@ final class ColorCatalog {
     /// the user can see or save.
     private func clearSelectedProfileIfUnavailable() {
         guard let selectedPrinterProfileID else { return }
-        let profileIDs = Set(printerProfiles.map(\.id))
-        guard !profileIDs.contains(selectedPrinterProfileID) else { return }
+        guard !includesProfile(selectedPrinterProfileID) else { return }
         restoreSelectedPrinterProfileID(nil)
     }
 
