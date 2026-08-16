@@ -48,16 +48,10 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
     }
 
     var shortcutKey: KeyEquivalent {
-        switch self {
-        case .composite: return "1"
-        case .errorMap: return "2"
-        case .gamut: return "3"
-        case .lighting(.white): return "4"
-        case .lighting(.red): return "5"
-        case .lighting(.green): return "6"
-        case .lighting(.blue): return "7"
-        case .lighting(.lps): return "8"
+        guard let index = Self.orderedModes.firstIndex(of: self) else {
+            return "0"
         }
+        return KeyEquivalent(Character(String(index + 1)))
     }
 }
 
