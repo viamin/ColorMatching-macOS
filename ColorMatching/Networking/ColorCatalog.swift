@@ -372,8 +372,9 @@ final class ColorCatalog {
         let profileIDs = Set(profiles.map(\.id))
         guard !profileIDs.contains(selectedPrinterProfileID) else { return false }
         let replacement = profiles.first?.id
+        let changed = replacement != selectedPrinterProfileID
         self.selectedPrinterProfileID = replacement
-        return replacement != selectedPrinterProfileID
+        return changed
     }
 
     private var keepsProfilesForCurrentServer: Bool {
