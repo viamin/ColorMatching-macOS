@@ -4,5 +4,6 @@ import XCTest
 final class LightingConditionTests: XCTestCase {
     func testCanonicalOrderMatchesPreviewShortcutNumbering() {
         XCTAssertEqual(LightingCondition.all, [.white, .red, .green, .blue, .lps])
+        XCTAssertEqual(LightingCondition.all.count, 5)
     }
 }
