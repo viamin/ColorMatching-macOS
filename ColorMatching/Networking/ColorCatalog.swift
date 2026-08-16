@@ -199,6 +199,7 @@ final class ColorCatalog {
         guard let profileID else { return }
         guard !includesProfile(profileID) else { return }
         printerProfiles.append(placeholderProfile(id: profileID))
+        printerProfiles.sort { $0.id < $1.id }
     }
 
     /// The picker changes selection synchronously, before any replacement fetch
