@@ -15,6 +15,7 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
+    var onPaletteLoaded: (() -> Void)?
     private(set) var loadedPrinterProfileID: Int?
     private var loadedProjectPaletteWithoutProfile = false
     private var colorFetchTask: Task<Void, Never>?
@@ -149,6 +150,7 @@ final class ColorCatalog {
         // offline snapshot, not a network refresh.
         lastRefresh = nil
         connectionMessage = "Loaded \(colors.count) color(s) from project."
+        onPaletteLoaded?()
     }
 
     private func setSelectedPrinterProfileID(_ id: Int?, fetchColors: Bool) {
@@ -193,6 +195,7 @@ final class ColorCatalog {
             colorsForProfile = profile
             lastRefresh = Date()
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
+            onPaletteLoaded?()
         } catch let error as PaletteAPIError {
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
             restoreLoadedProfileIfNeeded(

@@ -55,9 +55,6 @@ struct ProfileSection: View {
         .onChange(of: catalog.selectedPrinterProfileID) { _, _ in
             model.handleUpstreamChange()
         }
-        .onChange(of: catalog.lastRefresh) { _, _ in
-            model.handleUpstreamChange()
-        }
     }
 
     private func profileLabel(_ profile: PrinterProfileDTO) -> String {

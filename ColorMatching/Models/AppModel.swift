@@ -33,10 +33,14 @@ final class AppModel {
     /// the initial window's model and ⌘N's replacement model alike — starts
     /// able to reach the server without relying on an external configure call.
     init() {
+        catalog.onPaletteLoaded = { [weak self] in
+            self?.handleUpstreamChange()
+        }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
     }
 
     deinit {
+        catalog.onPaletteLoaded = nil
         cancelPendingWork()
     }
 
