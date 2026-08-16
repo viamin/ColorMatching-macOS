@@ -273,6 +273,14 @@ final class ColorCatalog {
         clearLoadedColorsWithoutSelection()
     }
 
+    /// Once color state has been cleared because the selection or server no
+    /// longer matches it, any status message describing those colors is stale
+    /// too. The next request or explicit load path can report fresh state.
+    private func clearColorMessageIfNoColorsRemain() {
+        guard !hasLoadedColorState else { return }
+        connectionMessage = nil
+    }
+
     // MARK: - Actions
 
     @MainActor
@@ -667,6 +675,7 @@ final class ColorCatalog {
         guard let selectedPrinterProfileID, hasLoadedColorState else { return }
         guard loadedColorsProfileID != selectedPrinterProfileID else { return }
         clearLoadedColors()
+        clearColorMessageIfNoColorsRemain()
     }
 
     /// A successful refresh can legitimately leave no selectable profile.
@@ -676,6 +685,7 @@ final class ColorCatalog {
     private func clearLoadedColorsWithoutSelection() {
         guard selectedPrinterProfileID == nil, !colorsLoadedFromProject else { return }
         clearLoadedColors()
+        clearColorMessageIfNoColorsRemain()
     }
 
     /// When the configured server changes, previously fetched live colors from
@@ -686,6 +696,7 @@ final class ColorCatalog {
         guard !colorsLoadedFromProject, hasLoadedColorState else { return }
         guard let loadedColorsServer, loadedColorsServer != cacheServer else { return }
         clearLoadedColors()
+        clearColorMessageIfNoColorsRemain()
     }
 
     /// Once stale colors are cleared, keep the selection only if the current
