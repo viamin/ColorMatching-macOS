@@ -54,8 +54,12 @@ final class ColorCatalog {
     }
 
     var isConfigured: Bool { client != nil }
+    /// A selection counts as loaded once the fetch (or project restore) for the
+    /// currently selected profile has completed, even if that profile contains
+    /// zero measured colors. An empty palette is still a real loaded result.
     var hasLoadedColorsForSelection: Bool {
-        !colors.isEmpty && loadedPrinterProfileID == selectedPrinterProfileID
+        guard let selectedPrinterProfileID else { return false }
+        return loadedPrinterProfileID == selectedPrinterProfileID
     }
 
     // MARK: - Actions
