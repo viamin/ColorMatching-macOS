@@ -53,7 +53,8 @@ final class ProfileColorCacheTests: XCTestCase {
     }
 
     private func serverDirectory(for serverBaseUrl: String = defaultServer) -> URL {
-        let safe = Data(serverBaseUrl.utf8).base64EncodedString()
+        let normalized = ProfileColorCache.normalizedServerBaseUrl(serverBaseUrl)
+        let safe = Data(normalized.utf8).base64EncodedString()
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "=", with: "")
@@ -252,6 +253,20 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertNil(cache.entry(for: 5, serverBaseUrl: defaultServer))
     }
 
+    func testEntryWhoseStoredServerDisagreesWithDirectoryCountsAsMiss() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
+        let oneServerDirectory = serverDirectory(for: "http://one.example:4000")
+        let twoServerDirectory = serverDirectory(for: "http://two.example:4000")
+        try FileManager.default.createDirectory(at: twoServerDirectory, withIntermediateDirectories: true)
+        try FileManager.default.moveItem(
+            at: oneServerDirectory.appendingPathComponent("profile-3.json"),
+            to: twoServerDirectory.appendingPathComponent("profile-3.json")
+        )
+
+        XCTAssertNil(cache.entry(for: 3, serverBaseUrl: "http://two.example:4000"))
+    }
+
     func testAllEntriesSkipsCorruptFilesAndSortsByProfile() throws {
         let cache = ProfileColorCache(directory: directory)
         try cache.store(try makeEntry(profileID: 3))
@@ -275,6 +290,21 @@ final class ProfileColorCacheTests: XCTestCase {
         try cache.store(try makeEntry(profileID: 2))
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: defaultServer).map(\.profileId), [2])
+    }
+
+    func testAllEntriesSkipsEntriesWhoseStoredServerDisagreesWithDirectory() throws {
+        let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
+        let oneServerDirectory = serverDirectory(for: "http://one.example:4000")
+        let twoServerDirectory = serverDirectory(for: "http://two.example:4000")
+        try FileManager.default.createDirectory(at: twoServerDirectory, withIntermediateDirectories: true)
+        try FileManager.default.moveItem(
+            at: oneServerDirectory.appendingPathComponent("profile-3.json"),
+            to: twoServerDirectory.appendingPathComponent("profile-3.json")
+        )
+        try cache.store(try makeEntry(profileID: 2, serverBaseUrl: "http://two.example:4000"))
+
+        XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://two.example:4000").map(\.profileId), [2])
     }
 
     func testAllEntriesIgnoresFilesOutsideTheNamingContract() throws {
