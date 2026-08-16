@@ -180,6 +180,7 @@ private struct DocumentCommands: Commands {
             if context?.tilingEnabled == true {
                 Divider()
                 Button("Export Tiles…") { context?.exportTiles() }
+                    .keyboardShortcut("e", modifiers: [.command, .shift, .option])
                     .disabled(!(context?.canExportTiles ?? false))
                 Button("Print Tiles") { context?.printTiles() }
                     .disabled(!(context?.canExportTiles ?? false))

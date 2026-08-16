@@ -56,7 +56,8 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 | ⌘↩ | Generate (requires colors loaded for the selected profile, from the server or a saved project) |
 | ⌘O / ⌘⌥O | Open Project… / Add Images… |
 | ⌘S / ⌘⌥S | Save Project / Save Project As… |
-| ⇧⌘E / ⌘P | Export Composite… / Print… (require a generated composition) |
+| ⇧⌘E / ⌥⇧⌘E | Export Composite… / Export Tiles… (tile export appears only when tiling is enabled; both require generated output) |
+| ⌘P | Print… (requires a generated composition) |
 | ⌘N | New Project |
 
 ## Architecture
