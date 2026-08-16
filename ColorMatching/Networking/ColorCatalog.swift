@@ -154,6 +154,24 @@ final class ColorCatalog {
         client.map { ProfileColorCache.normalizedServerBaseUrl($0.baseURL.absoluteString) }
     }
 
+    /// A live or cached profile list from another server must not remain
+    /// selectable once the user acts on the newly configured server. Keep only
+    /// a still-visible active selection (for current colors or a loaded
+    /// project) as a placeholder; otherwise clear the stale list entirely so a
+    /// later fetch never sends another server's profile id to this one.
+    private func retireStaleProfileListForServerAction() {
+        guard loadedPrinterProfilesServer != cacheServer else { return }
+        printerProfiles = []
+        printerProfilesAreCached = false
+        loadedPrinterProfilesServer = nil
+        if keepsActiveSelectionVisible {
+            ensureVisiblePrinterProfile(selectedPrinterProfileID)
+        } else {
+            clearSelectedProfileIfUnavailable()
+        }
+        clearCacheBackedServerIfUnused()
+    }
+
     private func beginRequest() {
         inFlightRequests += 1
         isWorking = true
@@ -334,6 +352,7 @@ final class ColorCatalog {
         // selection; fetching afterwards would only be discarded.)
         guard let client else { return }
         retireStaleCacheBackedState()
+        retireStaleProfileListForServerAction()
         clearLoadedColorsIfServerChanged()
         guard let profileID = selectedPrinterProfileID else { return }
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
