@@ -127,9 +127,16 @@ public struct PrintLayout: Sendable, Equatable {
             ),
             trimRect: trimRect,
             artworkRect: artworkRect,
-            cropMarks: cropMarks(for: trimRect, inset: markInset, length: markLength, enabled: options.showsMarks),
+            cropMarks: cropMarks(
+                for: trimRect,
+                artworkRect: artworkRect,
+                inset: markInset,
+                length: markLength,
+                enabled: options.showsMarks
+            ),
             registrationMarks: registrationMarks(
                 for: trimRect,
+                artworkRect: artworkRect,
                 inset: markInset,
                 radius: registrationRadius,
                 enabled: options.showsMarks
@@ -157,12 +164,18 @@ public struct PrintLayout: Sendable, Equatable {
         (radius * 2) + registrationCrosshairExtensionMM
     }
 
-    private static func cropMarks(for rect: Rect, inset: Double, length: Double, enabled: Bool) -> [Line] {
+    private static func cropMarks(
+        for rect: Rect,
+        artworkRect: Rect,
+        inset: Double,
+        length: Double,
+        enabled: Bool
+    ) -> [Line] {
         guard enabled else { return [] }
-        let top = rect.minY - inset
-        let bottom = rect.maxY + inset
-        let left = rect.minX - inset
-        let right = rect.maxX + inset
+        let top = artworkRect.minY - inset
+        let bottom = artworkRect.maxY + inset
+        let left = artworkRect.minX - inset
+        let right = artworkRect.maxX + inset
 
         return [
             Line(start: Point(x: rect.minX, y: top - length), end: Point(x: rect.minX, y: top)),
@@ -178,6 +191,7 @@ public struct PrintLayout: Sendable, Equatable {
 
     private static func registrationMarks(
         for rect: Rect,
+        artworkRect: Rect,
         inset: Double,
         radius: Double,
         enabled: Bool
@@ -185,10 +199,10 @@ public struct PrintLayout: Sendable, Equatable {
         guard enabled else { return [] }
         let offset = inset + radius
         return [
-            RegistrationMark(center: Point(x: rect.midX, y: rect.minY - offset), radius: radius),
-            RegistrationMark(center: Point(x: rect.midX, y: rect.maxY + offset), radius: radius),
-            RegistrationMark(center: Point(x: rect.minX - offset, y: rect.midY), radius: radius),
-            RegistrationMark(center: Point(x: rect.maxX + offset, y: rect.midY), radius: radius)
+            RegistrationMark(center: Point(x: rect.midX, y: artworkRect.minY - offset), radius: radius),
+            RegistrationMark(center: Point(x: rect.midX, y: artworkRect.maxY + offset), radius: radius),
+            RegistrationMark(center: Point(x: artworkRect.minX - offset, y: rect.midY), radius: radius),
+            RegistrationMark(center: Point(x: artworkRect.maxX + offset, y: rect.midY), radius: radius)
         ]
     }
 }

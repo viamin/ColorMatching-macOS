@@ -28,6 +28,22 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(layout.registrationMarks.count, 4)
     }
 
+    func testBleedPushesMarksOutsideArtworkBounds() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: 100, height: 80),
+            options: PrintOverlayOptions(showsMarks: true, markInsetMM: 2, bleedMM: 5)
+        )
+
+        XCTAssertEqual(
+            layout.cropMarks.first,
+            .init(start: .init(x: 15, y: 2), end: .init(x: 15, y: 8))
+        )
+        XCTAssertEqual(
+            layout.registrationMarks.first,
+            .init(center: .init(x: 65, y: 5), radius: 3)
+        )
+    }
+
     func testCropMarksAndRegistrationMarksUseRequestedInset() {
         let layout = PrintLayout.make(
             physicalSizeMM: .init(width: 40, height: 20),
