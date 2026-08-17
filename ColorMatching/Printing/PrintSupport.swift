@@ -29,11 +29,12 @@ enum PrintSupport {
             height: layout.canvasSize.height * pointsPerMM
         )
 
-        let printInfo = NSPrintInfo.shared
+        let printInfo = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo.shared
         // Keep reasonable default margins; the user can still adjust in the panel.
         printInfo.leftMargin = max(printInfo.leftMargin, 18)
         printInfo.rightMargin = max(printInfo.rightMargin, 18)
         printInfo.topMargin = max(printInfo.topMargin, 18)
+        printInfo.bottomMargin = max(printInfo.bottomMargin, 18)
         let operation = NSPrintOperation(view: view, printInfo: printInfo)
         operation.jobTitle = title
         operation.showsPrintPanel = true
@@ -75,10 +76,10 @@ private final class PrintableImageView: NSView {
         guard layout.artworkRect != layout.trimRect, let bleedSlices else { return }
         let artworkRect = scaledRect(layout.artworkRect)
         let trimRect = scaledRect(layout.trimRect)
-        let leftWidth = trimRect.minX - artworkRect.minX
-        let rightWidth = artworkRect.maxX - trimRect.maxX
-        let topHeight = trimRect.minY - artworkRect.minY
-        let bottomHeight = artworkRect.maxY - trimRect.maxY
+        let leftWidth = max(0, trimRect.minX - artworkRect.minX)
+        let rightWidth = max(0, artworkRect.maxX - trimRect.maxX)
+        let topHeight = max(0, trimRect.minY - artworkRect.minY)
+        let bottomHeight = max(0, artworkRect.maxY - trimRect.maxY)
 
         bleedSlices.topLeft.draw(in: NSRect(x: artworkRect.minX, y: artworkRect.minY, width: leftWidth, height: topHeight))
         bleedSlices.top.draw(in: NSRect(x: trimRect.minX, y: artworkRect.minY, width: trimRect.width, height: topHeight))
@@ -106,7 +107,7 @@ private final class PrintableImageView: NSView {
 
         for mark in layout.registrationMarks {
             let center = scaledPoint(mark.center)
-            let radius = scale(mark.radius)
+            let radius = min(scaleX(mark.radius), scaleY(mark.radius))
             let circleRect = NSRect(
                 x: center.x - radius,
                 y: center.y - radius,
@@ -118,7 +119,7 @@ private final class PrintableImageView: NSView {
             circle.lineWidth = 0.75
             circle.stroke()
 
-            let crosshair = radius + scale(2)
+            let crosshair = radius + min(scaleX(2), scaleY(2))
             let crosshairPath = NSBezierPath()
             crosshairPath.lineWidth = 0.75
             crosshairPath.move(to: NSPoint(x: center.x - crosshair, y: center.y))
@@ -130,15 +131,19 @@ private final class PrintableImageView: NSView {
     }
 
     private func scaledRect(_ rect: PrintLayout.Rect) -> NSRect {
-        NSRect(x: scale(rect.x), y: scale(rect.y), width: scale(rect.width), height: scale(rect.height))
+        NSRect(x: scaleX(rect.x), y: scaleY(rect.y), width: scaleX(rect.width), height: scaleY(rect.height))
     }
 
     private func scaledPoint(_ point: PrintLayout.Point) -> NSPoint {
-        NSPoint(x: scale(point.x), y: scale(point.y))
+        NSPoint(x: scaleX(point.x), y: scaleY(point.y))
     }
 
-    private func scale(_ millimeters: Double) -> CGFloat {
+    private func scaleX(_ millimeters: Double) -> CGFloat {
         CGFloat(millimeters / layout.canvasSize.width) * bounds.width
+    }
+
+    private func scaleY(_ millimeters: Double) -> CGFloat {
+        CGFloat(millimeters / layout.canvasSize.height) * bounds.height
     }
 }
 
@@ -153,6 +158,7 @@ private struct BleedSlices {
     let bottomRight: NSImage
 
     init?(raster: RGBAImage) {
+        guard raster.width > 0, raster.height > 0 else { return nil }
         guard
             let topLeft = Self.image(from: raster, x: 0, y: 0, width: 1, height: 1),
             let top = Self.image(from: raster, x: 0, y: 0, width: raster.width, height: 1),

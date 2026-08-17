@@ -48,4 +48,30 @@ final class PrintLayoutTests: XCTestCase {
             ]
         )
     }
+
+    func testNegativeBleedAndInsetAreClampedToZero() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: 40, height: 20),
+            options: PrintOverlayOptions(showsMarks: true, markInsetMM: -4, bleedMM: -2)
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 52, height: 32))
+        XCTAssertEqual(layout.trimRect, .init(x: 6, y: 6, width: 40, height: 20))
+        XCTAssertEqual(layout.artworkRect, layout.trimRect)
+        XCTAssertEqual(layout.cropMarks.first, .init(start: .init(x: 6, y: 0), end: .init(x: 6, y: 6)))
+        XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 26, y: 3), radius: 3))
+    }
+
+    func testBleedDoesNotIncreaseCanvasWithoutMarks() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: 40, height: 20),
+            options: PrintOverlayOptions(showsMarks: false, markInsetMM: 12, bleedMM: 5)
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 50, height: 30))
+        XCTAssertEqual(layout.trimRect, .init(x: 5, y: 5, width: 40, height: 20))
+        XCTAssertEqual(layout.artworkRect, .init(x: 0, y: 0, width: 50, height: 30))
+        XCTAssertTrue(layout.cropMarks.isEmpty)
+        XCTAssertTrue(layout.registrationMarks.isEmpty)
+    }
 }
