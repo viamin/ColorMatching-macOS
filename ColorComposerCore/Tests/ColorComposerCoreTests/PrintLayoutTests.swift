@@ -2,6 +2,22 @@ import XCTest
 @testable import ColorComposerCore
 
 final class PrintLayoutTests: XCTestCase {
+    func testPrintOverlayOptionsRoundTripPreservesSanitizedValues() throws {
+        let original = PrintOverlayOptions(
+            showsMarks: true,
+            markInsetMM: .infinity,
+            bleedMM: 4.5
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(PrintOverlayOptions.self, from: data)
+
+        XCTAssertEqual(
+            decoded,
+            PrintOverlayOptions(showsMarks: true, markInsetMM: 0.0, bleedMM: 4.5)
+        )
+    }
+
     func testPrintOverlayOptionsDefaultsMissingFieldsDuringDecode() throws {
         let options = try JSONDecoder().decode(
             PrintOverlayOptions.self,

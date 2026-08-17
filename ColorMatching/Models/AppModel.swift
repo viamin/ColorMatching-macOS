@@ -248,7 +248,7 @@ final class AppModel {
     }
 
     var canPrintTiles: Bool {
-        hasResult && tilePlan != nil
+        hasResult && hasFinitePositiveTileSize && tilePlan != nil
     }
 
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
@@ -378,6 +378,7 @@ final class AppModel {
     var tilePlan: [TileSpec]? {
         guard tilingEnabled, let raster = exportRaster else { return nil }
         guard hasFinitePositivePhysicalPrintSize else { return nil }
+        guard hasFinitePositiveTileSize else { return nil }
         let scaleX = Double(raster.width) / physicalWidthMM
         let scaleY = Double(raster.height) / physicalHeightMM
         let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
@@ -528,6 +529,11 @@ final class AppModel {
     private var hasFinitePositivePhysicalPrintSize: Bool {
         physicalWidthMM.isFinite && physicalWidthMM > 0 &&
             physicalHeightMM.isFinite && physicalHeightMM > 0
+    }
+
+    private var hasFinitePositiveTileSize: Bool {
+        tileWidthMM.isFinite && tileWidthMM > 0 &&
+            tileHeightMM.isFinite && tileHeightMM > 0
     }
 
     private static func sanitizedMeasurement(_ value: Double) -> Double {
