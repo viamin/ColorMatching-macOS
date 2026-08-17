@@ -8,6 +8,10 @@ import ColorComposerCore
 @Observable
 final class AppModel {
 
+    init() {
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+    }
+
     // MARK: - Catalog / server
 
     let catalog = ColorCatalog()
