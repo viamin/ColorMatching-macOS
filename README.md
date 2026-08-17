@@ -92,6 +92,87 @@ xcodegen generate
 xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching build
 ```
 
+## Release build and notarization
+
+Release builds are configured for a distributable Developer ID signature in
+`project.yml`:
+
+- `Debug` keeps automatic/local signing and does not enable the hardened runtime.
+- `Release` uses manual signing, enables the hardened runtime, and signs with
+  `ColorMatching/ColorMatching.entitlements`.
+
+The Release settings expect these build-time values:
+
+- `SIGNING_TEAM_ID` — your Apple Developer Team ID
+- `APP_SIGNING_IDENTITY` — your `Developer ID Application: …` certificate name
+
+Generate the project, archive the app, and export a Developer ID-signed bundle:
+
+```bash
+SIGNING_TEAM_ID=TEAMID1234 \
+APP_SIGNING_IDENTITY="Developer ID Application: Example, Inc. (TEAMID1234)" \
+./bin/build-release
+```
+
+That produces `build/release/ColorMatching.app`.
+
+### Notarize and staple
+
+`bin/notarize-release` submits the exported app, waits for notarization to
+finish, staples the ticket, then verifies:
+
+- the app assessment passes (`spctl`)
+- the code signature is intact (`codesign --verify`)
+- the hardened runtime flag is present in the Release signature
+- the signed entitlements match `ColorMatching/ColorMatching.entitlements`
+
+Use either a stored notarytool keychain profile:
+
+```bash
+NOTARYTOOL_PROFILE=ColorMatching ./bin/notarize-release
+```
+
+Or App Store Connect API key credentials:
+
+```bash
+APPLE_API_KEY_ID=ABC123DEFG \
+APPLE_API_ISSUER_ID=00000000-0000-0000-0000-000000000000 \
+APPLE_API_KEY_BASE64="$(base64 -i AuthKey_ABC123DEFG.p8)" \
+./bin/notarize-release
+```
+
+If you prefer a fully explicit sequence, the equivalent manual verification
+after notarization is:
+
+```bash
+xcrun stapler staple build/release/ColorMatching.app
+codesign --verify --deep --strict --verbose=2 build/release/ColorMatching.app
+spctl --assess --type execute --verbose=4 build/release/ColorMatching.app
+codesign -d --entitlements :- build/release/ColorMatching.app
+```
+
+### GitHub Actions release pipeline
+
+`.github/workflows/release.yml` provides an optional macOS release pipeline for
+`workflow_dispatch` and published GitHub Releases. It:
+
+1. installs `xcodegen`
+2. imports a Developer ID Application certificate into a temporary keychain
+3. runs `./bin/build-release`
+4. runs `./bin/notarize-release`
+5. uploads `build/ColorMatching-macOS.zip` and attaches it to the GitHub release
+
+Configure these repository secrets before enabling the workflow:
+
+- `APPLE_DEVELOPMENT_TEAM`
+- `APPLE_DEVELOPER_ID_APPLICATION`
+- `APPLE_DEVELOPER_ID_P12_BASE64`
+- `APPLE_DEVELOPER_ID_P12_PASSWORD`
+- `APPLE_KEYCHAIN_PASSWORD`
+- `APPLE_API_KEY_ID`
+- `APPLE_API_ISSUER_ID`
+- `APPLE_API_KEY_BASE64`
+
 ## Related
 
 - [`color_matching`](https://github.com/viamin/color_matching) — Elixir/Phoenix backend that owns the palette and measured illuminant-response data

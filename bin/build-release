@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# Builds a distributable Developer ID-signed Release app bundle.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT="$ROOT/ColorMatching.xcodeproj"
+SCHEME="ColorMatching"
+CONFIGURATION="Release"
+ARCHIVE_PATH="${ARCHIVE_PATH:-$ROOT/build/ColorMatching.xcarchive}"
+EXPORT_DIR="${EXPORT_DIR:-$ROOT/build/release}"
+TEAM_ID="${SIGNING_TEAM_ID:-${DEVELOPMENT_TEAM:-}}"
+SIGNING_IDENTITY="${APP_SIGNING_IDENTITY:-Developer ID Application}"
+
+require_tool() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "bin/build-release: missing required tool: $1" >&2
+        exit 1
+    fi
+}
+
+require_tool xcodegen
+require_tool xcodebuild
+
+if [ -z "$TEAM_ID" ]; then
+    echo "bin/build-release: SIGNING_TEAM_ID (or DEVELOPMENT_TEAM) is required for Release signing" >&2
+    exit 1
+fi
+
+"$ROOT/bin/setup"
+
+mkdir -p "$(dirname "$ARCHIVE_PATH")" "$EXPORT_DIR"
+EXPORT_OPTIONS_PLIST="$(mktemp "${TMPDIR:-/tmp}/ColorMatchingExportOptions.XXXXXX.plist")"
+trap 'rm -f "$EXPORT_OPTIONS_PLIST"' EXIT
+
+cat > "$EXPORT_OPTIONS_PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>developer-id</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>teamID</key>
+    <string>${TEAM_ID}</string>
+</dict>
+</plist>
+PLIST
+
+xcodebuild \
+    -project "$PROJECT" \
+    -scheme "$SCHEME" \
+    -configuration "$CONFIGURATION" \
+    -archivePath "$ARCHIVE_PATH" \
+    clean archive \
+    SIGNING_TEAM_ID="$TEAM_ID" \
+    APP_SIGNING_IDENTITY="$SIGNING_IDENTITY"
+
+xcodebuild \
+    -exportArchive \
+    -archivePath "$ARCHIVE_PATH" \
+    -exportPath "$EXPORT_DIR" \
+    -exportOptionsPlist "$EXPORT_OPTIONS_PLIST" \
+    SIGNING_TEAM_ID="$TEAM_ID" \
+    APP_SIGNING_IDENTITY="$SIGNING_IDENTITY"
+
+APP_PATH="$(find "$EXPORT_DIR" -maxdepth 1 -name '*.app' -print -quit)"
+if [ -z "$APP_PATH" ]; then
+    echo "bin/build-release: no exported .app found in $EXPORT_DIR" >&2
+    exit 1
+fi
+
+echo "Built Release app: $APP_PATH"

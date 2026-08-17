@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+#
+# Notarizes, staples, and verifies a Release app bundle.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+APP_PATH="${1:-${APP_PATH:-$ROOT/build/release/ColorMatching.app}}"
+ENTITLEMENTS_SOURCE="$ROOT/ColorMatching/ColorMatching.entitlements"
+SUBMISSION_MODE="${NOTARY_SUBMISSION_MODE:-auto}"
+API_KEY_FILE=""
+SIGNED_ENTITLEMENTS=""
+EXPECTED_ENTITLEMENTS=""
+
+require_tool() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "bin/notarize-release: missing required tool: $1" >&2
+        exit 1
+    fi
+}
+
+require_tool xcrun
+require_tool codesign
+require_tool plutil
+require_tool cmp
+require_tool python3
+require_tool spctl
+
+cleanup() {
+    rm -f "${API_KEY_FILE:-}" "${SIGNED_ENTITLEMENTS:-}" "${EXPECTED_ENTITLEMENTS:-}"
+}
+
+trap cleanup EXIT
+
+if [ ! -d "$APP_PATH" ]; then
+    echo "bin/notarize-release: app not found at $APP_PATH" >&2
+    exit 1
+fi
+
+submit_with_profile() {
+    xcrun notarytool submit "$APP_PATH" --wait --keychain-profile "$NOTARYTOOL_PROFILE"
+}
+
+submit_with_api_key() {
+    if [ -z "${APPLE_API_KEY_ID:-}" ] || [ -z "${APPLE_API_ISSUER_ID:-}" ] || [ -z "${APPLE_API_KEY_BASE64:-}" ]; then
+        echo "bin/notarize-release: APPLE_API_KEY_ID, APPLE_API_ISSUER_ID, and APPLE_API_KEY_BASE64 are required for API-key notarization" >&2
+        exit 1
+    fi
+
+    API_KEY_FILE="$(mktemp "${TMPDIR:-/tmp}/AuthKey.XXXXXX.p8")"
+    APPLE_API_KEY_BASE64="$APPLE_API_KEY_BASE64" python3 - "$API_KEY_FILE" <<'PY'
+import base64
+import os
+import sys
+
+with open(sys.argv[1], "wb") as file_handle:
+    file_handle.write(base64.b64decode(os.environ["APPLE_API_KEY_BASE64"]))
+PY
+
+    xcrun notarytool submit \
+        "$APP_PATH" \
+        --wait \
+        --key "$API_KEY_FILE" \
+        --key-id "$APPLE_API_KEY_ID" \
+        --issuer "$APPLE_API_ISSUER_ID"
+}
+
+case "$SUBMISSION_MODE" in
+    auto)
+        if [ -n "${NOTARYTOOL_PROFILE:-}" ]; then
+            submit_with_profile
+        else
+            submit_with_api_key
+        fi
+        ;;
+    profile)
+        if [ -z "${NOTARYTOOL_PROFILE:-}" ]; then
+            echo "bin/notarize-release: NOTARYTOOL_PROFILE is required when NOTARY_SUBMISSION_MODE=profile" >&2
+            exit 1
+        fi
+        submit_with_profile
+        ;;
+    api-key)
+        submit_with_api_key
+        ;;
+    *)
+        echo "bin/notarize-release: unsupported NOTARY_SUBMISSION_MODE=$SUBMISSION_MODE" >&2
+        exit 1
+        ;;
+esac
+
+xcrun stapler staple "$APP_PATH"
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+spctl --assess --type execute --verbose=4 "$APP_PATH"
+
+if ! codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -q "runtime"; then
+    echo "bin/notarize-release: hardened runtime flag not present in the Release signature" >&2
+    exit 1
+fi
+
+SIGNED_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/signed-entitlements.XXXXXX.plist")"
+EXPECTED_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/expected-entitlements.XXXXXX.plist")"
+
+codesign -d --entitlements :- "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
+plutil -convert xml1 -o "$SIGNED_ENTITLEMENTS" "$SIGNED_ENTITLEMENTS"
+plutil -convert xml1 -o "$EXPECTED_ENTITLEMENTS" "$ENTITLEMENTS_SOURCE"
+
+if ! cmp -s "$SIGNED_ENTITLEMENTS" "$EXPECTED_ENTITLEMENTS"; then
+    echo "bin/notarize-release: signed entitlements do not match $ENTITLEMENTS_SOURCE" >&2
+    exit 1
+fi
+
+echo "Notarized and stapled app: $APP_PATH"

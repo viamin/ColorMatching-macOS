@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  notarized-release:
+    runs-on: macos-14
+    env:
+      SIGNING_TEAM_ID: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
+      APP_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Import Developer ID certificate
+        env:
+          APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+
+          CERT_PATH="$CERT_PATH" python3 -c 'import base64, os; open(os.environ["CERT_PATH"], "wb").write(base64.b64decode(os.environ["APPLE_DEVELOPER_ID_P12_BASE64"]))'
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$APPLE_DEVELOPER_ID_P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Build Release app
+        run: ./bin/build-release
+
+      - name: Notarize and staple Release app
+        run: ./bin/notarize-release
+
+      - name: Zip distributable app
+        run: ditto -c -k --keepParent build/release/ColorMatching.app build/ColorMatching-macOS.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ColorMatching-macOS
+          path: build/ColorMatching-macOS.zip
+
+      - name: Attach artifact to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/ColorMatching-macOS.zip
