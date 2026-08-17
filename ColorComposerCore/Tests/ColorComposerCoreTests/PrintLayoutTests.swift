@@ -101,15 +101,15 @@ final class PrintLayoutTests: XCTestCase {
 
         XCTAssertEqual(
             layout.cropMarks.first,
-            .init(start: .init(x: 10, y: 0), end: .init(x: 10, y: 6))
+            .init(start: .init(x: 12, y: 2), end: .init(x: 12, y: 8))
         )
         XCTAssertEqual(
             layout.registrationMarks,
             [
-                .init(center: .init(x: 30, y: 3), radius: 3),
-                .init(center: .init(x: 30, y: 37), radius: 3),
-                .init(center: .init(x: 3, y: 20), radius: 3),
-                .init(center: .init(x: 57, y: 20), radius: 3)
+                .init(center: .init(x: 32, y: 5), radius: 3),
+                .init(center: .init(x: 32, y: 39), radius: 3),
+                .init(center: .init(x: 5, y: 22), radius: 3),
+                .init(center: .init(x: 59, y: 22), radius: 3)
             ]
         )
     }
