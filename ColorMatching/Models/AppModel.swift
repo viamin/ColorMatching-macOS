@@ -37,12 +37,6 @@ final class AppModel {
         catalog.onPaletteChanged = { [weak self] in
             self?.clearCompositionState()
         }
-        catalog.onAuthenticationRequired = {
-            await MainActor.run { ReauthPrompt.promptForToken() }
-        }
-        catalog.onTokenUpdated = { [weak self] newToken in
-            self?.serverToken = newToken
-        }
         wireUndoHooks()
     }
 
@@ -150,11 +144,36 @@ final class AppModel {
             noteEdit(kind: "exportScale", actionName: "Export Scale") { $0.pixelsPerCell = oldValue }
         }
     }
-    var physicalWidthMM = 200.0
-    var physicalHeightMM = 200.0
-    var showsPrintMarks = false
-    var printMarksInsetMM = 3.0
-    var printBleedMM = 0.0
+    var physicalWidthMM = 200.0 {
+        didSet {
+            guard oldValue != physicalWidthMM else { return }
+            noteEdit(kind: "printSize", actionName: "Print Size") { $0.physicalWidthMM = oldValue }
+        }
+    }
+    var physicalHeightMM = 200.0 {
+        didSet {
+            guard oldValue != physicalHeightMM else { return }
+            noteEdit(kind: "printSize", actionName: "Print Size") { $0.physicalHeightMM = oldValue }
+        }
+    }
+    var showsPrintMarks = false {
+        didSet {
+            guard oldValue != showsPrintMarks else { return }
+            noteEdit(kind: "printMarks", actionName: "Print Marks") { $0.showsPrintMarks = oldValue }
+        }
+    }
+    var printMarksInsetMM = 3.0 {
+        didSet {
+            guard oldValue != printMarksInsetMM else { return }
+            noteEdit(kind: "printMarks", actionName: "Print Marks") { $0.printMarksInsetMM = oldValue }
+        }
+    }
+    var printBleedMM = 0.0 {
+        didSet {
+            guard oldValue != printBleedMM else { return }
+            noteEdit(kind: "printBleed", actionName: "Bleed") { $0.printBleedMM = oldValue }
+        }
+    }
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
@@ -202,6 +221,15 @@ final class AppModel {
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
+            physicalWidthMM: physicalWidthMM,
+            physicalHeightMM: physicalHeightMM,
+            showsPrintMarks: showsPrintMarks,
+            printMarksInsetMM: printMarksInsetMM,
+            printBleedMM: printBleedMM,
+            tilingEnabled: tilingEnabled,
+            tileWidthMM: tileWidthMM,
+            tileHeightMM: tileHeightMM,
+            tileOverlapMM: tileOverlapMM,
             layers: layers.map {
                 CompositionEdit.Layer(
                     id: $0.id,
@@ -224,6 +252,15 @@ final class AppModel {
         logicalWidth = edit.logicalWidth
         logicalHeight = edit.logicalHeight
         pixelsPerCell = edit.pixelsPerCell
+        physicalWidthMM = edit.physicalWidthMM
+        physicalHeightMM = edit.physicalHeightMM
+        showsPrintMarks = edit.showsPrintMarks
+        printMarksInsetMM = edit.printMarksInsetMM
+        printBleedMM = edit.printBleedMM
+        tilingEnabled = edit.tilingEnabled
+        tileWidthMM = edit.tileWidthMM
+        tileHeightMM = edit.tileHeightMM
+        tileOverlapMM = edit.tileOverlapMM
         for layerEdit in edit.layers {
             guard let index = layers.firstIndex(where: { $0.id == layerEdit.id }) else { continue }
             layers[index].assignedCondition = layerEdit.assignedCondition
@@ -614,10 +651,30 @@ final class AppModel {
     /// When enabled, `exportTiles`/`printTiles` split the export raster into
     /// page-sized tiles instead of producing one oversized file/job — for
     /// artwork larger than the printer's paper (issue #11).
-    var tilingEnabled = false
-    var tileWidthMM = 200.0
-    var tileHeightMM = 200.0
-    var tileOverlapMM = 10.0
+    var tilingEnabled = false {
+        didSet {
+            guard oldValue != tilingEnabled else { return }
+            noteEdit(kind: "tilingEnabled", actionName: "Tiling") { $0.tilingEnabled = oldValue }
+        }
+    }
+    var tileWidthMM = 200.0 {
+        didSet {
+            guard oldValue != tileWidthMM else { return }
+            noteEdit(kind: "tileSize", actionName: "Tile Size") { $0.tileWidthMM = oldValue }
+        }
+    }
+    var tileHeightMM = 200.0 {
+        didSet {
+            guard oldValue != tileHeightMM else { return }
+            noteEdit(kind: "tileSize", actionName: "Tile Size") { $0.tileHeightMM = oldValue }
+        }
+    }
+    var tileOverlapMM = 10.0 {
+        didSet {
+            guard oldValue != tileOverlapMM else { return }
+            noteEdit(kind: "tileOverlap", actionName: "Tile Overlap") { $0.tileOverlapMM = oldValue }
+        }
+    }
 
     /// The planned tile layout for the current export raster, in image pixel
     /// coordinates. `nil` when tiling is disabled or there is no result yet.

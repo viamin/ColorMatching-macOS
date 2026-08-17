@@ -10,6 +10,15 @@ struct CompositionEdit: Sendable {
     var logicalWidth: Int
     var logicalHeight: Int
     var pixelsPerCell: Int
+    var physicalWidthMM: Double
+    var physicalHeightMM: Double
+    var showsPrintMarks: Bool
+    var printMarksInsetMM: Double
+    var printBleedMM: Double
+    var tilingEnabled: Bool
+    var tileWidthMM: Double
+    var tileHeightMM: Double
+    var tileOverlapMM: Double
     var layers: [Layer]
 
     /// The undoable per-layer settings, matched to a `SourceLayer` by identity.
