@@ -97,13 +97,13 @@ public struct PrintLayout: Sendable, Equatable {
         registrationRadiusMM: Double = 3.0
     ) -> PrintLayout {
         let trimSize = Size(
-            width: max(0, physicalSizeMM.width),
-            height: max(0, physicalSizeMM.height)
+            width: sanitizedMeasurement(physicalSizeMM.width),
+            height: sanitizedMeasurement(physicalSizeMM.height)
         )
-        let bleed = max(0, options.bleedMM)
-        let markInset = max(0, options.markInsetMM)
-        let markLength = max(0, markLengthMM)
-        let registrationRadius = max(0, registrationRadiusMM)
+        let bleed = sanitizedMeasurement(options.bleedMM)
+        let markInset = sanitizedMeasurement(options.markInsetMM)
+        let markLength = sanitizedMeasurement(markLengthMM)
+        let registrationRadius = sanitizedMeasurement(registrationRadiusMM)
         let outerPadding = showsMarksPadding(
             showsMarks: options.showsMarks,
             bleed: bleed,
@@ -135,6 +135,11 @@ public struct PrintLayout: Sendable, Equatable {
                 enabled: options.showsMarks
             )
         )
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 
     private static func showsMarksPadding(

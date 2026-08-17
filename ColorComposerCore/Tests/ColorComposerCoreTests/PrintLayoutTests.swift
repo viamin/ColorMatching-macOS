@@ -108,4 +108,19 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(layout.trimRect.minY, 11)
         XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 31, y: 5), radius: 3))
     }
+
+    func testNonFiniteMeasurementsAreClampedToZero() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: .nan, height: .infinity),
+            options: PrintOverlayOptions(showsMarks: false, markInsetMM: .nan, bleedMM: .infinity),
+            markLengthMM: .nan,
+            registrationRadiusMM: .infinity
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 0, height: 0))
+        XCTAssertEqual(layout.trimRect, .init(x: 0, y: 0, width: 0, height: 0))
+        XCTAssertEqual(layout.artworkRect, layout.trimRect)
+        XCTAssertTrue(layout.cropMarks.isEmpty)
+        XCTAssertTrue(layout.registrationMarks.isEmpty)
+    }
 }
