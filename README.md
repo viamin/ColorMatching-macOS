@@ -36,8 +36,8 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 
 ## Workflow
 
-1. **Server** (sidebar) — set the `color_matching` base URL (persisted), Test, then Refresh to load printer profiles and palettes.
-2. **Palette** — choose a printer profile and palette; the app fetches every color with its measured illuminant responses.
+1. **Server** (sidebar) — set the `color_matching` base URL (persisted), Test, then Refresh to load printer profiles.
+2. **Palette** — choose a printer profile; the app fetches every color with its measured illuminant responses. Each fetch is cached to disk per server and profile: when the server is unreachable the cached colors load instead and are badged as offline-stale (with their fetch date), the profile picker falls back to cached profiles when the server can't be reached at all, and **Clear Cache** discards them.
 3. **Source images** — add up to 4 images (PNG/JPEG/TIFF/HEIC), assign each to Red / Green / Blue / LPS. Per image: invert, and Fit / Fill / Stretch mapping.
 4. **Composition** — set the logical resolution (e.g. 200×200), export pixels-per-cell, physical print size, and per-channel weights.
 5. **Generate** — solve, then explore:
@@ -86,8 +86,7 @@ The Xcode project is **generated, not committed** — `project.yml` is the sourc
 Colors and their measured illuminant responses are fetched from `color_matching`'s versioned API:
 
 - `GET /api/v1/printer_profiles`
-- `GET /api/v1/palettes`
-- `GET /api/v1/colors?printer_profile_id=N&palette_id=M`
+- `GET /api/v1/colors?printer_profile_id=N`
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
 

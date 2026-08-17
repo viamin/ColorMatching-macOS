@@ -277,7 +277,7 @@ final class AppModel {
         }
         guard catalog.hasLoadedColorsForSelection else {
             clearGeneratedOutput()
-            lastError = "Load colors for the selected profile before generating."
+            lastError = "Load colors from the server, cache, or a project first."
             return
         }
         guard !catalog.colors.isEmpty else {
