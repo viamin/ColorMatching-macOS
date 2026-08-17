@@ -462,7 +462,23 @@ final class AppModel {
         )
     }
 
+    /// Project files persist inputs, not a solved output. Cancel any in-flight
+    /// work and clear derived solve state first so opening a document never
+    /// leaves the previous project's composition, gamut, or busy indicator on
+    /// screen while the new inputs are being restored.
+    private func resetSolvedStateForProjectLoad() {
+        debounceTask?.cancel()
+        solveTask?.cancel()
+        solveTask = nil
+        isSolving = false
+        result = nil
+        errorStatistics = nil
+        solvedGamut = nil
+        lastError = nil
+    }
+
     private func applySnapshot(_ s: ProjectDocument) {
+        resetSolvedStateForProjectLoad()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
         catalog.loadProjectColors(
