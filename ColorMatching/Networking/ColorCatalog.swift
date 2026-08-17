@@ -669,8 +669,11 @@ final class ColorCatalog {
         return changed
     }
 
+    /// A successful live refresh for the current server remains authoritative
+    /// even when it returned zero profiles. Otherwise an offline retry after a
+    /// live-empty response would incorrectly resurrect older cached profiles.
     private var keepsProfilesForCurrentServer: Bool {
-        !printerProfiles.isEmpty && loadedPrinterProfilesServer == cacheServer
+        loadedPrinterProfilesServer == cacheServer && !printerProfilesAreCached
     }
 
     /// Loaded color state includes metadata too, not just non-empty palettes:
