@@ -369,6 +369,7 @@ final class AppModel {
     /// split across two tiles.
     var tilePlan: [TileSpec]? {
         guard tilingEnabled, let raster = exportRaster else { return nil }
+        guard hasFinitePositivePhysicalPrintSize else { return nil }
         let scaleX = Double(raster.width) / physicalWidthMM
         let scaleY = Double(raster.height) / physicalHeightMM
         let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
@@ -401,6 +402,7 @@ final class AppModel {
     /// Presents one native print job per tile, in row-major order.
     func printTiles() {
         guard let raster = exportRaster, let tiles = tilePlan else { return }
+        guard raster.width > 0, raster.height > 0 else { return }
         let scaleX = physicalWidthMM / Double(raster.width)
         let scaleY = physicalHeightMM / Double(raster.height)
         for tile in tiles {
@@ -481,15 +483,15 @@ final class AppModel {
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
-        physicalWidthMM = s.physicalWidthMM
-        physicalHeightMM = s.physicalHeightMM
+        physicalWidthMM = Self.sanitizedMeasurement(s.physicalWidthMM)
+        physicalHeightMM = Self.sanitizedMeasurement(s.physicalHeightMM)
         showsPrintMarks = s.printOverlayOptions.showsMarks
-        printMarksInsetMM = s.printOverlayOptions.markInsetMM
-        printBleedMM = s.printOverlayOptions.bleedMM
+        printMarksInsetMM = Self.sanitizedMeasurement(s.printOverlayOptions.markInsetMM)
+        printBleedMM = Self.sanitizedMeasurement(s.printOverlayOptions.bleedMM)
         tilingEnabled = s.tilingEnabled
-        tileWidthMM = s.tileWidthMM
-        tileHeightMM = s.tileHeightMM
-        tileOverlapMM = s.tileOverlapMM
+        tileWidthMM = Self.sanitizedMeasurement(s.tileWidthMM)
+        tileHeightMM = Self.sanitizedMeasurement(s.tileHeightMM)
+        tileOverlapMM = Self.sanitizedMeasurement(s.tileOverlapMM)
 
         let restored = s.layers.enumerated().map { (index, snap) -> SourceLayer in
             let layer = index < layers.count ? layers[index] : SourceLayer()
@@ -513,5 +515,15 @@ final class AppModel {
             markInsetMM: printMarksInsetMM,
             bleedMM: printBleedMM
         )
+    }
+
+    private var hasFinitePositivePhysicalPrintSize: Bool {
+        physicalWidthMM.isFinite && physicalWidthMM > 0 &&
+            physicalHeightMM.isFinite && physicalHeightMM > 0
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 }
