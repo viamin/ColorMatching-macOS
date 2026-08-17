@@ -41,7 +41,7 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
 3. **Source images** — add up to 4 images (PNG/JPEG/TIFF/HEIC), assign each to Red / Green / Blue / LPS. Per image: invert, and Fit / Fill / Stretch mapping.
 4. **Composition** — set the logical resolution (e.g. 200×200), export pixels-per-cell, physical print size, and per-channel weights.
 5. **Generate** — solve, then explore:
-   - **Composite** — the printable color image (exact palette RGBs; export/print use this).
+   - **Composite** — the printable color image (exact palette RGBs; export/print use this). Toggle **Soft Proof** for a printer-profile preview derived from the selected profile's paper/ink metadata: warmed paper white, lifted blacks, compressed saturation, and an orange wash on out-of-gamut cells.
    - **Error map** — where the palette can't represent the targets well.
    - **Gamut** — parallel-coordinates plot of the loaded colors' response vectors against the target vectors the source images ask for, highlighting targets no color can reach and naming the channel that runs out.
    - **Preview · Red / Green / Blue / LPS / White** — predicted appearance under each light, tinted by channel color.

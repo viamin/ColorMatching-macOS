@@ -22,11 +22,14 @@ struct ColorMatchingApp: App {
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
-                Button("Print…") { model.printComposite() }.keyboardShortcut("p")
+                Button("Print…") { model.printComposite() }
+                    .keyboardShortcut("p")
+                    .disabled(!model.canPrintComposite)
                 if model.tilingEnabled {
                     Divider()
                     Button("Export Tiles…") { exportTiles() }
                     Button("Print Tiles") { model.printTiles() }
+                        .disabled(!model.canPrintTiles)
                 }
             }
         }
@@ -115,5 +118,26 @@ enum FilePanels {
         panel.allowsMultipleSelection = false
         panel.prompt = "Choose"
         if panel.runModal() == .OK, let url = panel.url { onComplete(url) }
+    }
+}
+
+/// Native re-authentication prompt shown when the server responds 401
+/// (issue #16). A modal secure field keeps the re-entered token out of
+/// SwiftUI view state.
+enum ReauthPrompt {
+    static func promptForToken() -> String? {
+        let alert = NSAlert()
+        alert.messageText = "Session Expired"
+        alert.informativeText = "The server rejected the current API token. Enter a new token to continue."
+        alert.addButton(withTitle: "Continue")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let token = field.stringValue
+        return token.isEmpty ? nil : token
     }
 }

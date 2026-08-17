@@ -25,9 +25,11 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
+    var onPaletteChanged: (() -> Void)?
 
     var selectedPrinterProfileID: Int? {
         didSet {
+            guard selectedPrinterProfileID != oldValue else { return }
             guard !suppressesSelectionFetch else { return }
             clearStaleColorsForSelectionChange()
             Task { @MainActor in await fetchColorsIfPossible() }
@@ -54,6 +56,15 @@ final class ColorCatalog {
     /// them even when a cache entry exists: a saved document's palette is the
     /// data the user chose, not a stale fetch to fall back from.
     var colorsLoadedFromProject = false
+
+    /// Invoked when the server rejects the current token with 401. Should
+    /// securely prompt for a replacement token and return it, or `nil` if the
+    /// user cancels (issue #16).
+    var onAuthenticationRequired: (() async -> String?)?
+
+    /// Invoked with the token that succeeded a re-authenticated retry, so the
+    /// owner can persist it (e.g. to `AppModel.serverToken`).
+    var onTokenUpdated: ((String) -> Void)?
 
     private var client: PaletteAPIClient?
     private let cache: ProfileColorCache
@@ -324,7 +335,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            try await client.testConnection()
+            try await withReauth { try await $0.testConnection() }
             // A late result describes the server it was sent to, which may no
             // longer be configured; only a fresh request may report.
             guard cacheServer == requestedServer,
@@ -353,7 +364,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let fetchedProfiles = try await client.fetchPrinterProfiles()
+            let fetchedProfiles = try await withReauth { try await $0.fetchPrinterProfiles() }
             // The server may have changed while the request was in flight;
             // the previous server's late response must not populate state.
             guard cacheServer == requestedServer,
@@ -403,28 +414,32 @@ final class ColorCatalog {
         }
     }
 
-    /// Applies a project's embedded palette snapshot. If the currently shown
-    /// profile list belongs to another server, drop it so the picker does not
-    /// keep offering stale profiles that no longer match the configured server.
-    func loadProjectColors(_ projectColors: [PaletteColor], profileID: Int?) {
+    /// Applies a project's embedded palette snapshot, including any printer
+    /// profile metadata saved with it. If the currently shown profile list
+    /// belongs to another server, drop it so the picker does not keep
+    /// offering stale profiles that no longer match the configured server.
+    func restoreSnapshot(
+        printerProfileID: Int?,
+        printerProfile: PrinterProfileDTO?,
+        colors projectColors: [PaletteColor]
+    ) {
         invalidateOutstandingRequests()
         if loadedPrinterProfilesServer != cacheServer {
             printerProfiles = []
             printerProfilesAreCached = false
             loadedPrinterProfilesServer = nil
         }
+        onPaletteChanged?()
         colors = projectColors
-        // The snapshot carries no profile metadata, so the on-screen colors
-        // describe no fetched profile; a later live fetch fills it back in.
-        colorsForProfile = nil
-        loadedColorsProfileID = profileID
+        // Use the snapshot's own profile metadata when the document saved
+        // one; ensureVisiblePrinterProfile below picks it up via
+        // colorsForProfile. Otherwise the on-screen colors describe no
+        // fetched profile; a later live fetch fills it back in.
+        colorsForProfile = printerProfileID.flatMap { sanitizedProfile(printerProfile, for: $0) }
+        loadedColorsProfileID = printerProfileID
         loadedColorsServer = nil
         colorsLoadedFromProject = true
-        // If the project switches servers, `colorsForProfile` may still hold
-        // metadata from an earlier live fetch for the same numeric id. Clear
-        // that first so the picker keeps only a placeholder until a live
-        // refresh repopulates profile details for this server.
-        ensureVisiblePrinterProfile(profileID)
+        ensureVisiblePrinterProfile(printerProfileID)
         // A document snapshot is neither a live refresh nor a cached fetch, so
         // leave the timestamp empty rather than mislabeling "right now" as the
         // age of server-derived data.
@@ -434,7 +449,7 @@ final class ColorCatalog {
         connectionMessage = "Loaded \(projectColors.count) color(s) from project."
         // Opening a project restores its embedded snapshot exactly; a manual
         // refresh can replace it with live server data later.
-        restoreSelectedPrinterProfileID(profileID)
+        restoreSelectedPrinterProfileID(printerProfileID)
     }
 
     // MARK: - Color loading
@@ -457,7 +472,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            let (dtos, profile) = try await withReauth { try await $0.fetchColors(printerProfileID: profileID) }
             // The selection or server may have changed while the request was
             // in flight; a late response for another profile must not
             // overwrite it, and another server's response must be neither
@@ -485,6 +500,7 @@ final class ColorCatalog {
         let fetchedAt = Date()
         let sanitizedProfile = sanitizedProfile(profile, for: profileID)
         refreshVisiblePrinterProfile(sanitizedProfile)
+        onPaletteChanged?()
         colors = dtos.compactMap { $0.toDomain() }
         colorsForProfile = sanitizedProfile
         lastRefresh = fetchedAt
@@ -575,6 +591,7 @@ final class ColorCatalog {
 
     private func serve(_ cached: CachedProfileColors, profileID: Int, reason: String) {
         refreshVisiblePrinterProfile(cached.profile)
+        onPaletteChanged?()
         colors = cached.domainColors
         colorsForProfile = cached.profile
         lastRefresh = cached.fetchedAt
@@ -769,6 +786,7 @@ final class ColorCatalog {
     }
 
     private func clearLoadedColors() {
+        onPaletteChanged?()
         colors = []
         colorsForProfile = nil
         lastRefresh = nil
@@ -777,6 +795,25 @@ final class ColorCatalog {
         colorsLoadedFromProject = false
         isServingFromCache = false
         clearCacheBackedServerIfUnused()
+    }
+
+    /// Runs `operation` against the current client, retrying exactly once
+    /// with a freshly prompted token if the server responds 401 (issue #16).
+    /// Non-auth errors, and a second 401 after re-auth, propagate untouched.
+    private func withReauth<T>(_ operation: (PaletteAPIClient) async throws -> T) async throws -> T {
+        guard let client else { throw PaletteAPIError.invalidURL }
+        do {
+            return try await operation(client)
+        } catch PaletteAPIError.unauthorized {
+            guard let newToken = await onAuthenticationRequired?(), !newToken.isEmpty else {
+                throw PaletteAPIError.unauthorized
+            }
+            let reauthedClient = PaletteAPIClient(baseURL: client.baseURL, token: newToken)
+            let result = try await operation(reauthedClient)
+            self.client = reauthedClient
+            onTokenUpdated?(newToken)
+            return result
+        }
     }
 
     /// Colors eligible for the solver given the currently active channels.

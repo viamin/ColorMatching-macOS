@@ -44,7 +44,7 @@ struct ProfileSection: View {
             Picker("Printer profile", selection: $catalog.selectedPrinterProfileID) {
                 Text("None").tag(Int?.none)
                 ForEach(catalog.printerProfiles) { profile in
-                    Text(profileLabel(profile)).tag(Int?.some(profile.id))
+                    Text(profile.displayName).tag(Int?.some(profile.id))
                 }
             }
 
@@ -68,11 +68,6 @@ struct ProfileSection: View {
                 )
             }
         }
-    }
-
-    private func profileLabel(_ profile: PrinterProfileDTO) -> String {
-        let parts = [profile.printerMakeModel, profile.paperType].compactMap { $0 }
-        return parts.isEmpty ? "Profile #\(profile.id)" : parts.joined(separator: " · ")
     }
 }
 
@@ -213,6 +208,10 @@ struct CompositionSettingsSection: View {
                 Stepper("Print size (mm): \(Int(model.physicalWidthMM))", value: $model.physicalWidthMM, in: 10...2000, step: 5)
                 Stepper("× \(Int(model.physicalHeightMM))", value: $model.physicalHeightMM, in: 10...2000, step: 5)
             }
+            Stepper("Bleed (mm): \(Int(model.printBleedMM))", value: $model.printBleedMM, in: 0...50, step: 1)
+            Toggle("Crop + registration marks", isOn: $model.showsPrintMarks)
+            Stepper("Mark inset (mm): \(Int(model.printMarksInsetMM))", value: $model.printMarksInsetMM, in: 0...50, step: 1)
+                .disabled(!model.showsPrintMarks)
 
             Divider()
             Picker("Scorer", selection: $model.scorerKind) {
