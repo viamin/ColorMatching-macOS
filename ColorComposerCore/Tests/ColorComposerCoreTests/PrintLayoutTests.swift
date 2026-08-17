@@ -74,4 +74,28 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertTrue(layout.cropMarks.isEmpty)
         XCTAssertTrue(layout.registrationMarks.isEmpty)
     }
+
+    func testNegativePhysicalSizeIsClampedToZero() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: -40, height: -20),
+            options: PrintOverlayOptions(showsMarks: false, markInsetMM: 12, bleedMM: 5)
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 10, height: 10))
+        XCTAssertEqual(layout.trimRect, .init(x: 5, y: 5, width: 0, height: 0))
+        XCTAssertEqual(layout.artworkRect, .init(x: 0, y: 0, width: 10, height: 10))
+    }
+
+    func testZeroPhysicalSizeWithMarksStillProducesFiniteLayout() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: 0, height: 0),
+            options: PrintOverlayOptions(showsMarks: true, markInsetMM: 4, bleedMM: 2)
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 24, height: 24))
+        XCTAssertEqual(layout.trimRect, .init(x: 12, y: 12, width: 0, height: 0))
+        XCTAssertEqual(layout.artworkRect, .init(x: 10, y: 10, width: 4, height: 4))
+        XCTAssertEqual(layout.cropMarks.count, 8)
+        XCTAssertEqual(layout.registrationMarks.count, 4)
+    }
 }

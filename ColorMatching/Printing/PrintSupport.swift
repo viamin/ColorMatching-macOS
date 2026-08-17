@@ -19,7 +19,8 @@ enum PrintSupport {
             physicalSizeMM: .init(width: physicalSizeMM.width, height: physicalSizeMM.height),
             options: overlay
         )
-        let view = PrintableImageView(raster: raster, layout: layout)
+        guard layout.canvasSize.width > 0, layout.canvasSize.height > 0 else { return }
+        guard let view = PrintableImageView(raster: raster, layout: layout) else { return }
 
         // Points (1 pt = 1/72 inch; 1 inch = 25.4 mm).
         let pointsPerMM = 72.0 / 25.4
@@ -50,8 +51,8 @@ private final class PrintableImageView: NSView {
     private let bleedSlices: BleedSlices?
     private let layout: PrintLayout
 
-    init(raster: RGBAImage, layout: PrintLayout) {
-        guard let image = ImageUtilities.nsImage(from: raster) else { fatalError() }
+    init?(raster: RGBAImage, layout: PrintLayout) {
+        guard let image = ImageUtilities.nsImage(from: raster) else { return nil }
         self.image = image
         bleedSlices = BleedSlices(raster: raster)
         self.layout = layout

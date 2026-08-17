@@ -94,36 +94,42 @@ public struct PrintLayout: Sendable, Equatable {
         markLengthMM: Double = 6.0,
         registrationRadiusMM: Double = 3.0
     ) -> PrintLayout {
+        let trimSize = Size(
+            width: max(0, physicalSizeMM.width),
+            height: max(0, physicalSizeMM.height)
+        )
         let bleed = max(0, options.bleedMM)
         let markInset = max(0, options.markInsetMM)
+        let markLength = max(0, markLengthMM)
+        let registrationRadius = max(0, registrationRadiusMM)
         let outerPadding = showsMarksPadding(
             showsMarks: options.showsMarks,
             bleed: bleed,
             markInset: markInset,
-            markLength: markLengthMM,
-            registrationRadius: registrationRadiusMM
+            markLength: markLength,
+            registrationRadius: registrationRadius
         )
 
         let trimRect = Rect(
             x: outerPadding,
             y: outerPadding,
-            width: physicalSizeMM.width,
-            height: physicalSizeMM.height
+            width: trimSize.width,
+            height: trimSize.height
         )
         let artworkRect = trimRect.expanded(by: bleed)
 
         return PrintLayout(
             canvasSize: Size(
-                width: physicalSizeMM.width + (outerPadding * 2),
-                height: physicalSizeMM.height + (outerPadding * 2)
+                width: trimSize.width + (outerPadding * 2),
+                height: trimSize.height + (outerPadding * 2)
             ),
             trimRect: trimRect,
             artworkRect: artworkRect,
-            cropMarks: cropMarks(for: trimRect, inset: markInset, length: markLengthMM, enabled: options.showsMarks),
+            cropMarks: cropMarks(for: trimRect, inset: markInset, length: markLength, enabled: options.showsMarks),
             registrationMarks: registrationMarks(
                 for: trimRect,
                 inset: markInset,
-                radius: registrationRadiusMM,
+                radius: registrationRadius,
                 enabled: options.showsMarks
             )
         )
