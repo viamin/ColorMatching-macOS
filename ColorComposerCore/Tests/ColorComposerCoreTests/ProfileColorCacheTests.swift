@@ -433,15 +433,14 @@ final class ProfileColorCacheTests: XCTestCase {
 
     func testAllEntriesSkipsEntriesWhoseStoredServerDisagreesWithDirectory() throws {
         let cache = ProfileColorCache(directory: directory)
+        try cache.store(try makeEntry(profileID: 2, serverBaseUrl: "http://two.example:4000"))
         try cache.store(try makeEntry(profileID: 3, serverBaseUrl: "http://one.example:4000"))
         let oneServerDirectory = serverDirectory(for: "http://one.example:4000")
         let twoServerDirectory = serverDirectory(for: "http://two.example:4000")
-        try FileManager.default.createDirectory(at: twoServerDirectory, withIntermediateDirectories: true)
         try FileManager.default.moveItem(
             at: oneServerDirectory.appendingPathComponent("profile-3.json"),
             to: twoServerDirectory.appendingPathComponent("profile-3.json")
         )
-        try cache.store(try makeEntry(profileID: 2, serverBaseUrl: "http://two.example:4000"))
 
         XCTAssertEqual(cache.allEntries(serverBaseUrl: "http://two.example:4000").map(\.profileId), [2])
     }
@@ -657,6 +656,7 @@ final class ProfileColorCacheTests: XCTestCase {
     }
 
     func testRemoveAllDoesNotDeleteANonDirectoryRoot() throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let rootFile = directory.appendingPathComponent("cache-root")
         try Data("not a directory".utf8).write(to: rootFile)
         let cache = ProfileColorCache(directory: rootFile)
@@ -706,6 +706,7 @@ final class ProfileColorCacheTests: XCTestCase {
     }
 
     func testStoreRejectsANonDirectoryRoot() throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let rootFile = directory.appendingPathComponent("cache-root")
         try Data("not a directory".utf8).write(to: rootFile)
         let cache = ProfileColorCache(directory: rootFile)
@@ -880,9 +881,9 @@ final class ProfileColorCacheTests: XCTestCase {
 
     func testEntryNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile() throws {
         let cache = ProfileColorCache(directory: directory)
-        let serverDirectory = try createOwnedServerDirectory()
+        let serverDirectory = try createOwnedServerDirectory(for: "http://localhost/colors")
         let json = """
-            {"server_base_url":" \nhttp://user:secret@LOCALHOST:80/colors/?token=abc#frag\t",
+            {"server_base_url":" \\nhttp://user:secret@LOCALHOST:80/colors/?token=abc#frag\\t",
             "profile_id":6,
             "profile":{"id":6,"printer_make_model":"Canon","paper_type":"Glossy","ink_type":"Pigment"},
             "colors":[{"id":1,"name":"Color 1","hex":"#112233","rgb":{"r":17,"g":34,"b":51},
@@ -916,7 +917,7 @@ final class ProfileColorCacheTests: XCTestCase {
 
     func testAllEntriesNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile() throws {
         let cache = ProfileColorCache(directory: directory)
-        let serverDirectory = try createOwnedServerDirectory()
+        let serverDirectory = try createOwnedServerDirectory(for: "http://localhost:4000/colors")
         let json = """
             {"server_base_url":"HTTP://LOCALHOST:4000/colors/?token=abc#frag",
             "profile_id":6,
