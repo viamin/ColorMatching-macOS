@@ -539,9 +539,11 @@ final class AppModel {
     }
 
     func loadProject(from url: URL) throws {
-        cancelPendingWork()
         let data = try Data(contentsOf: url)
         let snapshot = try JSONDecoder().decode(ProjectDocument.self, from: data)
+        // Keep the current document running unless the replacement snapshot is
+        // structurally valid; a failed open should not cancel its pending work.
+        cancelPendingWork()
         applySnapshot(snapshot)
         projectURL = url
     }
