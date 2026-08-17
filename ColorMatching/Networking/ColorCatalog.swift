@@ -97,7 +97,6 @@ final class ColorCatalog {
         self.cache = cache
     }
 
-    @MainActor
     func configure(baseURL: URL?, token: String?) {
         configurationRevision += 1
         client = baseURL.map { PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil) }
@@ -303,7 +302,6 @@ final class ColorCatalog {
 
     // MARK: - Actions
 
-    @MainActor
     func testConnection() async {
         guard let client else {
             connectionMessage = "Set a server URL first."
@@ -334,7 +332,6 @@ final class ColorCatalog {
         }
     }
 
-    @MainActor
     func refreshAll() async {
         guard let client else {
             connectionMessage = "Set a server URL first."
@@ -384,7 +381,6 @@ final class ColorCatalog {
     /// Drops every cached profile list and color fetch. Cache-backed state on
     /// screen — colors served from the cache, profiles offered from it — is
     /// cleared too; live-fetched and project-loaded colors are unaffected.
-    @MainActor
     func clearCache() {
         guard !isWorking else {
             connectionMessage = "Wait for the current request to finish before clearing the cache."
@@ -402,7 +398,6 @@ final class ColorCatalog {
     /// Applies a project's embedded palette snapshot. If the currently shown
     /// profile list belongs to another server, drop it so the picker does not
     /// keep offering stale profiles that no longer match the configured server.
-    @MainActor
     func loadProjectColors(_ projectColors: [PaletteColor], profileID: Int?) {
         invalidateOutstandingRequests()
         if loadedPrinterProfilesServer != cacheServer {
@@ -436,7 +431,6 @@ final class ColorCatalog {
 
     // MARK: - Color loading
 
-    @MainActor
     private func fetchColorsIfPossible() async {
         // Retiring precedes the selection guard: clearing the selection —
         // picking "None", loading a project with no profile — is still an
