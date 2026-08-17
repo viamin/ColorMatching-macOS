@@ -420,7 +420,7 @@ final class AppModel {
             PrintSupport.print(
                 tileImage,
                 physicalSizeMM: size,
-                overlay: printOverlayOptions,
+                overlay: tilePrintOverlayOptions,
                 title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
             )
         }
@@ -524,6 +524,12 @@ final class AppModel {
             markInsetMM: Self.sanitizedMeasurement(printMarksInsetMM),
             bleedMM: Self.sanitizedMeasurement(printBleedMM)
         )
+    }
+
+    private var tilePrintOverlayOptions: PrintOverlayOptions {
+        // Tile sizes are planned against the configured page size, so overlays
+        // must stay off here or macOS will enlarge/clamp each printed sheet.
+        PrintOverlayOptions()
     }
 
     private var hasFinitePositivePhysicalPrintSize: Bool {
