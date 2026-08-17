@@ -10,8 +10,6 @@ ZIP_PATH="${DIST_ZIP_PATH:-$ROOT/build/ColorMatching-macOS.zip}"
 ENTITLEMENTS_SOURCE="$ROOT/ColorMatching/ColorMatching.entitlements"
 SUBMISSION_MODE="${NOTARY_SUBMISSION_MODE:-auto}"
 API_KEY_FILE=""
-SIGNED_ENTITLEMENTS=""
-EXPECTED_ENTITLEMENTS=""
 NOTARIZATION_ARCHIVE=""
 
 require_tool() {
@@ -23,14 +21,12 @@ require_tool() {
 
 require_tool xcrun
 require_tool codesign
-require_tool plutil
-require_tool cmp
 require_tool python3
 require_tool spctl
 require_tool ditto
 
 cleanup() {
-    rm -f "${API_KEY_FILE:-}" "${SIGNED_ENTITLEMENTS:-}" "${EXPECTED_ENTITLEMENTS:-}" "${NOTARIZATION_ARCHIVE:-}"
+    rm -f "${API_KEY_FILE:-}" "${NOTARIZATION_ARCHIVE:-}"
 }
 
 trap cleanup EXIT
@@ -114,14 +110,20 @@ if ! codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -Eq 'flags=0x[0-9a-fA-F]+.
     exit 1
 fi
 
-SIGNED_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/signed-entitlements.XXXXXX.plist")"
-EXPECTED_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/expected-entitlements.XXXXXX.plist")"
+# Entitlement dictionaries are unordered, and codesign/plutil can serialize
+# semantically identical entitlements with keys in a different order, so
+# compare the parsed plist content rather than doing a byte-for-byte diff.
+if ! codesign -d --entitlements :- "$APP_PATH" | ENTITLEMENTS_SOURCE="$ENTITLEMENTS_SOURCE" python3 -c '
+import os
+import plistlib
+import sys
 
-codesign -d --entitlements :- "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
-plutil -convert xml1 -o "$SIGNED_ENTITLEMENTS" "$SIGNED_ENTITLEMENTS"
-plutil -convert xml1 -o "$EXPECTED_ENTITLEMENTS" "$ENTITLEMENTS_SOURCE"
+signed = plistlib.loads(sys.stdin.buffer.read())
+with open(os.environ["ENTITLEMENTS_SOURCE"], "rb") as expected_file:
+    expected = plistlib.loads(expected_file.read())
 
-if ! cmp -s "$SIGNED_ENTITLEMENTS" "$EXPECTED_ENTITLEMENTS"; then
+sys.exit(0 if signed == expected else 1)
+'; then
     echo "bin/notarize-release: signed entitlements do not match $ENTITLEMENTS_SOURCE" >&2
     exit 1
 fi
