@@ -78,7 +78,7 @@ struct PreviewPaneView: View {
                         .toggleStyle(.switch)
                     Spacer()
                     if softProofEnabled, let preview = model.softProofPreview {
-                        Text(softProofStatus(for: preview))
+                        Text(softProofStatus(for: preview, profileName: model.softProofProfileName))
                             .font(.caption)
                             .foregroundStyle(preview.outOfGamutCount > 0 ? .orange : .secondary)
                     }
@@ -158,12 +158,12 @@ struct PreviewPaneView: View {
         PreviewImage(image: image)
     }
 
-    private func softProofStatus(for preview: SoftProofPreview) -> String {
+    private func softProofStatus(for preview: SoftProofPreview, profileName: String) -> String {
         if preview.outOfGamutCount == 0 {
-            return "Generic printer preview"
+            return "\(profileName) preview"
         }
         let noun = preview.outOfGamutCount == 1 ? "cell" : "cells"
-        return "\(preview.outOfGamutCount) out-of-gamut \(noun)"
+        return "\(preview.outOfGamutCount) out-of-gamut \(noun) · \(profileName)"
     }
 }
 

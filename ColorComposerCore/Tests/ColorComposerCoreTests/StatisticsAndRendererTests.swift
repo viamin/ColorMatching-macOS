@@ -109,6 +109,48 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(preview.outOfGamutCells, [false, true])
     }
 
+    func testPrinterProfileDisplayNameIncludesPrinterPaperAndInk() {
+        let profile = PrinterProfileDTO(
+            id: 7,
+            printerMakeModel: "Canon PRO-1000",
+            paperType: "Photo Rag",
+            inkType: "Pigment"
+        )
+
+        XCTAssertEqual(profile.displayName, "Canon PRO-1000 · Photo Rag · Pigment")
+    }
+
+    func testPrinterProfileDisplayNameFallsBackToIdentifier() {
+        let profile = PrinterProfileDTO(
+            id: 7,
+            printerMakeModel: nil,
+            paperType: "   ",
+            inkType: nil
+        )
+
+        XCTAssertEqual(profile.displayName, "Profile #7")
+    }
+
+    func testMattePrinterProfileSoftProofIsMoreConservativeThanGlossy() {
+        let matte = PrinterProfileDTO(
+            id: 1,
+            printerMakeModel: "Epson P900",
+            paperType: "Matte Rag",
+            inkType: "Pigment"
+        ).softProofProfile
+        let glossy = PrinterProfileDTO(
+            id: 2,
+            printerMakeModel: "Canon PRO-100",
+            paperType: "Glossy",
+            inkType: "Dye"
+        ).softProofProfile
+
+        XCTAssertGreaterThan(matte.paperBlend, glossy.paperBlend)
+        XCTAssertGreaterThan(matte.blackFloor, glossy.blackFloor)
+        XCTAssertLessThan(matte.contrastScale, glossy.contrastScale)
+        XCTAssertLessThan(matte.baseChromaLimit, glossy.baseChromaLimit)
+    }
+
     func testCompositePreviewMarksUnmatchedCellsMagenta() {
         let preview = CompositionRenderer.compositePreview(unmatchedResult())
 

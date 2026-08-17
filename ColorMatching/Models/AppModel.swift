@@ -259,9 +259,14 @@ final class AppModel {
         return CompositionRenderer.compositePreview(result)
     }
 
+    var softProofProfileName: String {
+        activePrinterProfile?.displayName ?? "Generic printer"
+    }
+
     var softProofPreview: SoftProofPreview? {
         guard let result else { return nil }
-        return CompositionRenderer.softProofPreview(result)
+        let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
+        return CompositionRenderer.softProofPreview(result, profile: profile)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -333,6 +338,14 @@ final class AppModel {
             }
         }
         return RGBAImage(width: outW, height: outH, rgba: rgba)
+    }
+
+    private var activePrinterProfile: PrinterProfileDTO? {
+        if let profile = catalog.colorsForProfile {
+            return profile
+        }
+        guard let id = catalog.selectedPrinterProfileID else { return nil }
+        return catalog.printerProfiles.first { $0.id == id }
     }
 
     // MARK: - Export / print
