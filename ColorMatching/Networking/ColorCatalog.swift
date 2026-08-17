@@ -57,6 +57,15 @@ final class ColorCatalog {
     /// data the user chose, not a stale fetch to fall back from.
     var colorsLoadedFromProject = false
 
+    /// Invoked when the server rejects the current token with 401. Should
+    /// securely prompt for a replacement token and return it, or `nil` if the
+    /// user cancels (issue #16).
+    var onAuthenticationRequired: (() async -> String?)?
+
+    /// Invoked with the token that succeeded a re-authenticated retry, so the
+    /// owner can persist it (e.g. to `AppModel.serverToken`).
+    var onTokenUpdated: ((String) -> Void)?
+
     private var client: PaletteAPIClient?
     private let cache: ProfileColorCache
     /// Multiple request paths can overlap (for example a refresh updating the
@@ -74,7 +83,6 @@ final class ColorCatalog {
     /// `configure` runs on every edit of the server settings. Bump this so a
     /// late response from superseded credentials/configuration cannot report.
     private var configurationRevision = 0
-    private var configuredToken: String?
     /// Internal state changes sometimes need to update the selection without
     /// triggering an immediate fetch. Opening a saved project is the key case:
     /// the document should restore its embedded palette snapshot exactly as
@@ -101,19 +109,10 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
-        let previousServer = cacheServer
-        let previousToken = configuredToken
-        let normalizedToken = normalizedToken(token)
         configurationRevision += 1
         client = normalizedServerURL(from: baseURL).map {
-            PaletteAPIClient(baseURL: $0, token: normalizedToken)
+            PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil)
         }
-        configuredToken = normalizedToken
-        printerProfiles = []
-        retireCacheBackedStateIfCredentialsChanged(
-            previousServer: previousServer,
-            previousToken: previousToken
-        )
     }
 
     var isConfigured: Bool { client != nil }
@@ -122,21 +121,6 @@ final class ColorCatalog {
         guard let url else { return nil }
         let normalized = ProfileColorCache.normalizedServerBaseUrl(url.absoluteString)
         return URL(string: normalized) ?? url
-    }
-
-    private func normalizedToken(_ token: String?) -> String? {
-        guard let token = token?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
-            return nil
-        }
-        return token
-    }
-
-    private func retireCacheBackedStateIfCredentialsChanged(
-        previousServer: String?,
-        previousToken: String?
-    ) {
-        guard previousServer == cacheServer, previousToken != configuredToken else { return }
-        dropCacheBackedState()
     }
 
     /// Retires cache-backed state left over from a different server, before
@@ -823,6 +807,25 @@ final class ColorCatalog {
         colorsLoadedFromProject = false
         isServingFromCache = false
         clearCacheBackedServerIfUnused()
+    }
+
+    /// Runs `operation` against the current client, retrying exactly once
+    /// with a freshly prompted token if the server responds 401 (issue #16).
+    /// Non-auth errors, and a second 401 after re-auth, propagate untouched.
+    private func withReauth<T>(_ operation: (PaletteAPIClient) async throws -> T) async throws -> T {
+        guard let client else { throw PaletteAPIError.invalidURL }
+        do {
+            return try await operation(client)
+        } catch PaletteAPIError.unauthorized {
+            guard let newToken = await onAuthenticationRequired?(), !newToken.isEmpty else {
+                throw PaletteAPIError.unauthorized
+            }
+            let reauthedClient = PaletteAPIClient(baseURL: client.baseURL, token: newToken)
+            let result = try await operation(reauthedClient)
+            self.client = reauthedClient
+            onTokenUpdated?(newToken)
+            return result
+        }
     }
 
     /// Colors eligible for the solver given the currently active channels.

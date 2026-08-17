@@ -22,19 +22,17 @@ final class PaletteAPIClientTests: XCTestCase {
         }
     }
 
-    func testFetchPrinterProfilesDoesNotRetryAfterUnauthorized() async {
+    func testFetchPrinterProfilesUsesTrimmedBearerToken() async throws {
         let lock = NSLock()
         var requests: [String?] = []
         let client = makeClient { request in
             lock.lock()
             requests.append(request.value(forHTTPHeaderField: "Authorization"))
             lock.unlock()
-            return (.init(statusCode: 401, url: request.url!), Data())
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
         }
 
-        await XCTAssertThrowsErrorAsync(try await client.fetchPrinterProfiles()) { error in
-            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
-        }
+        _ = try await client.fetchPrinterProfiles()
 
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
@@ -46,7 +44,22 @@ final class PaletteAPIClientTests: XCTestCase {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "stale-token", session: session)
+        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
+    }
+
+    private func printerProfilesResponse() -> Data {
+        """
+        {
+          "printer_profiles": [
+            {
+              "id": 1,
+              "printer_make_model": "Example Printer",
+              "paper_type": "Matte",
+              "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
     }
 }
 

@@ -69,8 +69,7 @@ public struct PaletteAPIClient: Sendable {
     /// Lightweight reachability check used by the "Test connection" UI action.
     /// Succeeds on any 2xx from `/api/v1/printer_profiles`.
     public func testConnection() async throws {
-        let request = request(url: endpoint(path: "printer_profiles"))
-        _ = try await data(for: request)
+        _ = try await data(for: request(url: endpoint(path: "printer_profiles")))
     }
 
     // MARK: - Internals
@@ -79,24 +78,21 @@ public struct PaletteAPIClient: Sendable {
         baseURL.appendingPathComponent("api/v1").appendingPathComponent(path)
     }
 
-    private func request(url: URL, acceptJSON: Bool = true, token overrideToken: String? = nil) -> URLRequest {
+    private func request(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
-        if acceptJSON {
-            request.addValue("application/json", forHTTPHeaderField: "Accept")
-        }
-        authorize(&request, token: normalizedToken(overrideToken) ?? token)
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        authorize(&request)
         return request
     }
 
-    private func authorize(_ request: inout URLRequest, token: String?) {
+    private func authorize(_ request: inout URLRequest) {
         if let token = normalizedToken(token) {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
     }
 
     private func get<T: Decodable>(_ url: URL) async throws -> T {
-        let request = request(url: url)
-        let (data, _) = try await data(for: request)
+        let data = try await data(for: request(url: url))
 
         do {
             return try decoder.decode(T.self, from: data)
@@ -105,7 +101,7 @@ public struct PaletteAPIClient: Sendable {
         }
     }
 
-    private func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+    private func data(for request: URLRequest) async throws -> Data {
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
 
@@ -114,7 +110,7 @@ public struct PaletteAPIClient: Sendable {
         }
 
         guard (200..<300).contains(http.statusCode) else { throw PaletteAPIError.badStatus(http.statusCode) }
-        return (data, http)
+        return data
     }
 
     private func normalizedToken(_ token: String?) -> String? {
