@@ -26,13 +26,13 @@ public struct SoftProofProfile: Sendable, Equatable {
         warningOverlayOpacity: Double
     ) {
         self.paperWhite = paperWhite
-        self.paperBlend = paperBlend
-        self.blackFloor = blackFloor
-        self.contrastScale = contrastScale
-        self.baseChromaLimit = baseChromaLimit
-        self.midtoneChromaPenalty = midtoneChromaPenalty
-        self.shadowChromaPenalty = shadowChromaPenalty
-        self.warningOverlayOpacity = warningOverlayOpacity
+        self.paperBlend = Self.clamp(paperBlend)
+        self.blackFloor = Self.clamp(blackFloor)
+        self.contrastScale = Self.clamp(contrastScale)
+        self.baseChromaLimit = Self.clamp(baseChromaLimit)
+        self.midtoneChromaPenalty = Self.clamp(midtoneChromaPenalty)
+        self.shadowChromaPenalty = Self.clamp(shadowChromaPenalty)
+        self.warningOverlayOpacity = Self.clamp(warningOverlayOpacity)
     }
 
     public static let genericPrinter = SoftProofProfile(
@@ -149,7 +149,7 @@ enum SoftProofing {
         (value * (1 - amount)) + (other * amount)
     }
 
-    private static func clamp(_ value: Double) -> Double {
+    static func clamp(_ value: Double) -> Double {
         min(1, max(0, value))
     }
 

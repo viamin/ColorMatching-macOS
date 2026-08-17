@@ -131,6 +131,17 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(profile.displayName, "Profile #7")
     }
 
+    func testPrinterProfileDisplayNameTrimsWhitespace() {
+        let profile = PrinterProfileDTO(
+            id: 7,
+            printerMakeModel: "  Canon PRO-1000  ",
+            paperType: "  Photo Rag ",
+            inkType: " Pigment "
+        )
+
+        XCTAssertEqual(profile.displayName, "Canon PRO-1000 · Photo Rag · Pigment")
+    }
+
     func testMattePrinterProfileSoftProofIsMoreConservativeThanGlossy() {
         let matte = PrinterProfileDTO(
             id: 1,
@@ -149,6 +160,27 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertGreaterThan(matte.blackFloor, glossy.blackFloor)
         XCTAssertLessThan(matte.contrastScale, glossy.contrastScale)
         XCTAssertLessThan(matte.baseChromaLimit, glossy.baseChromaLimit)
+    }
+
+    func testSoftProofProfileClampsInvalidParameters() {
+        let profile = SoftProofProfile(
+            paperWhite: RGBColor(red: 255, green: 255, blue: 255),
+            paperBlend: -1,
+            blackFloor: 2,
+            contrastScale: 1.5,
+            baseChromaLimit: -0.5,
+            midtoneChromaPenalty: 3,
+            shadowChromaPenalty: -2,
+            warningOverlayOpacity: 4
+        )
+
+        XCTAssertEqual(profile.paperBlend, 0)
+        XCTAssertEqual(profile.blackFloor, 1)
+        XCTAssertEqual(profile.contrastScale, 1)
+        XCTAssertEqual(profile.baseChromaLimit, 0)
+        XCTAssertEqual(profile.midtoneChromaPenalty, 1)
+        XCTAssertEqual(profile.shadowChromaPenalty, 0)
+        XCTAssertEqual(profile.warningOverlayOpacity, 1)
     }
 
     func testCompositePreviewMarksUnmatchedCellsMagenta() {

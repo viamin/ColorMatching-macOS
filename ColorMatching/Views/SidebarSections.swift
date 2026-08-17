@@ -42,7 +42,7 @@ struct ProfileSection: View {
             Picker("Printer profile", selection: $catalog.selectedPrinterProfileID) {
                 Text("None").tag(Int?.none)
                 ForEach(catalog.printerProfiles) { profile in
-                    Text(profileLabel(profile)).tag(Int?.some(profile.id))
+                    Text(profile.displayName).tag(Int?.some(profile.id))
                 }
             }
 
@@ -52,11 +52,6 @@ struct ProfileSection: View {
                 LabeledContent("Last refreshed", value: refreshed.formatted(.dateTime.month().day().hour().minute()))
             }
         }
-    }
-
-    private func profileLabel(_ profile: PrinterProfileDTO) -> String {
-        let parts = [profile.printerMakeModel, profile.paperType].compactMap { $0 }
-        return parts.isEmpty ? "Profile #\(profile.id)" : parts.joined(separator: " · ")
     }
 }
 
