@@ -23,7 +23,7 @@ struct ResponseGamutView: View {
             ContentUnavailableView(
                 "No colors loaded",
                 systemImage: "eyedropper",
-                description: Text("Load colors from the server to see which response vectors are within reach.")
+                description: Text("Load colors from the server, cache, or a project to see which response vectors are within reach.")
             )
         } else {
             VStack(spacing: 0) {

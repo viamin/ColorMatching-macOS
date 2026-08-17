@@ -4,9 +4,11 @@ import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+@MainActor
 @Observable
 final class AppModel {
     init() {
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         catalog.onPaletteChanged = { [weak self] in
             self?.clearCompositionState()
         }
@@ -190,7 +192,7 @@ final class AppModel {
             return
         }
         guard !catalog.colors.isEmpty else {
-            lastError = "Load colors from the server first."
+            lastError = "Load colors from the server, cache, or a project first."
             return
         }
         guard let grids = sourceGrids(for: active) else { return }
