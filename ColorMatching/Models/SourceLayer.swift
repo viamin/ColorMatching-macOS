@@ -4,6 +4,7 @@ import CoreGraphics
 import ColorComposerCore
 
 /// One grayscale source image and how it is mapped into the composition.
+@MainActor
 @Observable
 final class SourceLayer: Identifiable {
     let id = UUID()
