@@ -99,10 +99,18 @@ final class ColorCatalog {
 
     func configure(baseURL: URL?, token: String?) {
         configurationRevision += 1
-        client = baseURL.map { PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil) }
+        client = normalizedServerURL(from: baseURL).map {
+            PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil)
+        }
     }
 
     var isConfigured: Bool { client != nil }
+
+    private func normalizedServerURL(from url: URL?) -> URL? {
+        guard let url else { return nil }
+        let normalized = ProfileColorCache.normalizedServerBaseUrl(url.absoluteString)
+        return URL(string: normalized) ?? url
+    }
 
     /// Retires cache-backed state left over from a different server, before
     /// this server is used for a real request. `configure` cannot call this
