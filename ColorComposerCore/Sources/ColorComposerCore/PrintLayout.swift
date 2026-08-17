@@ -5,6 +5,12 @@ public struct PrintOverlayOptions: Sendable, Equatable, Codable {
     public var markInsetMM: Double
     public var bleedMM: Double
 
+    private enum CodingKeys: String, CodingKey {
+        case showsMarks
+        case markInsetMM
+        case bleedMM
+    }
+
     public init(
         showsMarks: Bool = false,
         markInsetMM: Double = 3.0,
@@ -13,6 +19,15 @@ public struct PrintOverlayOptions: Sendable, Equatable, Codable {
         self.showsMarks = showsMarks
         self.markInsetMM = markInsetMM
         self.bleedMM = bleedMM
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            showsMarks: try container.decodeIfPresent(Bool.self, forKey: .showsMarks) ?? false,
+            markInsetMM: try container.decodeIfPresent(Double.self, forKey: .markInsetMM) ?? 3.0,
+            bleedMM: try container.decodeIfPresent(Double.self, forKey: .bleedMM) ?? 0.0
+        )
     }
 }
 

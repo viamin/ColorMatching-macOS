@@ -2,6 +2,30 @@ import XCTest
 @testable import ColorComposerCore
 
 final class PrintLayoutTests: XCTestCase {
+    func testPrintOverlayOptionsDefaultsMissingFieldsDuringDecode() throws {
+        let options = try JSONDecoder().decode(
+            PrintOverlayOptions.self,
+            from: #"{"showsMarks":true}"#.data(using: .utf8)!
+        )
+
+        XCTAssertEqual(
+            options,
+            PrintOverlayOptions(showsMarks: true, markInsetMM: 3.0, bleedMM: 0.0)
+        )
+    }
+
+    func testPrintOverlayOptionsDecodesPresentFieldsWithoutOverwritingThem() throws {
+        let options = try JSONDecoder().decode(
+            PrintOverlayOptions.self,
+            from: #"{"markInsetMM":12.5,"bleedMM":4}"#.data(using: .utf8)!
+        )
+
+        XCTAssertEqual(
+            options,
+            PrintOverlayOptions(showsMarks: false, markInsetMM: 12.5, bleedMM: 4.0)
+        )
+    }
+
     func testLayoutWithoutBleedOrMarksMatchesArtworkSize() {
         let layout = PrintLayout.make(
             physicalSizeMM: .init(width: 100, height: 80),
