@@ -8,6 +8,9 @@ public typealias PaletteAPIReauthentication = @Sendable () async throws -> Strin
 /// Errors produced by `PaletteAPIClient`.
 public enum PaletteAPIError: Error, LocalizedError, Equatable {
     case invalidURL
+    /// The server rejected the bearer token (HTTP 401), distinct from other
+    /// non-2xx statuses so callers can trigger a re-authentication flow
+    /// (issue #16) instead of surfacing a generic error.
     case unauthorized
     case badStatus(Int)
     case malformedResponse

@@ -21,6 +21,8 @@ struct ServerConfigurationSection: View {
                     .disabled(catalog.isWorking)
                 Button("Refresh") { Task { await catalog.refreshAll() } }
                     .disabled(catalog.isWorking)
+                Button("Clear Cache") { catalog.clearCache() }
+                    .disabled(catalog.isWorking)
             }
             if let message = catalog.connectionMessage {
                 Text(message).font(.caption).foregroundStyle(.secondary)
@@ -48,8 +50,22 @@ struct ProfileSection: View {
 
             LabeledContent("Colors loaded", value: "\(catalog.colors.count)")
             LabeledContent("Eligible for current weights", value: "\(model.eligibleColorCount)")
+            if catalog.isServingFromCache {
+                Label("Offline — cached colors", systemImage: "clock.badge.exclamationmark")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .help("The last fetch failed, so these colors were loaded from the local cache and may be stale.")
+            } else if catalog.colorsLoadedFromProject {
+                Label("Loaded from project snapshot", systemImage: "doc.badge.clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("These colors came from the opened project file rather than a live server fetch.")
+            }
             if let refreshed = catalog.lastRefresh {
-                LabeledContent("Last refreshed", value: refreshed.formatted(.dateTime.month().day().hour().minute()))
+                LabeledContent(
+                    catalog.isServingFromCache ? "Cached from" : "Last refreshed",
+                    value: refreshed.formatted(.dateTime.month().day().hour().minute())
+                )
             }
         }
     }
