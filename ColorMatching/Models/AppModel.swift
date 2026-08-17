@@ -6,6 +6,11 @@ import ColorComposerCore
 /// settings, and the solved result with derived preview images.
 @Observable
 final class AppModel {
+    init() {
+        catalog.onPaletteChanged = { [weak self] in
+            self?.clearCompositionState()
+        }
+    }
 
     // MARK: - Catalog / server
 
@@ -236,6 +241,18 @@ final class AppModel {
         return grids
     }
 
+    private func clearCompositionState() {
+        solveTask?.cancel()
+        solveTask = nil
+        debounceTask?.cancel()
+        debounceTask = nil
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
+        isSolving = false
+    }
+
     // MARK: - Derived images
 
     var compositeRGBA: RGBAImage? {
@@ -256,19 +273,17 @@ final class AppModel {
     /// using `compositeRGBA` (transparent for unmatched).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        for cell in 0..<result.cellCount {
-            let base = cell * 4
-            if let index = result.colorIndices[cell] {
-                let color = result.palette[index].rgb
-                rgba[base] = color.red; rgba[base + 1] = color.green
-                rgba[base + 2] = color.blue; rgba[base + 3] = 255
-            } else {
-                // Visible "no eligible color" marker.
-                rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
-            }
-        }
-        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+        return CompositionRenderer.compositePreview(result)
+    }
+
+    var softProofProfileName: String {
+        activePrinterProfile?.displayName ?? "Generic printer"
+    }
+
+    var softProofPreview: SoftProofPreview? {
+        guard let result else { return nil }
+        let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
+        return CompositionRenderer.softProofPreview(result, profile: profile)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -340,6 +355,14 @@ final class AppModel {
             }
         }
         return RGBAImage(width: outW, height: outH, rgba: rgba)
+    }
+
+    private var activePrinterProfile: PrinterProfileDTO? {
+        guard let id = catalog.selectedPrinterProfileID else { return nil }
+        if let profile = catalog.colorsForProfile, profile.id == id {
+            return profile
+        }
+        return catalog.printerProfiles.first(where: { $0.id == id })
     }
 
     // MARK: - Export / print
@@ -462,6 +485,7 @@ final class AppModel {
             serverBaseURL: serverBaseURL,
             apiToken: serverToken,
             printerProfileID: catalog.selectedPrinterProfileID,
+            printerProfileSnapshot: activePrinterProfile,
             colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
             scorerKind: scorerKind,
@@ -480,12 +504,14 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        catalog.selectedPrinterProfileID = s.printerProfileID
-        catalog.colors = s.colorSnapshot.map { $0.toColor() }
-        catalog.lastRefresh = Date()
-        catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
+        catalog.restoreSnapshot(
+            printerProfileID: s.printerProfileID,
+            printerProfile: s.printerProfileSnapshot,
+            colors: s.colorSnapshot.map { $0.toColor() }
+        )
 
         weights = s.weights
         scorerKind = s.scorerKind

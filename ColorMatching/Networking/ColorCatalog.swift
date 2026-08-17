@@ -15,9 +15,19 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
+    var onPaletteChanged: (() -> Void)?
+    private var isRestoringSnapshot = false
 
     var selectedPrinterProfileID: Int? {
-        didSet { Task { await fetchColorsIfPossible() } }
+        didSet {
+            guard selectedPrinterProfileID != oldValue else { return }
+            guard !isRestoringSnapshot else { return }
+            clearLoadedColors()
+            guard selectedPrinterProfileID != nil else {
+                return
+            }
+            Task { await fetchColorsIfPossible() }
+        }
     }
 
     var lastRefresh: Date?
@@ -27,11 +37,19 @@ final class ColorCatalog {
     private var client: PaletteAPIClient?
 
     func configure(baseURL: URL?, token: String?) {
-        guard let baseURL else {
-            client = nil
-            return
+        let normalizedToken = token?.isEmpty == false ? token : nil
+        let configurationChanged = client?.baseURL != baseURL || client?.token != normalizedToken
+
+        guard configurationChanged else { return }
+
+        client = baseURL.map { PaletteAPIClient(baseURL: $0, token: normalizedToken) }
+        printerProfiles = []
+
+        if selectedPrinterProfileID != nil {
+            selectedPrinterProfileID = nil
+        } else {
+            clearLoadedColors()
         }
-        client = PaletteAPIClient(baseURL: baseURL, token: token?.isEmpty == false ? token : nil)
     }
 
     var isConfigured: Bool { client != nil }
@@ -63,11 +81,19 @@ final class ColorCatalog {
         isWorking = true
         defer { isWorking = false }
         do {
+            let previousSelection = selectedPrinterProfileID
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
-            if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
+            if let selectedProfileID = selectedPrinterProfileID,
+               fetchedProfiles.contains(where: { $0.id == selectedProfileID }) == false {
+                selectedPrinterProfileID = fetchedProfiles.first?.id
+            } else if selectedPrinterProfileID == nil {
+                selectedPrinterProfileID = fetchedProfiles.first?.id
+            }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
-            await fetchColorsIfPossible()
+            if selectedPrinterProfileID == previousSelection {
+                await fetchColorsIfPossible()
+            }
         } catch let error as PaletteAPIError {
             connectionMessage = error.errorDescription
         } catch {
@@ -81,15 +107,56 @@ final class ColorCatalog {
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
-            colors = dtos.compactMap { $0.toDomain() }
-            colorsForProfile = profile
-            lastRefresh = Date()
-            connectionMessage = "Loaded \(colors.count) color(s) for this profile."
+            guard selectedPrinterProfileID == profileID else { return }
+            let loadedColors = dtos.compactMap { $0.toDomain() }
+            applyPalette(
+                loadedColors,
+                profile: profile,
+                connectionMessage: "Loaded \(loadedColors.count) color(s) for this profile."
+            )
         } catch let error as PaletteAPIError {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = error.errorDescription
         } catch {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = "Could not load colors."
         }
+    }
+
+    func restoreSnapshot(
+        printerProfileID: Int?,
+        printerProfile: PrinterProfileDTO?,
+        colors: [PaletteColor]
+    ) {
+        isRestoringSnapshot = true
+        selectedPrinterProfileID = printerProfileID
+        isRestoringSnapshot = false
+        printerProfiles = printerProfile.map { [$0] } ?? []
+        applyPalette(
+            colors,
+            profile: printerProfile,
+            connectionMessage: "Loaded \(colors.count) color(s) from project."
+        )
+    }
+
+    private func clearLoadedColors() {
+        onPaletteChanged?()
+        colors = []
+        colorsForProfile = nil
+        lastRefresh = nil
+        connectionMessage = nil
+    }
+
+    private func applyPalette(
+        _ colors: [PaletteColor],
+        profile: PrinterProfileDTO?,
+        connectionMessage: String
+    ) {
+        onPaletteChanged?()
+        self.colors = colors
+        colorsForProfile = profile
+        lastRefresh = Date()
+        self.connectionMessage = connectionMessage
     }
 
     /// Colors eligible for the solver given the currently active channels.
