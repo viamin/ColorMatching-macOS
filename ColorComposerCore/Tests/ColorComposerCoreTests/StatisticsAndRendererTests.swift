@@ -109,6 +109,87 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(preview.outOfGamutCells, [false, true])
     }
 
+    func testSoftProofGamutFlagsAreRowMajor() throws {
+        let palette = [
+            color(1, "#808080", [.red: 0.0]),
+            color(2, "#FF0000", [.red: 1.0])
+        ]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 2, values: [0.0, 1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let preview = CompositionRenderer.softProof(result)
+
+        XCTAssertEqual(preview.image.width, 1)
+        XCTAssertEqual(preview.image.height, 2)
+        XCTAssertFalse(preview.isOutOfGamut(x: 0, y: 0))
+        XCTAssertTrue(preview.isOutOfGamut(x: 0, y: 1))
+        XCTAssertEqual(preview.outOfGamutCount, 1)
+    }
+
+    func testSoftProofUsesProvidedProfilePaperWhite() throws {
+        let palette = [color(1, "#808080", [.red: 0.5])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [0.5])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let warm = SoftProofProfile(
+            paperWhite: RGBColor(red: 255, green: 128, blue: 128),
+            paperBlend: 0.5,
+            blackFloor: 0,
+            contrastScale: 1,
+            baseChromaLimit: 1,
+            midtoneChromaPenalty: 0,
+            shadowChromaPenalty: 0,
+            warningOverlayOpacity: 0
+        )
+        let cool = SoftProofProfile(
+            paperWhite: RGBColor(red: 128, green: 128, blue: 255),
+            paperBlend: 0.5,
+            blackFloor: 0,
+            contrastScale: 1,
+            baseChromaLimit: 1,
+            midtoneChromaPenalty: 0,
+            shadowChromaPenalty: 0,
+            warningOverlayOpacity: 0
+        )
+
+        let warmPreview = CompositionRenderer.softProof(result, profile: warm)
+        let coolPreview = CompositionRenderer.softProof(result, profile: cool)
+
+        XCTAssertNotEqual(warmPreview.image, coolPreview.image)
+        XCTAssertGreaterThan(warmPreview.image.rgba[0], warmPreview.image.rgba[2])
+        XCTAssertLessThan(coolPreview.image.rgba[0], coolPreview.image.rgba[2])
+    }
+
+    func testSoftProofWideGamutProfileKeepsSaturatedColorUntinted() throws {
+        let palette = [color(1, "#FF0000", [.red: 1.0])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+        let wideGamut = SoftProofProfile(
+            paperWhite: RGBColor(red: 255, green: 255, blue: 255),
+            paperBlend: 0,
+            blackFloor: 0,
+            contrastScale: 1,
+            baseChromaLimit: 1,
+            midtoneChromaPenalty: 0,
+            shadowChromaPenalty: 0,
+            warningOverlayOpacity: 0.5
+        )
+
+        let preview = CompositionRenderer.softProof(result, profile: wideGamut)
+
+        XCTAssertFalse(preview.isOutOfGamut(x: 0, y: 0))
+        XCTAssertEqual(Array(preview.image.rgba[0..<4]), [255, 0, 0, 255])
+    }
+
     func testPrinterProfileDisplayNameIncludesPrinterPaperAndInk() {
         let profile = PrinterProfileDTO(
             id: 7,

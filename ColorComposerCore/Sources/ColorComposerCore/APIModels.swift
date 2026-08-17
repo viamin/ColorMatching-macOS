@@ -11,12 +11,12 @@ public struct PrinterProfileDTO: Codable, Identifiable, Sendable, Equatable {
 }
 
 public extension PrinterProfileDTO {
-    public var displayName: String {
+    var displayName: String {
         let parts = [printerMakeModel, paperType, inkType].compactMap { normalizedLabelPart($0) }
         return parts.isEmpty ? "Profile #\(id)" : parts.joined(separator: " · ")
     }
 
-    public var softProofProfile: SoftProofProfile {
+    var softProofProfile: SoftProofProfile {
         var profile = SoftProofProfile.genericPrinter
         let paper = normalizedSearchText(paperType)
         let ink = normalizedSearchText(inkType)
@@ -49,23 +49,23 @@ public extension PrinterProfileDTO {
             profile = SoftProofProfile(
                 paperWhite: profile.paperWhite,
                 paperBlend: profile.paperBlend,
-                blackFloor: clamped(profile.blackFloor - 0.01),
-                contrastScale: clamped(profile.contrastScale + 0.02),
-                baseChromaLimit: clamped(profile.baseChromaLimit + 0.02),
+                blackFloor: SoftProofing.clamp(profile.blackFloor - 0.01),
+                contrastScale: SoftProofing.clamp(profile.contrastScale + 0.02),
+                baseChromaLimit: SoftProofing.clamp(profile.baseChromaLimit + 0.02),
                 midtoneChromaPenalty: profile.midtoneChromaPenalty,
                 shadowChromaPenalty: profile.shadowChromaPenalty,
-                warningOverlayOpacity: clamped(profile.warningOverlayOpacity - 0.03)
+                warningOverlayOpacity: SoftProofing.clamp(profile.warningOverlayOpacity - 0.03)
             )
         } else if matchesAny(ink, ["dye"]) {
             profile = SoftProofProfile(
                 paperWhite: profile.paperWhite,
-                paperBlend: clamped(profile.paperBlend + 0.01),
+                paperBlend: SoftProofing.clamp(profile.paperBlend + 0.01),
                 blackFloor: profile.blackFloor,
-                contrastScale: clamped(profile.contrastScale - 0.02),
-                baseChromaLimit: clamped(profile.baseChromaLimit + 0.01),
+                contrastScale: SoftProofing.clamp(profile.contrastScale - 0.02),
+                baseChromaLimit: SoftProofing.clamp(profile.baseChromaLimit + 0.01),
                 midtoneChromaPenalty: profile.midtoneChromaPenalty,
                 shadowChromaPenalty: profile.shadowChromaPenalty,
-                warningOverlayOpacity: clamped(profile.warningOverlayOpacity + 0.02)
+                warningOverlayOpacity: SoftProofing.clamp(profile.warningOverlayOpacity + 0.02)
             )
         }
 
@@ -85,10 +85,6 @@ public extension PrinterProfileDTO {
 
     private func matchesAny(_ haystack: String, _ needles: [String]) -> Bool {
         needles.contains { haystack.contains($0) }
-    }
-
-    private func clamped(_ value: Double) -> Double {
-        min(1, max(0, value))
     }
 }
 

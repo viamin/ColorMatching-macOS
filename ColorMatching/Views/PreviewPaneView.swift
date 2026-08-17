@@ -74,7 +74,9 @@ struct PreviewPaneView: View {
             }
             .pickerStyle(.segmented)
 
-            if mode == .composite, model.hasResult {
+            // The soft-proof row describes the composite preview; hide it when
+            // that preview is replaced by the all-cells-unmatched notice.
+            if mode == .composite, model.hasResult, !model.allCellsUnmatched {
                 HStack(spacing: 12) {
                     Toggle("Soft Proof", isOn: $softProofEnabled)
                         .toggleStyle(.switch)
