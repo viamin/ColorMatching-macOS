@@ -12,10 +12,35 @@ final class SourceLayer: Identifiable {
         didSet { cachedCGImage = imageData.flatMap { ImageUtilities.makeCGImage(from: $0) } }
     }
     var filename: String?
-    var assignedCondition: LightingCondition?
-    var inverted: Bool = false
-    var scalingMode: ImageScalingMode = .fit
-    var colorSpace: BrightnessColorSpace = .gamma
+
+    /// Informs the owner when an undoable field changes so the edit can be
+    /// registered with the undo manager (issue #14).
+    var onUndoableEdit: ((SourceLayer, LayerEdit) -> Void)?
+
+    var assignedCondition: LightingCondition? {
+        didSet {
+            guard oldValue != assignedCondition else { return }
+            onUndoableEdit?(self, .assignedCondition(oldValue))
+        }
+    }
+    var inverted: Bool = false {
+        didSet {
+            guard oldValue != inverted else { return }
+            onUndoableEdit?(self, .inverted(oldValue))
+        }
+    }
+    var scalingMode: ImageScalingMode = .fit {
+        didSet {
+            guard oldValue != scalingMode else { return }
+            onUndoableEdit?(self, .scalingMode(oldValue))
+        }
+    }
+    var colorSpace: BrightnessColorSpace = .gamma {
+        didSet {
+            guard oldValue != colorSpace else { return }
+            onUndoableEdit?(self, .colorSpace(oldValue))
+        }
+    }
 
     private var cachedCGImage: CGImage?
 

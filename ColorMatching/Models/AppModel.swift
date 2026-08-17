@@ -10,6 +10,7 @@ final class AppModel {
         catalog.onPaletteChanged = { [weak self] in
             self?.clearCompositionState()
         }
+        wireUndoHooks()
     }
 
     // MARK: - Catalog / server
@@ -42,11 +43,15 @@ final class AppModel {
         guard index >= 0 && index < layers.count else { return }
         do {
             let (data, filename, _) = try ImageUtilities.load(from: url)
-            layers[index].imageData = data
-            layers[index].filename = filename
-            // Auto-assign a condition if none yet, preferring unused ones.
-            if layers[index].assignedCondition == nil {
-                layers[index].assignedCondition = nextUnassignedCondition()
+            // Importing an image is not a user composition edit, so the
+            // auto-assigned channel must not register an undo action.
+            undo.performWithoutRegistration {
+                layers[index].imageData = data
+                layers[index].filename = filename
+                // Auto-assign a condition if none yet, preferring unused ones.
+                if layers[index].assignedCondition == nil {
+                    layers[index].assignedCondition = nextUnassignedCondition()
+                }
             }
         } catch {
             lastError = error.localizedDescription
@@ -82,11 +87,36 @@ final class AppModel {
 
     // MARK: - Composition settings
 
-    var weights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1)
-    var scorerKind: ScorerKind = .weightedSquaredError
-    var logicalWidth = 200
-    var logicalHeight = 200
-    var pixelsPerCell = 4
+    var weights: ChannelWeights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1) {
+        didSet {
+            guard oldValue != weights else { return }
+            noteEdit(kind: "weights", actionName: "Weights") { $0.weights = oldValue }
+        }
+    }
+    var scorerKind: ScorerKind = .weightedSquaredError {
+        didSet {
+            guard oldValue != scorerKind else { return }
+            noteEdit(kind: "scorer", actionName: "Scorer") { $0.scorerKind = oldValue }
+        }
+    }
+    var logicalWidth = 200 {
+        didSet {
+            guard oldValue != logicalWidth else { return }
+            noteEdit(kind: "resolution", actionName: "Resolution") { $0.logicalWidth = oldValue }
+        }
+    }
+    var logicalHeight = 200 {
+        didSet {
+            guard oldValue != logicalHeight else { return }
+            noteEdit(kind: "resolution", actionName: "Resolution") { $0.logicalHeight = oldValue }
+        }
+    }
+    var pixelsPerCell = 4 {
+        didSet {
+            guard oldValue != pixelsPerCell else { return }
+            noteEdit(kind: "exportScale", actionName: "Export Scale") { $0.pixelsPerCell = oldValue }
+        }
+    }
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
     var showsPrintMarks = false
@@ -97,6 +127,97 @@ final class AppModel {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
     }
 
+    // MARK: - Undo support (issue #14)
+
+    /// Registers user composition edits with the window's undo manager so
+    /// ⌘Z / ⇧⌘Z and the Edit menu's Undo/Redo drive them. Only edits noted
+    /// here reach the undo stack — solves and results never do.
+    let undo = CompositionUndo()
+
+    /// Connects window undo support; called when the window's undo manager
+    /// becomes available and again when a fresh model takes over.
+    func attachUndoManager(_ manager: UndoManager?) {
+        undo.attach(manager)
+    }
+
+    /// Builds the pre-edit snapshot for a settings edit by reverting one
+    /// field of the current snapshot.
+    private func noteEdit(kind: String, actionName: String, revert: (inout CompositionEdit) -> Void) {
+        var restore = compositionEdit()
+        revert(&restore)
+        undo.noteUserEdit(kind: kind, actionName: actionName, restore: restore, swap: editSwap)
+    }
+
+    /// Builds the pre-edit snapshot for a layer-field edit.
+    private func noteLayerEdit(_ layer: SourceLayer, edit: LayerEdit) {
+        guard let index = layers.firstIndex(where: { $0 === layer }) else { return }
+        var restore = compositionEdit()
+        restore.layers[index] = edit.reverted(restore.layers[index])
+        undo.noteUserEdit(
+            kind: "layer.\(layer.id.uuidString).\(edit.key)",
+            actionName: edit.actionName,
+            restore: restore,
+            swap: editSwap
+        )
+    }
+
+    /// The current undoable settings, mirrored per layer by identity.
+    private func compositionEdit() -> CompositionEdit {
+        CompositionEdit(
+            weights: weights,
+            scorerKind: scorerKind,
+            logicalWidth: logicalWidth,
+            logicalHeight: logicalHeight,
+            pixelsPerCell: pixelsPerCell,
+            layers: layers.map {
+                CompositionEdit.Layer(
+                    id: $0.id,
+                    assignedCondition: $0.assignedCondition,
+                    inverted: $0.inverted,
+                    scalingMode: $0.scalingMode,
+                    colorSpace: $0.colorSpace
+                )
+            }
+        )
+    }
+
+    /// Applies `edit` and returns the snapshot it replaced; undo and redo both
+    /// run through here so the inverse is always the displaced state. May
+    /// exceed the size target: it is a flat field-by-field copy.
+    private func swapEdit(_ edit: CompositionEdit) -> CompositionEdit {
+        let previous = compositionEdit()
+        weights = edit.weights
+        scorerKind = edit.scorerKind
+        logicalWidth = edit.logicalWidth
+        logicalHeight = edit.logicalHeight
+        pixelsPerCell = edit.pixelsPerCell
+        for layerEdit in edit.layers {
+            guard let index = layers.firstIndex(where: { $0.id == layerEdit.id }) else { continue }
+            layers[index].assignedCondition = layerEdit.assignedCondition
+            layers[index].inverted = layerEdit.inverted
+            layers[index].scalingMode = layerEdit.scalingMode
+            layers[index].colorSpace = layerEdit.colorSpace
+        }
+        scheduleAutoRegenerate()
+        return previous
+    }
+
+    /// Weak wrapper: undo closures live in the window's undo manager and must
+    /// not keep a replaced model (and its images) alive.
+    private var editSwap: (CompositionEdit) -> CompositionEdit {
+        { [weak self] edit in
+            guard let self else { return edit }
+            return self.swapEdit(edit)
+        }
+    }
+
+    private func wireUndoHooks() {
+        for layer in layers {
+            layer.onUndoableEdit = { [weak self] layer, edit in
+                self?.noteLayerEdit(layer, edit: edit)
+            }
+        }
+    }
 
     // MARK: - Auto-regenerate
 
@@ -504,6 +625,14 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        // Loading a project replaces state wholesale: it is not a user edit,
+        // and stale pre-load undo actions would restore a half-replaced model.
+        undo.performWithoutRegistration { applySnapshotContents(s) }
+        wireUndoHooks()
+        undo.reset()
+    }
+
+    private func applySnapshotContents(_ s: ProjectDocument) {
         clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken

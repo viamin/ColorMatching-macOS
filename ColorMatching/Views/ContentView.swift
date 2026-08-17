@@ -3,6 +3,7 @@ import ColorComposerCore
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         @Bindable var model = model
@@ -67,6 +68,15 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear { connectUndo() }
+        .onChange(of: ObjectIdentifier(model)) { connectUndo() }
+    }
+
+    /// Registers edits with the window's undo manager so the standard Edit
+    /// menu's Undo/Redo (⌘Z / ⇧⌘Z) drive them (issue #14). Re-attaching after
+    /// the model is replaced (New Project) clears stale registrations.
+    private func connectUndo() {
+        model.attachUndoManager(undoManager)
     }
 }
 
