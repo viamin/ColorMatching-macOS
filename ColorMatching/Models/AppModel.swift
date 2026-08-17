@@ -4,6 +4,11 @@ import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+///
+/// Main-actor isolated so it can register edits with the main-actor-isolated
+/// `UndoManager` (issue #14); the heavy solve runs off the main actor in
+/// `solveComposition(_:…)`.
+@MainActor
 @Observable
 final class AppModel {
     init() {
@@ -310,40 +315,60 @@ final class AppModel {
         }
         guard let grids = sourceGrids(for: active) else { return }
 
-        let candidateColors = catalog.colors
-        let weights = self.weights
-        let solver = CompositionSolver(scorer: scorerKind.makeScorer())
         isSolving = true
         lastError = nil
-
-        let solved: Result<CompositionResult, Error>
-        do {
-            let r = try solver.solve(palette: candidateColors, sourceGrids: grids, weights: weights)
-            guard !Task.isCancelled else {
-                isSolving = false
-                return
-            }
-            solved = .success(r)
-        } catch {
-            solved = .failure(error)
-        }
+        let outcome = await Self.solveComposition(
+            palette: catalog.colors,
+            sourceGrids: grids,
+            weights: weights,
+            scorerKind: scorerKind
+        )
 
         guard !Task.isCancelled else {
             isSolving = false
             return
         }
         isSolving = false
-        switch solved {
-        case .success(let r):
-            result = r
-            errorStatistics = ErrorStatistics(result: r)
-            solvedGamut = ResponseGamutAnalyzer().analyze(
-                palette: candidateColors,
-                sourceGrids: grids,
-                weights: weights
-            )
+        switch outcome {
+        case .success(let solved):
+            result = solved.result
+            errorStatistics = solved.statistics
+            solvedGamut = solved.gamut
         case .failure(let error):
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    private struct SolvedComposition {
+        let result: CompositionResult
+        let statistics: ErrorStatistics
+        let gamut: ResponseGamut
+    }
+
+    private enum SolveOutcome {
+        case success(SolvedComposition)
+        case failure(Error)
+    }
+
+    /// Runs the solve and the analyses derived from it off the main actor.
+    /// `AppModel` is main-actor isolated to host undo registration (issue
+    /// #14), so the heavy work is funneled through this nonisolated helper.
+    private nonisolated static func solveComposition(
+        palette: [PaletteColor],
+        sourceGrids: [LightingCondition: BrightnessGrid],
+        weights: ChannelWeights,
+        scorerKind: ScorerKind
+    ) async -> SolveOutcome {
+        do {
+            let solver = CompositionSolver(scorer: scorerKind.makeScorer())
+            let solved = try solver.solve(palette: palette, sourceGrids: sourceGrids, weights: weights)
+            return .success(SolvedComposition(
+                result: solved,
+                statistics: ErrorStatistics(result: solved),
+                gamut: ResponseGamutAnalyzer().analyze(palette: palette, sourceGrids: sourceGrids, weights: weights)
+            ))
+        } catch {
+            return .failure(error)
         }
     }
 

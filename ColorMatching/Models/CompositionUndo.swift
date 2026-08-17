@@ -8,6 +8,10 @@ import Foundation
 /// apply snapshots and re-register the displaced state as the inverse, so both
 /// directions stay available. Only edits that pass through `noteUserEdit` ever
 /// reach the undo stack — solves and results never do.
+///
+/// Main-actor isolated because `UndoManager` is, and because every user edit
+/// originates from the main-actor UI.
+@MainActor
 final class CompositionUndo {
     /// Same-kind edits within this window continue the current undo step.
     static let coalesceInterval: TimeInterval = 0.5
