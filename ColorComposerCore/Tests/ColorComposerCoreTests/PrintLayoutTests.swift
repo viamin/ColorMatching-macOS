@@ -78,7 +78,7 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 28, y: 5), radius: 3))
     }
 
-    func testBleedDoesNotIncreaseCanvasWithoutMarks() {
+    func testBleedExpandsCanvasWithoutMarks() {
         let layout = PrintLayout.make(
             physicalSizeMM: .init(width: 40, height: 20),
             options: PrintOverlayOptions(showsMarks: false, markInsetMM: 12, bleedMM: 5)
@@ -138,5 +138,28 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(layout.artworkRect, layout.trimRect)
         XCTAssertTrue(layout.cropMarks.isEmpty)
         XCTAssertTrue(layout.registrationMarks.isEmpty)
+    }
+
+    func testNonFiniteMeasurementsWithMarksStillProduceFiniteLayout() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: .nan, height: .infinity),
+            options: PrintOverlayOptions(showsMarks: true, markInsetMM: .nan, bleedMM: .infinity),
+            markLengthMM: .nan,
+            registrationRadiusMM: .infinity
+        )
+
+        XCTAssertEqual(layout.canvasSize, .init(width: 4, height: 4))
+        XCTAssertEqual(layout.trimRect, .init(x: 2, y: 2, width: 0, height: 0))
+        XCTAssertEqual(layout.artworkRect, layout.trimRect)
+        XCTAssertEqual(layout.cropMarks.count, 8)
+        XCTAssertEqual(
+            layout.registrationMarks,
+            [
+                .init(center: .init(x: 2, y: 2), radius: 0),
+                .init(center: .init(x: 2, y: 2), radius: 0),
+                .init(center: .init(x: 2, y: 2), radius: 0),
+                .init(center: .init(x: 2, y: 2), radius: 0)
+            ]
+        )
     }
 }
