@@ -335,7 +335,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            try await client.testConnection()
+            try await withReauth { try await $0.testConnection() }
             // A late result describes the server it was sent to, which may no
             // longer be configured; only a fresh request may report.
             guard cacheServer == requestedServer,
@@ -364,7 +364,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let fetchedProfiles = try await client.fetchPrinterProfiles()
+            let fetchedProfiles = try await withReauth { try await $0.fetchPrinterProfiles() }
             // The server may have changed while the request was in flight;
             // the previous server's late response must not populate state.
             guard cacheServer == requestedServer,
@@ -472,7 +472,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            let (dtos, profile) = try await withReauth { try await $0.fetchColors(printerProfileID: profileID) }
             // The selection or server may have changed while the request was
             // in flight; a late response for another profile must not
             // overwrite it, and another server's response must be neither
