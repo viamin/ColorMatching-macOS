@@ -17,6 +17,8 @@ public struct PrintOverlayOptions: Sendable, Equatable, Codable {
 }
 
 public struct PrintLayout: Sendable, Equatable {
+    public static let registrationCrosshairExtensionMM = 2.0
+
     public struct Point: Sendable, Equatable {
         public let x: Double
         public let y: Double
@@ -143,7 +145,11 @@ public struct PrintLayout: Sendable, Equatable {
         registrationRadius: Double
     ) -> Double {
         guard showsMarks else { return bleed }
-        return bleed + markInset + max(markLength, registrationRadius * 2)
+        return bleed + markInset + max(markLength, registrationMarkExtent(radius: registrationRadius))
+    }
+
+    private static func registrationMarkExtent(radius: Double) -> Double {
+        (radius * 2) + registrationCrosshairExtensionMM
     }
 
     private static func cropMarks(for rect: Rect, inset: Double, length: Double, enabled: Bool) -> [Line] {

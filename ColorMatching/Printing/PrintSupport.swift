@@ -120,7 +120,10 @@ private final class PrintableImageView: NSView {
             circle.lineWidth = 0.75
             circle.stroke()
 
-            let crosshair = radius + min(scaleX(2), scaleY(2))
+            let crosshair = radius + min(
+                scaleX(PrintLayout.registrationCrosshairExtensionMM),
+                scaleY(PrintLayout.registrationCrosshairExtensionMM)
+            )
             let crosshairPath = NSBezierPath()
             crosshairPath.lineWidth = 0.75
             crosshairPath.move(to: NSPoint(x: center.x - crosshair, y: center.y))

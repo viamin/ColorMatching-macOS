@@ -21,9 +21,9 @@ final class PrintLayoutTests: XCTestCase {
             options: PrintOverlayOptions(showsMarks: true, markInsetMM: 2, bleedMM: 5)
         )
 
-        XCTAssertEqual(layout.canvasSize, .init(width: 126, height: 106))
-        XCTAssertEqual(layout.trimRect, .init(x: 13, y: 13, width: 100, height: 80))
-        XCTAssertEqual(layout.artworkRect, .init(x: 8, y: 8, width: 110, height: 90))
+        XCTAssertEqual(layout.canvasSize, .init(width: 130, height: 110))
+        XCTAssertEqual(layout.trimRect, .init(x: 15, y: 15, width: 100, height: 80))
+        XCTAssertEqual(layout.artworkRect, .init(x: 10, y: 10, width: 110, height: 90))
         XCTAssertEqual(layout.cropMarks.count, 8)
         XCTAssertEqual(layout.registrationMarks.count, 4)
     }
@@ -55,11 +55,11 @@ final class PrintLayoutTests: XCTestCase {
             options: PrintOverlayOptions(showsMarks: true, markInsetMM: -4, bleedMM: -2)
         )
 
-        XCTAssertEqual(layout.canvasSize, .init(width: 52, height: 32))
-        XCTAssertEqual(layout.trimRect, .init(x: 6, y: 6, width: 40, height: 20))
+        XCTAssertEqual(layout.canvasSize, .init(width: 56, height: 36))
+        XCTAssertEqual(layout.trimRect, .init(x: 8, y: 8, width: 40, height: 20))
         XCTAssertEqual(layout.artworkRect, layout.trimRect)
-        XCTAssertEqual(layout.cropMarks.first, .init(start: .init(x: 6, y: 0), end: .init(x: 6, y: 6)))
-        XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 26, y: 3), radius: 3))
+        XCTAssertEqual(layout.cropMarks.first, .init(start: .init(x: 8, y: 2), end: .init(x: 8, y: 8)))
+        XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 28, y: 5), radius: 3))
     }
 
     func testBleedDoesNotIncreaseCanvasWithoutMarks() {
@@ -92,10 +92,20 @@ final class PrintLayoutTests: XCTestCase {
             options: PrintOverlayOptions(showsMarks: true, markInsetMM: 4, bleedMM: 2)
         )
 
-        XCTAssertEqual(layout.canvasSize, .init(width: 24, height: 24))
-        XCTAssertEqual(layout.trimRect, .init(x: 12, y: 12, width: 0, height: 0))
-        XCTAssertEqual(layout.artworkRect, .init(x: 10, y: 10, width: 4, height: 4))
+        XCTAssertEqual(layout.canvasSize, .init(width: 28, height: 28))
+        XCTAssertEqual(layout.trimRect, .init(x: 14, y: 14, width: 0, height: 0))
+        XCTAssertEqual(layout.artworkRect, .init(x: 12, y: 12, width: 4, height: 4))
         XCTAssertEqual(layout.cropMarks.count, 8)
         XCTAssertEqual(layout.registrationMarks.count, 4)
+    }
+
+    func testLayoutAddsEnoughPaddingForRegistrationCrosshairs() {
+        let layout = PrintLayout.make(
+            physicalSizeMM: .init(width: 40, height: 20),
+            options: PrintOverlayOptions(showsMarks: true, markInsetMM: 3, bleedMM: 0)
+        )
+
+        XCTAssertEqual(layout.trimRect.minY, 11)
+        XCTAssertEqual(layout.registrationMarks.first, .init(center: .init(x: 31, y: 5), radius: 3))
     }
 }
