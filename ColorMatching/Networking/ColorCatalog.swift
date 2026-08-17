@@ -37,11 +37,19 @@ final class ColorCatalog {
     private var client: PaletteAPIClient?
 
     func configure(baseURL: URL?, token: String?) {
-        guard let baseURL else {
-            client = nil
-            return
+        let normalizedToken = token?.isEmpty == false ? token : nil
+        let configurationChanged = client?.baseURL != baseURL || client?.token != normalizedToken
+
+        guard configurationChanged else { return }
+
+        client = baseURL.map { PaletteAPIClient(baseURL: $0, token: normalizedToken) }
+        printerProfiles = []
+
+        if selectedPrinterProfileID != nil {
+            selectedPrinterProfileID = nil
+        } else {
+            clearLoadedColors()
         }
-        client = PaletteAPIClient(baseURL: baseURL, token: token?.isEmpty == false ? token : nil)
     }
 
     var isConfigured: Bool { client != nil }
