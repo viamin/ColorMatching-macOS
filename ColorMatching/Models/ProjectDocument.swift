@@ -6,6 +6,7 @@ struct ProjectDocument: Codable {
     var serverBaseURL: String
     var apiToken: String
     var printerProfileID: Int?
+    var printerProfileSnapshot: PrinterProfileDTO?
     var colorSnapshot: [ColorSnapshot]
     var weights: ChannelWeights
     var scorerKind: ScorerKind
@@ -22,7 +23,7 @@ struct ProjectDocument: Codable {
     var layers: [LayerSnapshot]
 
     private enum CodingKeys: String, CodingKey {
-        case serverBaseURL, apiToken, printerProfileID, colorSnapshot
+        case serverBaseURL, apiToken, printerProfileID, printerProfileSnapshot, colorSnapshot
         case weights, scorerKind
         case logicalWidth, logicalHeight, pixelsPerCell
         case physicalWidthMM, physicalHeightMM
@@ -35,6 +36,7 @@ struct ProjectDocument: Codable {
         serverBaseURL: String,
         apiToken: String,
         printerProfileID: Int?,
+        printerProfileSnapshot: PrinterProfileDTO?,
         colorSnapshot: [ColorSnapshot],
         weights: ChannelWeights,
         scorerKind: ScorerKind,
@@ -53,6 +55,7 @@ struct ProjectDocument: Codable {
         self.serverBaseURL = serverBaseURL
         self.apiToken = apiToken
         self.printerProfileID = printerProfileID
+        self.printerProfileSnapshot = printerProfileSnapshot
         self.colorSnapshot = colorSnapshot
         self.weights = weights
         self.scorerKind = scorerKind
@@ -74,6 +77,7 @@ struct ProjectDocument: Codable {
         serverBaseURL = try c.decode(String.self, forKey: .serverBaseURL)
         apiToken = try c.decode(String.self, forKey: .apiToken)
         printerProfileID = try c.decodeIfPresent(Int.self, forKey: .printerProfileID)
+        printerProfileSnapshot = try c.decodeIfPresent(PrinterProfileDTO.self, forKey: .printerProfileSnapshot)
         colorSnapshot = try c.decode([ColorSnapshot].self, forKey: .colorSnapshot)
         weights = try c.decode(ChannelWeights.self, forKey: .weights)
         // Older projects predate scorer choice; default to the v1 scorer so

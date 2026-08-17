@@ -485,6 +485,7 @@ final class AppModel {
             serverBaseURL: serverBaseURL,
             apiToken: serverToken,
             printerProfileID: catalog.selectedPrinterProfileID,
+            printerProfileSnapshot: activePrinterProfile,
             colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
             scorerKind: scorerKind,
@@ -506,8 +507,10 @@ final class AppModel {
         clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
+        catalog.printerProfiles = s.printerProfileSnapshot.map { [$0] } ?? []
         catalog.selectedPrinterProfileID = s.printerProfileID
         catalog.colors = s.colorSnapshot.map { $0.toColor() }
+        catalog.colorsForProfile = s.printerProfileSnapshot
         catalog.lastRefresh = Date()
         catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
 
