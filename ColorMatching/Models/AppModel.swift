@@ -50,6 +50,7 @@ final class AppModel {
         catalog.onTokenUpdated = { [weak self] newToken in
             self?.serverToken = newToken
         }
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         wireUndoHooks()
     }
 
