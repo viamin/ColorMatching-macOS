@@ -20,15 +20,14 @@ require_tool() {
     fi
 }
 
-require_tool xcodegen
-require_tool xcodebuild
-
 if [ -z "$TEAM_ID" ]; then
     echo "bin/build-release: SIGNING_TEAM_ID (or DEVELOPMENT_TEAM) is required for Release signing" >&2
     exit 1
 fi
 
 "$ROOT/bin/setup"
+
+require_tool xcodebuild
 
 mkdir -p "$(dirname "$ARCHIVE_PATH")" "$EXPORT_DIR"
 EXPORT_OPTIONS_PLIST="$(mktemp "${TMPDIR:-/tmp}/ColorMatchingExportOptions.XXXXXX.plist")"
