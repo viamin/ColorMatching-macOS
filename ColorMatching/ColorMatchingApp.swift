@@ -62,10 +62,6 @@ private struct DocumentSceneView: View {
         }
     }
 
-    private func newProject() {
-        model = AppModel()
-    }
-
     private func saveProject() {
         if let url = model.projectURL {
             do { try model.saveProject(to: url) }
@@ -115,7 +111,6 @@ private struct DocumentSceneView: View {
 
     private var commandContext: DocumentCommandContext {
         DocumentCommandContext(
-            newProject: newProject,
             openProject: openProject,
             saveProject: saveProject,
             saveProjectAs: saveProjectAs,
@@ -134,7 +129,6 @@ private struct DocumentSceneView: View {
 }
 
 private struct DocumentCommandContext {
-    let newProject: () -> Void
     let openProject: () -> Void
     let saveProject: () -> Void
     let saveProjectAs: () -> Void
@@ -207,10 +201,6 @@ private struct DocumentCommands: Commands {
     }
 
     private func newProject() {
-        if let context {
-            context.newProject()
-            return
-        }
         openWindow(id: SceneIDs.document)
     }
 
