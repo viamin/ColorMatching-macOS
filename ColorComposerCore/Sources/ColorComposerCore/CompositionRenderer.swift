@@ -61,6 +61,17 @@ public enum CompositionRenderer {
         return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
     }
 
+    /// Generic soft-proof preview of the printable composite. This is a
+    /// lightweight approximation of how the palette may compress on paper, not
+    /// an ICC-managed conversion. Cells that exceed the conservative printable
+    /// envelope are flagged in `outOfGamutCells` and tinted with a warning wash.
+    public static func softProof(
+        _ result: CompositionResult,
+        profile: SoftProofProfile = .genericPrinter
+    ) -> SoftProofPreview {
+        SoftProofing.preview(result, profile: profile)
+    }
+
     /// Normalized error map. Brighter means larger matching error; unmatched
     /// cells are the brightest.
     public static func errorMap(_ result: CompositionResult) -> BrightnessGrid {

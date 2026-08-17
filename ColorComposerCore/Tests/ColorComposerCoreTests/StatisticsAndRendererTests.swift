@@ -47,6 +47,55 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(image.rgba[7], 255) // A of white
     }
 
+    func testSoftProofLeavesNeutralColorInGamut() throws {
+        let palette = [color(1, "#808080", [.red: 0.5])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [0.5])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let preview = CompositionRenderer.softProof(result)
+
+        XCTAssertFalse(preview.isOutOfGamut(x: 0, y: 0))
+        XCTAssertEqual(preview.outOfGamutCount, 0)
+        XCTAssertEqual(preview.image.rgba[3], 255)
+        XCTAssertLessThan(abs(Int(preview.image.rgba[0]) - Int(preview.image.rgba[1])), 8)
+        XCTAssertLessThan(abs(Int(preview.image.rgba[1]) - Int(preview.image.rgba[2])), 12)
+    }
+
+    func testSoftProofFlagsSaturatedColorAndAddsWarningTint() throws {
+        let palette = [color(1, "#FF0000", [.red: 1.0])]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let preview = CompositionRenderer.softProof(result)
+
+        XCTAssertTrue(preview.isOutOfGamut(x: 0, y: 0))
+        XCTAssertEqual(preview.outOfGamutCount, 1)
+        XCTAssertLessThan(preview.image.rgba[0], 255)
+        XCTAssertGreaterThan(preview.image.rgba[1], preview.image.rgba[2])
+    }
+
+    func testSoftProofTracksPerCellFlags() throws {
+        let palette = [
+            color(1, "#808080", [.red: 0.0]),
+            color(2, "#FF0000", [.red: 1.0])
+        ]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 2, height: 1, values: [0.0, 1.0])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let preview = CompositionRenderer.softProof(result)
+
+        XCTAssertEqual(preview.outOfGamutCells, [false, true])
+    }
+
     func testLightingPreviewUsesMeasuredBrightness() throws {
         let result = try solve()
         let preview = CompositionRenderer.lightingPreview(result, for: .red)

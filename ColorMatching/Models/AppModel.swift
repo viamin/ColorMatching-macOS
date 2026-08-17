@@ -256,19 +256,16 @@ final class AppModel {
     /// using `compositeRGBA` (transparent for unmatched).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        for cell in 0..<result.cellCount {
-            let base = cell * 4
-            if let index = result.colorIndices[cell] {
-                let color = result.palette[index].rgb
-                rgba[base] = color.red; rgba[base + 1] = color.green
-                rgba[base + 2] = color.blue; rgba[base + 3] = 255
-            } else {
-                // Visible "no eligible color" marker.
-                rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
-            }
-        }
-        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+        return previewImage(for: result, image: CompositionRenderer.composite(result))
+    }
+
+    var softProofPreview: SoftProofPreview? {
+        guard let result else { return nil }
+        let preview = CompositionRenderer.softProof(result)
+        return SoftProofPreview(
+            image: previewImage(for: result, image: preview.image),
+            outOfGamutCells: preview.outOfGamutCells
+        )
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -340,6 +337,16 @@ final class AppModel {
             }
         }
         return RGBAImage(width: outW, height: outH, rgba: rgba)
+    }
+
+    private func previewImage(for result: CompositionResult, image: RGBAImage) -> RGBAImage {
+        var rgba = image.rgba
+        for cell in 0..<result.cellCount where result.colorIndices[cell] == nil {
+            let base = cell * 4
+            // Visible "no eligible color" marker.
+            rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
+        }
+        return RGBAImage(width: image.width, height: image.height, rgba: rgba)
     }
 
     // MARK: - Export / print
