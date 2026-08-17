@@ -14,6 +14,7 @@ struct ProjectDocument: Codable {
     var pixelsPerCell: Int
     var physicalWidthMM: Double
     var physicalHeightMM: Double
+    var printOverlayOptions: PrintOverlayOptions
     var tilingEnabled: Bool
     var tileWidthMM: Double
     var tileHeightMM: Double
@@ -25,6 +26,7 @@ struct ProjectDocument: Codable {
         case weights, scorerKind
         case logicalWidth, logicalHeight, pixelsPerCell
         case physicalWidthMM, physicalHeightMM
+        case printOverlayOptions
         case tilingEnabled, tileWidthMM, tileHeightMM, tileOverlapMM
         case layers
     }
@@ -41,6 +43,7 @@ struct ProjectDocument: Codable {
         pixelsPerCell: Int,
         physicalWidthMM: Double,
         physicalHeightMM: Double,
+        printOverlayOptions: PrintOverlayOptions,
         tilingEnabled: Bool,
         tileWidthMM: Double,
         tileHeightMM: Double,
@@ -58,6 +61,7 @@ struct ProjectDocument: Codable {
         self.pixelsPerCell = pixelsPerCell
         self.physicalWidthMM = physicalWidthMM
         self.physicalHeightMM = physicalHeightMM
+        self.printOverlayOptions = printOverlayOptions
         self.tilingEnabled = tilingEnabled
         self.tileWidthMM = tileWidthMM
         self.tileHeightMM = tileHeightMM
@@ -80,6 +84,7 @@ struct ProjectDocument: Codable {
         pixelsPerCell = try c.decode(Int.self, forKey: .pixelsPerCell)
         physicalWidthMM = try c.decode(Double.self, forKey: .physicalWidthMM)
         physicalHeightMM = try c.decode(Double.self, forKey: .physicalHeightMM)
+        printOverlayOptions = try c.decodeIfPresent(PrintOverlayOptions.self, forKey: .printOverlayOptions) ?? PrintOverlayOptions()
         // Older projects predate tiling; default to disabled with sane sizes
         // so they round-trip identically to how they were originally authored.
         tilingEnabled = try c.decodeIfPresent(Bool.self, forKey: .tilingEnabled) ?? false

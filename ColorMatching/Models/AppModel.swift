@@ -84,6 +84,9 @@ final class AppModel {
     var pixelsPerCell = 4
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
+    var showsPrintMarks = false
+    var printMarksInsetMM = 3.0
+    var printBleedMM = 0.0
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
@@ -342,9 +345,12 @@ final class AppModel {
     }
 
     func printComposite() {
-        guard let raster = exportRaster,
-              let image = ImageUtilities.nsImage(from: raster) else { return }
-        PrintSupport.print(image, physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM))
+        guard let raster = exportRaster else { return }
+        PrintSupport.print(
+            raster,
+            physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM),
+            overlay: printOverlayOptions
+        )
     }
 
     // MARK: - Large-format tiling
@@ -399,9 +405,13 @@ final class AppModel {
         let scaleY = physicalHeightMM / Double(raster.height)
         for tile in tiles {
             let tileImage = RasterTiler.extract(raster, tile: tile)
-            guard let image = ImageUtilities.nsImage(from: tileImage) else { continue }
             let size = CGSize(width: Double(tile.width) * scaleX, height: Double(tile.height) * scaleY)
-            PrintSupport.print(image, physicalSizeMM: size, title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)")
+            PrintSupport.print(
+                tileImage,
+                physicalSizeMM: size,
+                overlay: printOverlayOptions,
+                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
+            )
         }
     }
 
@@ -449,6 +459,7 @@ final class AppModel {
             pixelsPerCell: pixelsPerCell,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
+            printOverlayOptions: printOverlayOptions,
             tilingEnabled: tilingEnabled,
             tileWidthMM: tileWidthMM,
             tileHeightMM: tileHeightMM,
@@ -472,6 +483,9 @@ final class AppModel {
         pixelsPerCell = s.pixelsPerCell
         physicalWidthMM = s.physicalWidthMM
         physicalHeightMM = s.physicalHeightMM
+        showsPrintMarks = s.printOverlayOptions.showsMarks
+        printMarksInsetMM = s.printOverlayOptions.markInsetMM
+        printBleedMM = s.printOverlayOptions.bleedMM
         tilingEnabled = s.tilingEnabled
         tileWidthMM = s.tileWidthMM
         tileHeightMM = s.tileHeightMM
@@ -491,5 +505,13 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
+    }
+
+    private var printOverlayOptions: PrintOverlayOptions {
+        PrintOverlayOptions(
+            showsMarks: showsPrintMarks,
+            markInsetMM: printMarksInsetMM,
+            bleedMM: printBleedMM
+        )
     }
 }
