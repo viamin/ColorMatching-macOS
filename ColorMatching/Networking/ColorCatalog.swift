@@ -16,6 +16,7 @@ final class ColorCatalog {
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
     var onPaletteChanged: (() -> Void)?
+    var reauthenticate: (@MainActor @Sendable () async -> String?)?
     private var isRestoringSnapshot = false
 
     var selectedPrinterProfileID: Int? {
@@ -37,12 +38,21 @@ final class ColorCatalog {
     private var client: PaletteAPIClient?
 
     func configure(baseURL: URL?, token: String?) {
-        let normalizedToken = token?.isEmpty == false ? token : nil
-        let configurationChanged = client?.baseURL != baseURL || client?.token != normalizedToken
+        let normalizedToken = token?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .flatMap { $0.isEmpty ? nil : $0 }
+        let baseURLChanged = client?.baseURL != baseURL
+        let tokenChanged = client?.token != normalizedToken
 
-        guard configurationChanged else { return }
+        guard baseURLChanged || tokenChanged else { return }
 
         client = baseURL.map { PaletteAPIClient(baseURL: $0, token: normalizedToken) }
+
+        guard baseURLChanged else {
+            connectionMessage = nil
+            return
+        }
+
         printerProfiles = []
 
         if selectedPrinterProfileID != nil {
@@ -64,7 +74,7 @@ final class ColorCatalog {
         isWorking = true
         defer { isWorking = false }
         do {
-            try await client.testConnection()
+            try await client.testConnection(retryingWith: authRetryHandler())
             connectionMessage = "Connected."
         } catch let error as PaletteAPIError {
             connectionMessage = error.errorDescription
@@ -82,7 +92,7 @@ final class ColorCatalog {
         defer { isWorking = false }
         do {
             let previousSelection = selectedPrinterProfileID
-            let fetchedProfiles = try await client.fetchPrinterProfiles()
+            let fetchedProfiles = try await client.fetchPrinterProfiles(retryingWith: authRetryHandler())
             printerProfiles = fetchedProfiles
             if let selectedProfileID = selectedPrinterProfileID,
                fetchedProfiles.contains(where: { $0.id == selectedProfileID }) == false {
@@ -106,7 +116,10 @@ final class ColorCatalog {
         isWorking = true
         defer { isWorking = false }
         do {
-            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            let (dtos, profile) = try await client.fetchColors(
+                printerProfileID: profileID,
+                retryingWith: authRetryHandler()
+            )
             guard selectedPrinterProfileID == profileID else { return }
             let loadedColors = dtos.compactMap { $0.toDomain() }
             applyPalette(
@@ -165,5 +178,10 @@ final class ColorCatalog {
     func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {
         let required = Set(activeConditions)
         return colors.filter { $0.hasMeasurements(for: required) }
+    }
+
+    private func authRetryHandler() -> PaletteAPIReauthentication? {
+        guard let reauthenticate else { return nil }
+        return { await reauthenticate() }
     }
 }

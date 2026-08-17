@@ -44,6 +44,9 @@ final class AppModel {
         catalog.onPaletteChanged = { [weak self] in
             self?.clearCompositionState()
         }
+        catalog.reauthenticate = { [weak self] in
+            self?.promptForServerTokenRefresh()
+        }
         wireUndoHooks()
     }
 
@@ -117,6 +120,28 @@ final class AppModel {
 
     var assignedConditions: Set<LightingCondition> {
         Set(layers.compactMap { $0.hasImage ? $0.assignedCondition : nil })
+    }
+
+    private func promptForServerTokenRefresh() -> String? {
+        let alert = NSAlert()
+        alert.messageText = "API token rejected"
+        alert.informativeText = "The palette server returned HTTP 401. Enter a new token to retry once."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Retry")
+        alert.addButton(withTitle: "Cancel")
+
+        let tokenField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        tokenField.placeholderString = "API token"
+        tokenField.stringValue = serverToken
+        alert.accessoryView = tokenField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+
+        let refreshedToken = tokenField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !refreshedToken.isEmpty else { return nil }
+
+        serverToken = refreshedToken
+        return refreshedToken
     }
 
     // MARK: - Composition settings
