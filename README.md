@@ -118,8 +118,9 @@ That produces `build/release/ColorMatching.app`.
 
 ### Notarize and staple
 
-`bin/notarize-release` submits the exported app, waits for notarization to
-finish, staples the ticket, then verifies:
+`bin/notarize-release` first builds a temporary ZIP for `notarytool submit`,
+waits for notarization to finish, staples the exported app, rebuilds the final
+distribution ZIP at `build/ColorMatching-macOS.zip`, then verifies:
 
 - the app assessment passes (`spctl`)
 - the code signature is intact (`codesign --verify`)
@@ -141,11 +142,13 @@ APPLE_API_KEY_BASE64="$(base64 -i AuthKey_ABC123DEFG.p8)" \
 ./bin/notarize-release
 ```
 
-If you prefer a fully explicit sequence, the equivalent manual verification
-after notarization is:
+If you prefer a fully explicit sequence, the equivalent manual sequence is:
 
 ```bash
+ditto -c -k --keepParent build/release/ColorMatching.app build/ColorMatching-notarize.zip
+xcrun notarytool submit build/ColorMatching-notarize.zip --wait ...
 xcrun stapler staple build/release/ColorMatching.app
+ditto -c -k --keepParent build/release/ColorMatching.app build/ColorMatching-macOS.zip
 codesign --verify --deep --strict --verbose=2 build/release/ColorMatching.app
 spctl --assess --type execute --verbose=4 build/release/ColorMatching.app
 codesign -d --entitlements :- build/release/ColorMatching.app
@@ -160,7 +163,7 @@ codesign -d --entitlements :- build/release/ColorMatching.app
 2. imports a Developer ID Application certificate into a temporary keychain
 3. runs `./bin/build-release`
 4. runs `./bin/notarize-release`
-5. uploads `build/ColorMatching-macOS.zip` and attaches it to the GitHub release
+5. uploads the ZIP rebuilt by `./bin/notarize-release` and attaches it to the GitHub release
 
 Configure these repository secrets before enabling the workflow:
 

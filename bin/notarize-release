@@ -6,11 +6,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_PATH="${1:-${APP_PATH:-$ROOT/build/release/ColorMatching.app}}"
+ZIP_PATH="${DIST_ZIP_PATH:-$ROOT/build/ColorMatching-macOS.zip}"
 ENTITLEMENTS_SOURCE="$ROOT/ColorMatching/ColorMatching.entitlements"
 SUBMISSION_MODE="${NOTARY_SUBMISSION_MODE:-auto}"
 API_KEY_FILE=""
 SIGNED_ENTITLEMENTS=""
 EXPECTED_ENTITLEMENTS=""
+NOTARIZATION_ARCHIVE=""
 
 require_tool() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -25,9 +27,10 @@ require_tool plutil
 require_tool cmp
 require_tool python3
 require_tool spctl
+require_tool ditto
 
 cleanup() {
-    rm -f "${API_KEY_FILE:-}" "${SIGNED_ENTITLEMENTS:-}" "${EXPECTED_ENTITLEMENTS:-}"
+    rm -f "${API_KEY_FILE:-}" "${SIGNED_ENTITLEMENTS:-}" "${EXPECTED_ENTITLEMENTS:-}" "${NOTARIZATION_ARCHIVE:-}"
 }
 
 trap cleanup EXIT
@@ -37,8 +40,19 @@ if [ ! -d "$APP_PATH" ]; then
     exit 1
 fi
 
+create_notarization_archive() {
+    NOTARIZATION_ARCHIVE="$(mktemp "${TMPDIR:-/tmp}/ColorMatching-notarize.XXXXXX.zip")"
+    ditto -c -k --keepParent "$APP_PATH" "$NOTARIZATION_ARCHIVE"
+}
+
+rebuild_distribution_zip() {
+    mkdir -p "$(dirname "$ZIP_PATH")"
+    rm -f "$ZIP_PATH"
+    ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+}
+
 submit_with_profile() {
-    xcrun notarytool submit "$APP_PATH" --wait --keychain-profile "$NOTARYTOOL_PROFILE"
+    xcrun notarytool submit "$NOTARIZATION_ARCHIVE" --wait --keychain-profile "$NOTARYTOOL_PROFILE"
 }
 
 submit_with_api_key() {
@@ -58,12 +72,14 @@ with open(sys.argv[1], "wb") as file_handle:
 PY
 
     xcrun notarytool submit \
-        "$APP_PATH" \
+        "$NOTARIZATION_ARCHIVE" \
         --wait \
         --key "$API_KEY_FILE" \
         --key-id "$APPLE_API_KEY_ID" \
         --issuer "$APPLE_API_ISSUER_ID"
 }
+
+create_notarization_archive
 
 case "$SUBMISSION_MODE" in
     auto)
@@ -110,4 +126,7 @@ if ! cmp -s "$SIGNED_ENTITLEMENTS" "$EXPECTED_ENTITLEMENTS"; then
     exit 1
 fi
 
+rebuild_distribution_zip
+
 echo "Notarized and stapled app: $APP_PATH"
+echo "Rebuilt distributable zip: $ZIP_PATH"

@@ -45,9 +45,6 @@ jobs:
       - name: Notarize and staple Release app
         run: ./bin/notarize-release
 
-      - name: Zip distributable app
-        run: ditto -c -k --keepParent build/release/ColorMatching.app build/ColorMatching-macOS.zip
-
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
