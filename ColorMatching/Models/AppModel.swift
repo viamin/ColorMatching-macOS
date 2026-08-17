@@ -84,6 +84,9 @@ final class AppModel {
     var pixelsPerCell = 4
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
+    var showsPrintMarks = false
+    var printMarksInsetMM = 3.0
+    var printBleedMM = 0.0
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
@@ -240,6 +243,14 @@ final class AppModel {
         return CompositionRenderer.composite(result)
     }
 
+    var canPrintComposite: Bool {
+        hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
+    }
+
+    var canPrintTiles: Bool {
+        hasResult && hasFinitePositiveTileSize && tilePlan != nil
+    }
+
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
     /// no-data or partial-match result is never invisible. Export/print keep
     /// using `compositeRGBA` (transparent for unmatched).
@@ -342,9 +353,12 @@ final class AppModel {
     }
 
     func printComposite() {
-        guard let raster = exportRaster,
-              let image = ImageUtilities.nsImage(from: raster) else { return }
-        PrintSupport.print(image, physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM))
+        guard hasFinitePositivePhysicalPrintSize, let raster = exportRaster else { return }
+        PrintSupport.print(
+            raster,
+            physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM),
+            overlay: printOverlayOptions
+        )
     }
 
     // MARK: - Large-format tiling
@@ -363,6 +377,8 @@ final class AppModel {
     /// split across two tiles.
     var tilePlan: [TileSpec]? {
         guard tilingEnabled, let raster = exportRaster else { return nil }
+        guard hasFinitePositivePhysicalPrintSize else { return nil }
+        guard hasFinitePositiveTileSize else { return nil }
         let scaleX = Double(raster.width) / physicalWidthMM
         let scaleY = Double(raster.height) / physicalHeightMM
         let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
@@ -395,13 +411,18 @@ final class AppModel {
     /// Presents one native print job per tile, in row-major order.
     func printTiles() {
         guard let raster = exportRaster, let tiles = tilePlan else { return }
+        guard raster.width > 0, raster.height > 0 else { return }
         let scaleX = physicalWidthMM / Double(raster.width)
         let scaleY = physicalHeightMM / Double(raster.height)
         for tile in tiles {
             let tileImage = RasterTiler.extract(raster, tile: tile)
-            guard let image = ImageUtilities.nsImage(from: tileImage) else { continue }
             let size = CGSize(width: Double(tile.width) * scaleX, height: Double(tile.height) * scaleY)
-            PrintSupport.print(image, physicalSizeMM: size, title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)")
+            PrintSupport.print(
+                tileImage,
+                physicalSizeMM: size,
+                overlay: tilePrintOverlayOptions,
+                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
+            )
         }
     }
 
@@ -449,6 +470,7 @@ final class AppModel {
             pixelsPerCell: pixelsPerCell,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
+            printOverlayOptions: printOverlayOptions,
             tilingEnabled: tilingEnabled,
             tileWidthMM: tileWidthMM,
             tileHeightMM: tileHeightMM,
@@ -470,12 +492,15 @@ final class AppModel {
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
-        physicalWidthMM = s.physicalWidthMM
-        physicalHeightMM = s.physicalHeightMM
+        physicalWidthMM = Self.sanitizedMeasurement(s.physicalWidthMM)
+        physicalHeightMM = Self.sanitizedMeasurement(s.physicalHeightMM)
+        showsPrintMarks = s.printOverlayOptions.showsMarks
+        printMarksInsetMM = Self.sanitizedMeasurement(s.printOverlayOptions.markInsetMM)
+        printBleedMM = Self.sanitizedMeasurement(s.printOverlayOptions.bleedMM)
         tilingEnabled = s.tilingEnabled
-        tileWidthMM = s.tileWidthMM
-        tileHeightMM = s.tileHeightMM
-        tileOverlapMM = s.tileOverlapMM
+        tileWidthMM = Self.sanitizedMeasurement(s.tileWidthMM)
+        tileHeightMM = Self.sanitizedMeasurement(s.tileHeightMM)
+        tileOverlapMM = Self.sanitizedMeasurement(s.tileOverlapMM)
 
         let restored = s.layers.enumerated().map { (index, snap) -> SourceLayer in
             let layer = index < layers.count ? layers[index] : SourceLayer()
@@ -491,5 +516,34 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
+    }
+
+    private var printOverlayOptions: PrintOverlayOptions {
+        PrintOverlayOptions(
+            showsMarks: showsPrintMarks,
+            markInsetMM: Self.sanitizedMeasurement(printMarksInsetMM),
+            bleedMM: Self.sanitizedMeasurement(printBleedMM)
+        )
+    }
+
+    private var tilePrintOverlayOptions: PrintOverlayOptions {
+        // Tile sizes are planned against the configured page size, so overlays
+        // must stay off here or macOS will enlarge/clamp each printed sheet.
+        PrintOverlayOptions()
+    }
+
+    private var hasFinitePositivePhysicalPrintSize: Bool {
+        physicalWidthMM.isFinite && physicalWidthMM > 0 &&
+            physicalHeightMM.isFinite && physicalHeightMM > 0
+    }
+
+    private var hasFinitePositiveTileSize: Bool {
+        tileWidthMM.isFinite && tileWidthMM > 0 &&
+            tileHeightMM.isFinite && tileHeightMM > 0
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 }

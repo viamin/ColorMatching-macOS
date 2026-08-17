@@ -23,11 +23,14 @@ struct ColorMatchingApp: App {
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
-                Button("Print…") { model.printComposite() }.keyboardShortcut("p")
+                Button("Print…") { model.printComposite() }
+                    .keyboardShortcut("p")
+                    .disabled(!model.canPrintComposite)
                 if model.tilingEnabled {
                     Divider()
                     Button("Export Tiles…") { exportTiles() }
                     Button("Print Tiles") { model.printTiles() }
+                        .disabled(!model.canPrintTiles)
                 }
             }
         }
