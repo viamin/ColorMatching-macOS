@@ -15,6 +15,7 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
+    var onPaletteChanged: (() -> Void)?
 
     var selectedPrinterProfileID: Int? {
         didSet {
@@ -97,6 +98,7 @@ final class ColorCatalog {
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             guard selectedPrinterProfileID == profileID else { return }
+            onPaletteChanged?()
             colors = dtos.compactMap { $0.toDomain() }
             colorsForProfile = profile
             lastRefresh = Date()
@@ -111,6 +113,7 @@ final class ColorCatalog {
     }
 
     private func clearLoadedColors() {
+        onPaletteChanged?()
         colors = []
         colorsForProfile = nil
         lastRefresh = nil

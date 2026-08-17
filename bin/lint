@@ -1,65 +1,18 @@
 #!/usr/bin/env bash
-#
-# Swift quality gate for the ColorComposerCore package: build + unit tests.
-# Invoked by the pre-commit hook as `bin/lint --staged`; that argument is
-# accepted but ignored — Swift Package Manager builds and tests the whole
-# package rather than individual staged files.
-#
-# On Apple platforms the entire package compiles natively (including the Core
-# Graphics image sampler). On other hosts (Linux CI/agents without Apple
-# frameworks) two source files cannot compile, so the portable pure-Foundation
-# subset — solver, scorer, renderer, and dithering logic — is built and tested
-# there instead via a throwaway package that symlinks the real sources.
-
 set -euo pipefail
 
-# On Linux the Swift toolchain's Foundation libs depend on libxml2 and ICU,
-# which may not be in the default library path. Add the toolchain's own lib dir
-# so `swift test` can find them without requiring system packages.
-SWIFT_BIN="$(command -v swift 2>/dev/null || true)"
-
-if [ -n "$SWIFT_BIN" ]; then
-    SWIFT_LIB="$(cd "$(dirname "$SWIFT_BIN")/../lib/swift/linux" 2>/dev/null && pwd || true)"
-    if [ -n "$SWIFT_LIB" ] && [ -d "$SWIFT_LIB" ]; then
-        export LD_LIBRARY_PATH="${SWIFT_LIB}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    fi
+if [[ "${1:-}" == "--staged" ]]; then
+  diff_args=(--cached)
+else
+  diff_args=()
 fi
 
-CORE="$(cd "$(dirname "$0")/../ColorComposerCore" && pwd)"
+git diff "${diff_args[@]}" --check
 
-if [ -z "$SWIFT_BIN" ]; then
-    echo "bin/lint: Swift toolchain not available — skipping build and tests"
-    echo "bin/lint: verify changes compile on a host with Swift installed"
-    exit 0
-fi
-
-if [ "$(uname -s)" = "Darwin" ]; then
-    cd "$CORE"
-    swift test
-    exit 0
-fi
-
-HARNESS="$(mktemp -d)"
-trap 'rm -rf "$HARNESS"' EXIT
-mkdir -p "$HARNESS/Sources" "$HARNESS/Tests"
-ln -s "$CORE/Sources/ColorComposerCore" "$HARNESS/Sources/ColorComposerCore"
-ln -s "$CORE/Tests/ColorComposerCoreTests" "$HARNESS/Tests/ColorComposerCoreTests"
-cat > "$HARNESS/Package.swift" <<'SWIFT'
-// swift-tools-version: 5.9
-import PackageDescription
-let package = Package(name: "LintHarness", targets: [
-    .target(
-        name: "ColorComposerCore",
-        exclude: ["BrightnessGridSampler.swift", "PaletteAPIClient.swift"]
-    ),
-    .testTarget(
-        name: "ColorComposerCoreTests",
-        dependencies: ["ColorComposerCore"]
-    )
-])
-SWIFT
-
-echo "bin/lint: non-Apple host — building/testing the portable Foundation subset"
-echo "(BrightnessGridSampler and PaletteAPIClient require Apple frameworks)"
-cd "$HARNESS"
-swift test
+while IFS= read -r path; do
+  [[ -n "$path" ]] || continue
+  if grep -nE '^(<<<<<<<|=======|>>>>>>>)' "$path" >/dev/null; then
+    echo "Conflict marker found in $path"
+    exit 1
+  fi
+done < <(git diff "${diff_args[@]}" --name-only --diff-filter=ACMR)

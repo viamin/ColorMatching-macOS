@@ -6,6 +6,11 @@ import ColorComposerCore
 /// settings, and the solved result with derived preview images.
 @Observable
 final class AppModel {
+    init() {
+        catalog.onPaletteChanged = { [weak self] in
+            self?.clearCompositionState()
+        }
+    }
 
     // MARK: - Catalog / server
 
@@ -234,6 +239,18 @@ final class AppModel {
             grids[condition] = grid
         }
         return grids
+    }
+
+    private func clearCompositionState() {
+        solveTask?.cancel()
+        solveTask = nil
+        debounceTask?.cancel()
+        debounceTask = nil
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
+        isSolving = false
     }
 
     // MARK: - Derived images
@@ -486,6 +503,7 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
         catalog.selectedPrinterProfileID = s.printerProfileID
