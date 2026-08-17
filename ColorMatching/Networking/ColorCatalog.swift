@@ -16,10 +16,12 @@ final class ColorCatalog {
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
     var onPaletteChanged: (() -> Void)?
+    private var isRestoringSnapshot = false
 
     var selectedPrinterProfileID: Int? {
         didSet {
             guard selectedPrinterProfileID != oldValue else { return }
+            guard !isRestoringSnapshot else { return }
             clearLoadedColors()
             guard selectedPrinterProfileID != nil else {
                 return
@@ -98,11 +100,12 @@ final class ColorCatalog {
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             guard selectedPrinterProfileID == profileID else { return }
-            onPaletteChanged?()
-            colors = dtos.compactMap { $0.toDomain() }
-            colorsForProfile = profile
-            lastRefresh = Date()
-            connectionMessage = "Loaded \(colors.count) color(s) for this profile."
+            let loadedColors = dtos.compactMap { $0.toDomain() }
+            applyPalette(
+                loadedColors,
+                profile: profile,
+                connectionMessage: "Loaded \(loadedColors.count) color(s) for this profile."
+            )
         } catch let error as PaletteAPIError {
             guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = error.errorDescription
@@ -112,12 +115,40 @@ final class ColorCatalog {
         }
     }
 
+    func restoreSnapshot(
+        printerProfileID: Int?,
+        printerProfile: PrinterProfileDTO?,
+        colors: [PaletteColor]
+    ) {
+        isRestoringSnapshot = true
+        selectedPrinterProfileID = printerProfileID
+        isRestoringSnapshot = false
+        printerProfiles = printerProfile.map { [$0] } ?? []
+        applyPalette(
+            colors,
+            profile: printerProfile,
+            connectionMessage: "Loaded \(colors.count) color(s) from project."
+        )
+    }
+
     private func clearLoadedColors() {
         onPaletteChanged?()
         colors = []
         colorsForProfile = nil
         lastRefresh = nil
         connectionMessage = nil
+    }
+
+    private func applyPalette(
+        _ colors: [PaletteColor],
+        profile: PrinterProfileDTO?,
+        connectionMessage: String
+    ) {
+        onPaletteChanged?()
+        self.colors = colors
+        colorsForProfile = profile
+        lastRefresh = Date()
+        self.connectionMessage = connectionMessage
     }
 
     /// Colors eligible for the solver given the currently active channels.
