@@ -179,6 +179,17 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(accented, plain)
     }
 
+    func testPrinterProfileSoftProofFallsBackToGenericWhenMetadataIsMissing() {
+        let profile = PrinterProfileDTO(
+            id: 1,
+            printerMakeModel: nil,
+            paperType: "   ",
+            inkType: nil
+        ).softProofProfile
+
+        XCTAssertEqual(profile, .genericPrinter)
+    }
+
     func testSoftProofProfileClampsInvalidParameters() {
         let profile = SoftProofProfile(
             paperWhite: RGBColor(red: 255, green: 255, blue: 255),

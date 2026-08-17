@@ -49,10 +49,12 @@ struct PreviewPaneView: View {
     @State private var softProofEnabled = false
 
     var body: some View {
+        let softProofPreview = softProofPreviewSelection
+
         VStack(spacing: 0) {
-            previewPicker
+            previewPicker(softProofPreview: softProofPreview)
             Divider()
-            content
+            content(softProofPreview: softProofPreview)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.hasResult {
                 Divider()
@@ -63,7 +65,7 @@ struct PreviewPaneView: View {
         .background(Color(nsColor: .textBackgroundColor))
     }
 
-    private var previewPicker: some View {
+    private func previewPicker(softProofPreview: SoftProofPreview?) -> some View {
         VStack(spacing: 8) {
             Picker("Preview", selection: $mode) {
                 ForEach(PreviewMode.allCases) { m in
@@ -77,7 +79,7 @@ struct PreviewPaneView: View {
                     Toggle("Soft Proof", isOn: $softProofEnabled)
                         .toggleStyle(.switch)
                     Spacer()
-                    if softProofEnabled, let preview = model.softProofPreview {
+                    if let preview = softProofPreview {
                         Text(softProofStatus(for: preview, profileName: model.softProofProfileName))
                             .font(.caption)
                             .foregroundStyle(preview.outOfGamutCount > 0 ? .orange : .secondary)
@@ -89,7 +91,7 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private var content: some View {
+    private func content(softProofPreview: SoftProofPreview?) -> some View {
         if mode == .gamut {
             // The gamut explains why a solve will struggle, so it stays useful
             // before Generate and when nothing could be matched at all.
@@ -109,7 +111,7 @@ struct PreviewPaneView: View {
         } else {
             switch mode {
             case .composite:
-                let image = softProofEnabled ? model.softProofPreview?.image : model.compositePreviewRGBA
+                let image = softProofPreview?.image ?? model.compositePreviewRGBA
                 PreviewImage(image: image.flatMap { ImageUtilities.nsImage(from: $0) })
             case .errorMap:
                 PreviewImage(image: model.errorMapGrid.flatMap { ImageUtilities.nsImage(from: $0) })
@@ -119,6 +121,11 @@ struct PreviewPaneView: View {
                 lightingCompareView(for: condition)
             }
         }
+    }
+
+    private var softProofPreviewSelection: SoftProofPreview? {
+        guard mode == .composite, softProofEnabled else { return nil }
+        return model.softProofPreview
     }
 
     /// Per-channel comparison: a switch between Predicted, Source, and
