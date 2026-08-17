@@ -8,6 +8,8 @@ on:
 jobs:
   notarized-release:
     runs-on: macos-14
+    permissions:
+      contents: write
     env:
       SIGNING_TEAM_ID: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
       APP_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
@@ -44,6 +46,12 @@ jobs:
 
       - name: Notarize and staple Release app
         run: ./bin/notarize-release
+
+      - name: Clean up signing keychain
+        if: ${{ always() }}
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
+          rm -f "$RUNNER_TEMP/developer-id.p12"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4

@@ -109,7 +109,7 @@ xcrun stapler staple "$APP_PATH"
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 spctl --assess --type execute --verbose=4 "$APP_PATH"
 
-if ! codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -q "runtime"; then
+if ! codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -Eq 'flags=0x[0-9a-fA-F]+.*runtime'; then
     echo "bin/notarize-release: hardened runtime flag not present in the Release signature" >&2
     exit 1
 fi
