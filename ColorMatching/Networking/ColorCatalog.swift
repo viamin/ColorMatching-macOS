@@ -70,11 +70,19 @@ final class ColorCatalog {
         isWorking = true
         defer { isWorking = false }
         do {
+            let previousSelection = selectedPrinterProfileID
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             printerProfiles = fetchedProfiles
-            if selectedPrinterProfileID == nil { selectedPrinterProfileID = fetchedProfiles.first?.id }
+            if let selectedProfileID = selectedPrinterProfileID,
+               fetchedProfiles.contains(where: { $0.id == selectedProfileID }) == false {
+                selectedPrinterProfileID = fetchedProfiles.first?.id
+            } else if selectedPrinterProfileID == nil {
+                selectedPrinterProfileID = fetchedProfiles.first?.id
+            }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
-            await fetchColorsIfPossible()
+            if selectedPrinterProfileID == previousSelection {
+                await fetchColorsIfPossible()
+            }
         } catch let error as PaletteAPIError {
             connectionMessage = error.errorDescription
         } catch {
@@ -88,13 +96,16 @@ final class ColorCatalog {
         defer { isWorking = false }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            guard selectedPrinterProfileID == profileID else { return }
             colors = dtos.compactMap { $0.toDomain() }
             colorsForProfile = profile
             lastRefresh = Date()
             connectionMessage = "Loaded \(colors.count) color(s) for this profile."
         } catch let error as PaletteAPIError {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = error.errorDescription
         } catch {
+            guard selectedPrinterProfileID == profileID else { return }
             connectionMessage = "Could not load colors."
         }
     }
