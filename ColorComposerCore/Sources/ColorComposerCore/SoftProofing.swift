@@ -63,6 +63,7 @@ public struct SoftProofPreview: Sendable, Equatable {
     }
 
     public func isOutOfGamut(x: Int, y: Int) -> Bool {
+        precondition(x >= 0 && x < image.width && y >= 0 && y < image.height)
         outOfGamutCells[y * image.width + x]
     }
 }

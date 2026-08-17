@@ -80,7 +80,7 @@ public extension PrinterProfileDTO {
     }
 
     private func normalizedSearchText(_ value: String?) -> String {
-        normalizedLabelPart(value)?.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) ?? ""
+        normalizedLabelPart(value)?.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) ?? ""
     }
 
     private func matchesAny(_ haystack: String, _ needles: [String]) -> Bool {

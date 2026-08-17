@@ -162,6 +162,23 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertLessThan(matte.baseChromaLimit, glossy.baseChromaLimit)
     }
 
+    func testPrinterProfileSoftProofMatchesGlossyNamesWithDiacritics() {
+        let accented = PrinterProfileDTO(
+            id: 1,
+            printerMakeModel: "Canon PRO-100",
+            paperType: "Lustré",
+            inkType: "Dye"
+        ).softProofProfile
+        let plain = PrinterProfileDTO(
+            id: 2,
+            printerMakeModel: "Canon PRO-100",
+            paperType: "Lustre",
+            inkType: "Dye"
+        ).softProofProfile
+
+        XCTAssertEqual(accented, plain)
+    }
+
     func testSoftProofProfileClampsInvalidParameters() {
         let profile = SoftProofProfile(
             paperWhite: RGBColor(red: 255, green: 255, blue: 255),
