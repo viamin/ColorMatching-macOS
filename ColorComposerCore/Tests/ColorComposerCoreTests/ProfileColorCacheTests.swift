@@ -896,6 +896,24 @@ final class ProfileColorCacheTests: XCTestCase {
         XCTAssertEqual(entry.serverBaseUrl, "http://localhost/colors")
     }
 
+    func testEntryDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = try createOwnedServerDirectory()
+        let json = """
+            {"server_base_url":"http://localhost:4000",
+            "profile_id":6,
+            "profile":{"id":99,"printer_make_model":"Canon","paper_type":"Glossy","ink_type":"Pigment"},
+            "colors":[{"id":1,"name":"Color 1","hex":"#112233","rgb":{"r":17,"g":34,"b":51},
+            "responses":{"red":{"brightness":0.5}}}],
+            "fetched_at":"2023-11-14T22:13:20Z"}
+            """
+        try Data(json.utf8).write(to: serverDirectory.appendingPathComponent("profile-6.json"))
+
+        let entry = try XCTUnwrap(cache.entry(for: 6, serverBaseUrl: "http://localhost:4000"))
+
+        XCTAssertNil(entry.profile)
+    }
+
     func testAllEntriesNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile() throws {
         let cache = ProfileColorCache(directory: directory)
         let serverDirectory = try createOwnedServerDirectory()
@@ -912,6 +930,25 @@ final class ProfileColorCacheTests: XCTestCase {
         let entries = cache.allEntries(serverBaseUrl: "http://localhost:4000/colors")
 
         XCTAssertEqual(entries.map(\.serverBaseUrl), ["http://localhost:4000/colors"])
+    }
+
+    func testAllEntriesDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile() throws {
+        let cache = ProfileColorCache(directory: directory)
+        let serverDirectory = try createOwnedServerDirectory()
+        let json = """
+            {"server_base_url":"http://localhost:4000",
+            "profile_id":6,
+            "profile":{"id":99,"printer_make_model":"Canon","paper_type":"Glossy","ink_type":"Pigment"},
+            "colors":[{"id":1,"name":"Color 1","hex":"#112233","rgb":{"r":17,"g":34,"b":51},
+            "responses":{"red":{"brightness":0.5}}}],
+            "fetched_at":"2023-11-14T22:13:20Z"}
+            """
+        try Data(json.utf8).write(to: serverDirectory.appendingPathComponent("profile-6.json"))
+
+        let entries = cache.allEntries(serverBaseUrl: "http://localhost:4000")
+
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertNil(entries.first?.profile)
     }
 
     func testStoreTrimsWhitespaceBeforePersistingServerBaseUrl() throws {
