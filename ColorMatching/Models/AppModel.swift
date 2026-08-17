@@ -243,6 +243,14 @@ final class AppModel {
         return CompositionRenderer.composite(result)
     }
 
+    var canPrintComposite: Bool {
+        hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
+    }
+
+    var canPrintTiles: Bool {
+        hasResult && tilePlan != nil
+    }
+
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
     /// no-data or partial-match result is never invisible. Export/print keep
     /// using `compositeRGBA` (transparent for unmatched).

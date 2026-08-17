@@ -45,7 +45,7 @@ struct ContentView: View {
                 } label: {
                     Label("Print", systemImage: "printer")
                 }
-                .disabled(!model.hasResult)
+                .disabled(!model.canPrintComposite)
 
                 if model.tilingEnabled {
                     Button {
@@ -63,7 +63,7 @@ struct ContentView: View {
                     } label: {
                         Label("Print Tiles", systemImage: "printer.filled.and.paper")
                     }
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canPrintTiles)
                 }
             }
         }
