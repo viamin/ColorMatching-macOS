@@ -393,7 +393,7 @@ final class ColorCatalog {
         do {
             try cache.removeAll()
             dropCacheBackedState()
-            connectionMessage = "Cleared cached profiles and colors."
+            connectionMessage = "Cleared the offline color cache."
         } catch {
             connectionMessage = "Could not clear the color cache."
         }
