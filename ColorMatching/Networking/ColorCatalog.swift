@@ -537,9 +537,8 @@ final class ColorCatalog {
         let clause = reason.hasSuffix(".") ? String(reason.dropLast()) : reason
         if keepsLiveColors(profileID) {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
-        } else if allowsOfflineFallback(for: error),
-                  let cached = servableCacheEntry(for: profileID) {
-            serve(cached, profileID: profileID, reason: clause)
+        } else if allowsOfflineFallback(for: error) {
+            serveCachedColorsOrClearMiss(for: profileID, reason: clause)
         } else {
             keepOrClearLoadedColors(profileID: profileID, reason: clause)
         }
@@ -601,6 +600,19 @@ final class ColorCatalog {
         isServingFromCache = true
         cacheBackedServer = cacheServer
         connectionMessage = "\(reason) — showing cached colors from \(Self.cacheTimestamp(cached.fetchedAt))."
+    }
+
+    /// A transport failure may fall back to the disk cache, but a cache miss
+    /// must never keep another profile's stale cached palette on screen.
+    private func serveCachedColorsOrClearMiss(for profileID: Int, reason: String) {
+        guard let cached = servableCacheEntry(for: profileID) else {
+            if isServingFromCache {
+                clearLoadedColors()
+            }
+            connectionMessage = "\(reason)."
+            return
+        }
+        serve(cached, profileID: profileID, reason: reason)
     }
 
     /// Keeps colors already on screen only when they belong to the selected

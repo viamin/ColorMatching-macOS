@@ -139,7 +139,9 @@ public struct ProfileColorCache: Sendable {
 
     /// Stores (or overwrites) the cached fetch for `entry.profileId`. Two
     /// servers' entries for the same profile id live in different
-    /// subdirectories and do not overwrite one another.
+    /// subdirectories and do not overwrite one another, so reconfiguring the
+    /// app to another deployment switches cache namespaces instead of reusing
+    /// another server's offline fallback.
     public func store(_ entry: CachedProfileColors) throws {
         let normalizedEntry = normalized(entry)
         try ensureWritableRootDirectory()
