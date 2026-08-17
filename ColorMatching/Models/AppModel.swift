@@ -345,7 +345,7 @@ final class AppModel {
     }
 
     func printComposite() {
-        guard let raster = exportRaster else { return }
+        guard hasFinitePositivePhysicalPrintSize, let raster = exportRaster else { return }
         PrintSupport.print(
             raster,
             physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM),
@@ -512,8 +512,8 @@ final class AppModel {
     private var printOverlayOptions: PrintOverlayOptions {
         PrintOverlayOptions(
             showsMarks: showsPrintMarks,
-            markInsetMM: printMarksInsetMM,
-            bleedMM: printBleedMM
+            markInsetMM: Self.sanitizedMeasurement(printMarksInsetMM),
+            bleedMM: Self.sanitizedMeasurement(printBleedMM)
         )
     }
 

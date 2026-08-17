@@ -15,6 +15,8 @@ enum PrintSupport {
         overlay: PrintOverlayOptions = PrintOverlayOptions(),
         title: String = "ColorMatching"
     ) {
+        guard physicalSizeMM.width.isFinite, physicalSizeMM.width > 0,
+              physicalSizeMM.height.isFinite, physicalSizeMM.height > 0 else { return }
         let layout = PrintLayout.make(
             physicalSizeMM: .init(width: physicalSizeMM.width, height: physicalSizeMM.height),
             options: overlay
