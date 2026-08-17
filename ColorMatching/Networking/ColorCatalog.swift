@@ -48,18 +48,17 @@ final class ColorCatalog {
 
         client = baseURL.map { PaletteAPIClient(baseURL: $0, token: normalizedToken) }
 
-        guard baseURLChanged else {
-            connectionMessage = nil
-            return
-        }
-
-        printerProfiles = []
-
-        if selectedPrinterProfileID != nil {
+        if baseURLChanged, selectedPrinterProfileID != nil {
             selectedPrinterProfileID = nil
         } else {
+            // Same server with a new token keeps the profile selection: a
+            // re-auth retry may be in flight, and it lands its refetched
+            // colors only while the selected profile is unchanged. Everything
+            // cached under the previous credential is still dropped, so stale
+            // palette data never lingers across re-auth or account switches.
             clearLoadedColors()
         }
+        printerProfiles = []
     }
 
     var isConfigured: Bool { client != nil }
