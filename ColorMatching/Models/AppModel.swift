@@ -430,7 +430,7 @@ final class AppModel {
     ) throws -> [LightingCondition: BrightnessGrid] {
         var grids: [LightingCondition: BrightnessGrid] = [:]
         for condition in active {
-            guard let layer = layers.first(where: { $0.assignedCondition == condition }) else {
+            guard let layer = layers.first(where: { $0.imageData != nil && $0.assignedCondition == condition }) else {
                 throw SourceGridBuildError.missingSourceImage(condition)
             }
             guard let grid = brightnessGrid(for: layer, logicalWidth: logicalWidth, logicalHeight: logicalHeight) else {
