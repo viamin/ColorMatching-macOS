@@ -7,7 +7,6 @@ private enum SceneIDs {
 }
 
 @MainActor
-@Observable
 private final class PendingProjectOpen {
     static let shared = PendingProjectOpen()
 
