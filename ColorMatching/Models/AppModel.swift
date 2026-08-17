@@ -6,6 +6,18 @@ import ColorComposerCore
 /// settings, and the solved result with derived preview images.
 @Observable
 final class AppModel {
+    init() {
+        catalog.onPaletteChanged = { [weak self] in
+            self?.handleUpstreamChange()
+        }
+        catalog.onAuthenticationRequired = {
+            await MainActor.run { ReauthPrompt.promptForToken() }
+        }
+        catalog.onTokenUpdated = { [weak self] newToken in
+            self?.serverToken = newToken
+        }
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+    }
 
     // MARK: - Catalog / server
 
@@ -29,18 +41,10 @@ final class AppModel {
         }
     }
 
-    /// Configures the catalog from persisted settings so every fresh instance —
-    /// the initial window's model and ⌘N's replacement model alike — starts
-    /// able to reach the server without relying on an external configure call.
-    init() {
-        catalog.onPaletteLoaded = { [weak self] in
-            self?.handleUpstreamChange()
-        }
-        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
-    }
-
     deinit {
-        catalog.onPaletteLoaded = nil
+        catalog.onPaletteChanged = nil
+        catalog.onAuthenticationRequired = nil
+        catalog.onTokenUpdated = nil
         cancelPendingWork()
     }
 
@@ -110,6 +114,9 @@ final class AppModel {
     var pixelsPerCell = 4
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
+    var showsPrintMarks = false
+    var printMarksInsetMM = 3.0
+    var printBleedMM = 0.0
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
@@ -353,6 +360,21 @@ final class AppModel {
         }
     }
 
+    private func clearCompositionState() {
+        solveTask?.cancel()
+        solveTask = nil
+        debounceTask?.cancel()
+        debounceTask = nil
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
+        isSolving = false
+        pendingAutoRegenerate = false
+        solveQueued = false
+        solveGeneration += 1
+    }
+
     // MARK: - Derived images
 
     var compositeRGBA: RGBAImage? {
@@ -360,24 +382,30 @@ final class AppModel {
         return CompositionRenderer.composite(result)
     }
 
+    var canPrintComposite: Bool {
+        hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
+    }
+
+    var canPrintTiles: Bool {
+        hasResult && hasFinitePositiveTileSize && tilePlan != nil
+    }
+
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
     /// no-data or partial-match result is never invisible. Export/print keep
     /// using `compositeRGBA` (transparent for unmatched).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        for cell in 0..<result.cellCount {
-            let base = cell * 4
-            if let index = result.colorIndices[cell] {
-                let color = result.palette[index].rgb
-                rgba[base] = color.red; rgba[base + 1] = color.green
-                rgba[base + 2] = color.blue; rgba[base + 3] = 255
-            } else {
-                // Visible "no eligible color" marker.
-                rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
-            }
-        }
-        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+        return CompositionRenderer.compositePreview(result)
+    }
+
+    var softProofProfileName: String {
+        activePrinterProfile?.displayName ?? "Generic printer"
+    }
+
+    var softProofPreview: SoftProofPreview? {
+        guard let result else { return nil }
+        let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
+        return CompositionRenderer.softProofPreview(result, profile: profile)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -451,6 +479,14 @@ final class AppModel {
         return RGBAImage(width: outW, height: outH, rgba: rgba)
     }
 
+    private var activePrinterProfile: PrinterProfileDTO? {
+        guard let id = catalog.selectedPrinterProfileID else { return nil }
+        if let profile = catalog.colorsForProfile, profile.id == id {
+            return profile
+        }
+        return catalog.printerProfiles.first(where: { $0.id == id })
+    }
+
     // MARK: - Export / print
 
     func exportComposite(to url: URL) throws {
@@ -462,9 +498,12 @@ final class AppModel {
     }
 
     func printComposite() {
-        guard let raster = exportRaster,
-              let image = ImageUtilities.nsImage(from: raster) else { return }
-        PrintSupport.print(image, physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM))
+        guard hasFinitePositivePhysicalPrintSize, let raster = exportRaster else { return }
+        PrintSupport.print(
+            raster,
+            physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM),
+            overlay: printOverlayOptions
+        )
     }
 
     // MARK: - Large-format tiling
@@ -483,6 +522,8 @@ final class AppModel {
     /// split across two tiles.
     var tilePlan: [TileSpec]? {
         guard tilingEnabled, let raster = exportRaster else { return nil }
+        guard hasFinitePositivePhysicalPrintSize else { return nil }
+        guard hasFinitePositiveTileSize else { return nil }
         let scaleX = Double(raster.width) / physicalWidthMM
         let scaleY = Double(raster.height) / physicalHeightMM
         let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
@@ -515,13 +556,18 @@ final class AppModel {
     /// Presents one native print job per tile, in row-major order.
     func printTiles() {
         guard let raster = exportRaster, let tiles = tilePlan else { return }
+        guard raster.width > 0, raster.height > 0 else { return }
         let scaleX = physicalWidthMM / Double(raster.width)
         let scaleY = physicalHeightMM / Double(raster.height)
         for tile in tiles {
             let tileImage = RasterTiler.extract(raster, tile: tile)
-            guard let image = ImageUtilities.nsImage(from: tileImage) else { continue }
             let size = CGSize(width: Double(tile.width) * scaleX, height: Double(tile.height) * scaleY)
-            PrintSupport.print(image, physicalSizeMM: size, title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)")
+            PrintSupport.print(
+                tileImage,
+                physicalSizeMM: size,
+                overlay: tilePrintOverlayOptions,
+                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
+            )
         }
     }
 
@@ -564,6 +610,7 @@ final class AppModel {
             serverBaseURL: serverBaseURL,
             apiToken: serverToken,
             printerProfileID: catalog.selectedPrinterProfileID,
+            printerProfileSnapshot: activePrinterProfile,
             colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
             scorerKind: scorerKind,
@@ -572,6 +619,7 @@ final class AppModel {
             pixelsPerCell: pixelsPerCell,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
+            printOverlayOptions: printOverlayOptions,
             tilingEnabled: tilingEnabled,
             tileWidthMM: tileWidthMM,
             tileHeightMM: tileHeightMM,
@@ -583,11 +631,12 @@ final class AppModel {
     private func applySnapshot(_ s: ProjectDocument) {
         isRestoringProject = true
         defer { isRestoringProject = false }
-        clearDerivedState()
+        clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        catalog.restoreProjectPalette(
+        catalog.restoreSnapshot(
             printerProfileID: s.printerProfileID,
+            printerProfile: s.printerProfileSnapshot,
             colors: s.colorSnapshot.map { $0.toColor() }
         )
 
@@ -596,12 +645,15 @@ final class AppModel {
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
-        physicalWidthMM = s.physicalWidthMM
-        physicalHeightMM = s.physicalHeightMM
+        physicalWidthMM = Self.sanitizedMeasurement(s.physicalWidthMM)
+        physicalHeightMM = Self.sanitizedMeasurement(s.physicalHeightMM)
+        showsPrintMarks = s.printOverlayOptions.showsMarks
+        printMarksInsetMM = Self.sanitizedMeasurement(s.printOverlayOptions.markInsetMM)
+        printBleedMM = Self.sanitizedMeasurement(s.printOverlayOptions.bleedMM)
         tilingEnabled = s.tilingEnabled
-        tileWidthMM = s.tileWidthMM
-        tileHeightMM = s.tileHeightMM
-        tileOverlapMM = s.tileOverlapMM
+        tileWidthMM = Self.sanitizedMeasurement(s.tileWidthMM)
+        tileHeightMM = Self.sanitizedMeasurement(s.tileHeightMM)
+        tileOverlapMM = Self.sanitizedMeasurement(s.tileOverlapMM)
 
         let restored = s.layers.enumerated().map { (index, snap) -> SourceLayer in
             let layer = index < layers.count ? layers[index] : SourceLayer()
@@ -617,17 +669,6 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
-    }
-
-    private func clearDerivedState() {
-        result = nil
-        errorStatistics = nil
-        isSolving = false
-        lastError = nil
-        solvedGamut = nil
-        pendingAutoRegenerate = false
-        solveQueued = false
-        solveGeneration += 1
         documentStateID = UUID()
     }
 
@@ -636,5 +677,34 @@ final class AppModel {
         errorStatistics = nil
         lastError = nil
         solvedGamut = nil
+    }
+
+    private var printOverlayOptions: PrintOverlayOptions {
+        PrintOverlayOptions(
+            showsMarks: showsPrintMarks,
+            markInsetMM: Self.sanitizedMeasurement(printMarksInsetMM),
+            bleedMM: Self.sanitizedMeasurement(printBleedMM)
+        )
+    }
+
+    private var tilePrintOverlayOptions: PrintOverlayOptions {
+        // Tile sizes are planned against the configured page size, so overlays
+        // must stay off here or macOS will enlarge/clamp each printed sheet.
+        PrintOverlayOptions()
+    }
+
+    private var hasFinitePositivePhysicalPrintSize: Bool {
+        physicalWidthMM.isFinite && physicalWidthMM > 0 &&
+            physicalHeightMM.isFinite && physicalHeightMM > 0
+    }
+
+    private var hasFinitePositiveTileSize: Bool {
+        tileWidthMM.isFinite && tileWidthMM > 0 &&
+            tileHeightMM.isFinite && tileHeightMM > 0
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 }

@@ -15,17 +15,19 @@ final class ColorCatalog {
     var printerProfiles: [PrinterProfileDTO] = []
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
-    var onPaletteLoaded: (() -> Void)?
+    var onPaletteChanged: (() -> Void)?
     private(set) var loadedPrinterProfileID: Int?
     private var loadedProjectPaletteWithoutProfile = false
     private var colorFetchTask: Task<Void, Never>?
     private var operationVersion = 0
+    private var isRestoringSnapshot = false
 
     var selectedPrinterProfileID: Int? {
         didSet {
-            guard fetchesColorsOnProfileSelection else { return }
+            guard selectedPrinterProfileID != oldValue else { return }
+            guard fetchesColorsOnProfileSelection, !isRestoringSnapshot else { return }
             cancelPendingWork()
-            clearLoadedPalette()
+            clearLoadedColors()
             connectionMessage = selectedPrinterProfileID == nil ? nil : "Loading colors..."
             let version = operationVersion
             colorFetchTask = Task { [weak self] in
@@ -38,6 +40,15 @@ final class ColorCatalog {
     var connectionMessage: String?
     var isWorking = false
 
+    /// Invoked when the server rejects the current token with 401. Should
+    /// securely prompt for a replacement token and return it, or `nil` if the
+    /// user cancels (issue #16).
+    var onAuthenticationRequired: (() async -> String?)?
+
+    /// Invoked with the token that succeeded a re-authenticated retry, so the
+    /// owner can persist it (e.g. to `AppModel.serverToken`).
+    var onTokenUpdated: ((String) -> Void)?
+
     private var client: PaletteAPIClient?
     private var fetchesColorsOnProfileSelection = true
 
@@ -46,15 +57,19 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
-        invalidateLoadedData(preserveSelectedProfile: true)
-        guard let baseURL else {
-            client = nil
-            return
-        }
-        client = PaletteAPIClient(baseURL: baseURL, token: token?.isEmpty == false ? token : nil)
+        let normalizedToken = token?.isEmpty == false ? token : nil
+        let configurationChanged = client?.baseURL != baseURL || client?.token != normalizedToken
+
+        guard configurationChanged else { return }
+
+        cancelPendingWork()
+        client = baseURL.map { PaletteAPIClient(baseURL: $0, token: normalizedToken) }
+        printerProfiles = []
+        clearLoadedColors()
     }
 
     var isConfigured: Bool { client != nil }
+
     /// A selection counts as loaded once the fetch (or project restore) for the
     /// currently selected profile has completed, even if that profile contains
     /// zero measured colors. A restored project palette with no current profile
@@ -77,7 +92,7 @@ final class ColorCatalog {
     }
 
     func testConnection() async {
-        guard let client else {
+        guard client != nil else {
             connectionMessage = "Set a server URL first."
             return
         }
@@ -89,7 +104,7 @@ final class ColorCatalog {
             isWorking = false
         }
         do {
-            try await client.testConnection()
+            try await withReauth { try await $0.testConnection() }
             guard isCurrent(version) else { return }
             connectionMessage = "Connected."
         } catch let error as PaletteAPIError {
@@ -102,7 +117,7 @@ final class ColorCatalog {
     }
 
     func refreshAll() async {
-        guard let client else {
+        guard client != nil else {
             connectionMessage = "Set a server URL first."
             return
         }
@@ -117,7 +132,7 @@ final class ColorCatalog {
             isWorking = false
         }
         do {
-            let fetchedProfiles = try await client.fetchPrinterProfiles()
+            let fetchedProfiles = try await withReauth { try await $0.fetchPrinterProfiles() }
             guard isCurrent(version) else { return }
             printerProfiles = fetchedProfiles
             if needsProfileSelection(from: fetchedProfiles) {
@@ -125,7 +140,7 @@ final class ColorCatalog {
             }
             connectionMessage = "Loaded \(fetchedProfiles.count) profile(s)."
             if selectedPrinterProfileID == nil {
-                clearLoadedPalette()
+                clearLoadedColors()
             }
             await fetchColorsIfPossible(version: version)
         } catch let error as PaletteAPIError {
@@ -137,20 +152,24 @@ final class ColorCatalog {
         }
     }
 
-    /// Restores the saved palette and selected profile from a project document
-    /// without immediately replacing the embedded colors from the server.
-    func restoreProjectPalette(printerProfileID: Int?, colors: [PaletteColor]) {
+    func restoreSnapshot(
+        printerProfileID: Int?,
+        printerProfile: PrinterProfileDTO?,
+        colors: [PaletteColor]
+    ) {
         cancelPendingWork()
+        isRestoringSnapshot = true
         setSelectedPrinterProfileID(printerProfileID, fetchColors: false)
-        self.colors = colors
-        loadedPrinterProfileID = printerProfileID
-        loadedProjectPaletteWithoutProfile = printerProfileID == nil
-        colorsForProfile = printerProfiles.first { $0.id == printerProfileID }
-        // `lastRefresh` is reserved for server fetches; project restores are an
-        // offline snapshot, not a network refresh.
-        lastRefresh = nil
-        connectionMessage = "Loaded \(colors.count) color(s) from project."
-        onPaletteLoaded?()
+        isRestoringSnapshot = false
+        printerProfiles = printerProfile.map { [$0] } ?? []
+        applyPalette(
+            colors,
+            profile: printerProfile,
+            connectionMessage: "Loaded \(colors.count) color(s) from project.",
+            lastRefresh: nil,
+            loadedPrinterProfileID: printerProfileID,
+            loadedProjectPaletteWithoutProfile: printerProfileID == nil
+        )
     }
 
     private func setSelectedPrinterProfileID(_ id: Int?, fetchColors: Bool) {
@@ -188,14 +207,17 @@ final class ColorCatalog {
             isWorking = false
         }
         do {
-            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
+            let (dtos, profile) = try await withReauth { try await $0.fetchColors(printerProfileID: profileID) }
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
-            colors = dtos.compactMap { $0.toDomain() }
-            loadedPrinterProfileID = profileID
-            colorsForProfile = profile
-            lastRefresh = Date()
-            connectionMessage = "Loaded \(colors.count) color(s) for this profile."
-            onPaletteLoaded?()
+            let loadedColors = dtos.compactMap { $0.toDomain() }
+            applyPalette(
+                loadedColors,
+                profile: profile,
+                connectionMessage: "Loaded \(loadedColors.count) color(s) for this profile.",
+                lastRefresh: Date(),
+                loadedPrinterProfileID: profileID,
+                loadedProjectPaletteWithoutProfile: false
+            )
         } catch let error as PaletteAPIError {
             guard isCurrent(version), selectedPrinterProfileID == profileID else { return }
             restoreLoadedProfileIfNeeded(
@@ -219,31 +241,49 @@ final class ColorCatalog {
         }
     }
 
-    /// Colors eligible for the solver given the currently active channels.
-    /// Colors missing measurements for any active channel are excluded, matching
-    /// the solver's policy; the UI surfaces the excluded count.
-    func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {
-        let required = Set(activeConditions)
-        return colors.filter { $0.hasMeasurements(for: required) }
+    /// Runs `operation` against the current client, retrying exactly once
+    /// with a freshly prompted token if the server responds 401 (issue #16).
+    /// Non-auth errors, and a second 401 after re-auth, propagate untouched.
+    private func withReauth<T>(_ operation: (PaletteAPIClient) async throws -> T) async throws -> T {
+        guard let client else { throw PaletteAPIError.invalidURL }
+        do {
+            return try await operation(client)
+        } catch PaletteAPIError.unauthorized {
+            guard let newToken = await onAuthenticationRequired?(), !newToken.isEmpty else {
+                throw PaletteAPIError.unauthorized
+            }
+            let reauthedClient = PaletteAPIClient(baseURL: client.baseURL, token: newToken)
+            let result = try await operation(reauthedClient)
+            self.client = reauthedClient
+            onTokenUpdated?(newToken)
+            return result
+        }
     }
 
-    private func clearLoadedPalette() {
+    private func clearLoadedColors() {
         colors = []
         colorsForProfile = nil
         loadedPrinterProfileID = nil
         loadedProjectPaletteWithoutProfile = false
         lastRefresh = nil
+        connectionMessage = nil
     }
 
-    private func invalidateLoadedData(preserveSelectedProfile: Bool) {
-        // Keep the profile selection sticky across server/token edits so a
-        // refresh can repopulate the same profile when it still exists.
-        let preservedSelectedPrinterProfileID = preserveSelectedProfile ? selectedPrinterProfileID : nil
-        cancelPendingWork()
-        printerProfiles = []
-        setSelectedPrinterProfileID(preservedSelectedPrinterProfileID, fetchColors: false)
-        clearLoadedPalette()
-        connectionMessage = nil
+    private func applyPalette(
+        _ colors: [PaletteColor],
+        profile: PrinterProfileDTO?,
+        connectionMessage: String,
+        lastRefresh: Date?,
+        loadedPrinterProfileID: Int?,
+        loadedProjectPaletteWithoutProfile: Bool
+    ) {
+        self.colors = colors
+        colorsForProfile = profile
+        self.lastRefresh = lastRefresh
+        self.loadedPrinterProfileID = loadedPrinterProfileID
+        self.loadedProjectPaletteWithoutProfile = loadedProjectPaletteWithoutProfile
+        self.connectionMessage = connectionMessage
+        onPaletteChanged?()
     }
 
     private func restoreLoadedProfileIfNeeded(
@@ -257,5 +297,13 @@ final class ColorCatalog {
         loadedPrinterProfileID = profileID
         colorsForProfile = previousColorsForProfile
         lastRefresh = previousLastRefresh
+    }
+
+    /// Colors eligible for the solver given the currently active channels.
+    /// Colors missing measurements for any active channel are excluded, matching
+    /// the solver's policy; the UI surfaces the excluded count.
+    func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {
+        let required = Set(activeConditions)
+        return colors.filter { $0.hasMeasurements(for: required) }
     }
 }

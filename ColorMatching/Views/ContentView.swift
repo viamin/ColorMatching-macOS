@@ -52,7 +52,7 @@ struct ContentView: View {
                 } label: {
                     Label("Print", systemImage: "printer")
                 }
-                .disabled(!model.canExportComposite)
+                .disabled(!model.canPrintComposite)
 
                 if model.tilingEnabled {
                     Button {
@@ -70,7 +70,7 @@ struct ContentView: View {
                     } label: {
                         Label("Print Tiles", systemImage: "printer.filled.and.paper")
                     }
-                    .disabled(!model.canExportTiles)
+                    .disabled(!model.canPrintTiles)
                 }
             }
         }

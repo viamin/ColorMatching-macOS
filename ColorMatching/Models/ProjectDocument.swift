@@ -6,6 +6,7 @@ struct ProjectDocument: Codable {
     var serverBaseURL: String
     var apiToken: String
     var printerProfileID: Int?
+    var printerProfileSnapshot: PrinterProfileDTO?
     var colorSnapshot: [ColorSnapshot]
     var weights: ChannelWeights
     var scorerKind: ScorerKind
@@ -14,6 +15,7 @@ struct ProjectDocument: Codable {
     var pixelsPerCell: Int
     var physicalWidthMM: Double
     var physicalHeightMM: Double
+    var printOverlayOptions: PrintOverlayOptions
     var tilingEnabled: Bool
     var tileWidthMM: Double
     var tileHeightMM: Double
@@ -21,10 +23,11 @@ struct ProjectDocument: Codable {
     var layers: [LayerSnapshot]
 
     private enum CodingKeys: String, CodingKey {
-        case serverBaseURL, apiToken, printerProfileID, colorSnapshot
+        case serverBaseURL, apiToken, printerProfileID, printerProfileSnapshot, colorSnapshot
         case weights, scorerKind
         case logicalWidth, logicalHeight, pixelsPerCell
         case physicalWidthMM, physicalHeightMM
+        case printOverlayOptions
         case tilingEnabled, tileWidthMM, tileHeightMM, tileOverlapMM
         case layers
     }
@@ -33,6 +36,7 @@ struct ProjectDocument: Codable {
         serverBaseURL: String,
         apiToken: String,
         printerProfileID: Int?,
+        printerProfileSnapshot: PrinterProfileDTO?,
         colorSnapshot: [ColorSnapshot],
         weights: ChannelWeights,
         scorerKind: ScorerKind,
@@ -41,6 +45,7 @@ struct ProjectDocument: Codable {
         pixelsPerCell: Int,
         physicalWidthMM: Double,
         physicalHeightMM: Double,
+        printOverlayOptions: PrintOverlayOptions,
         tilingEnabled: Bool,
         tileWidthMM: Double,
         tileHeightMM: Double,
@@ -50,6 +55,7 @@ struct ProjectDocument: Codable {
         self.serverBaseURL = serverBaseURL
         self.apiToken = apiToken
         self.printerProfileID = printerProfileID
+        self.printerProfileSnapshot = printerProfileSnapshot
         self.colorSnapshot = colorSnapshot
         self.weights = weights
         self.scorerKind = scorerKind
@@ -58,6 +64,7 @@ struct ProjectDocument: Codable {
         self.pixelsPerCell = pixelsPerCell
         self.physicalWidthMM = physicalWidthMM
         self.physicalHeightMM = physicalHeightMM
+        self.printOverlayOptions = printOverlayOptions
         self.tilingEnabled = tilingEnabled
         self.tileWidthMM = tileWidthMM
         self.tileHeightMM = tileHeightMM
@@ -70,6 +77,7 @@ struct ProjectDocument: Codable {
         serverBaseURL = try c.decode(String.self, forKey: .serverBaseURL)
         apiToken = try c.decode(String.self, forKey: .apiToken)
         printerProfileID = try c.decodeIfPresent(Int.self, forKey: .printerProfileID)
+        printerProfileSnapshot = try c.decodeIfPresent(PrinterProfileDTO.self, forKey: .printerProfileSnapshot)
         colorSnapshot = try c.decode([ColorSnapshot].self, forKey: .colorSnapshot)
         weights = try c.decode(ChannelWeights.self, forKey: .weights)
         // Older projects predate scorer choice; default to the v1 scorer so
@@ -80,6 +88,7 @@ struct ProjectDocument: Codable {
         pixelsPerCell = try c.decode(Int.self, forKey: .pixelsPerCell)
         physicalWidthMM = try c.decode(Double.self, forKey: .physicalWidthMM)
         physicalHeightMM = try c.decode(Double.self, forKey: .physicalHeightMM)
+        printOverlayOptions = try c.decodeIfPresent(PrintOverlayOptions.self, forKey: .printOverlayOptions) ?? PrintOverlayOptions()
         // Older projects predate tiling; default to disabled with sane sizes
         // so they round-trip identically to how they were originally authored.
         tilingEnabled = try c.decodeIfPresent(Bool.self, forKey: .tilingEnabled) ?? false

@@ -122,7 +122,9 @@ private struct DocumentSceneView: View {
             tilingEnabled: model.tilingEnabled,
             canGenerate: model.canGenerate,
             canExportComposite: model.canExportComposite,
-            canExportTiles: model.canExportTiles
+            canExportTiles: model.canExportTiles,
+            canPrintComposite: model.canPrintComposite,
+            canPrintTiles: model.canPrintTiles
         )
     }
 }
@@ -141,6 +143,8 @@ private struct DocumentCommandContext {
     let canGenerate: Bool
     let canExportComposite: Bool
     let canExportTiles: Bool
+    let canPrintComposite: Bool
+    let canPrintTiles: Bool
 }
 
 private struct DocumentCommandContextKey: FocusedValueKey {
@@ -187,7 +191,7 @@ private struct DocumentCommands: Commands {
                     .keyboardShortcut("e", modifiers: [.command, .shift, .option])
                     .disabled(!(context?.canExportTiles ?? false))
                 Button("Print Tiles") { context?.printTiles() }
-                    .disabled(!(context?.canExportTiles ?? false))
+                    .disabled(!(context?.canPrintTiles ?? false))
             }
         }
         // Replaces the default ⌘P print item so the File menu carries only
@@ -195,7 +199,7 @@ private struct DocumentCommands: Commands {
         CommandGroup(replacing: .printItem) {
             Button("Print…") { context?.printComposite() }
                 .keyboardShortcut("p")
-                .disabled(!(context?.canExportComposite ?? false))
+                .disabled(!(context?.canPrintComposite ?? false))
         }
     }
 
@@ -294,5 +298,26 @@ enum FilePanels {
         panel.allowsMultipleSelection = false
         panel.prompt = "Choose"
         if panel.runModal() == .OK, let url = panel.url { onComplete(url) }
+    }
+}
+
+/// Native re-authentication prompt shown when the server responds 401
+/// (issue #16). A modal secure field keeps the re-entered token out of
+/// SwiftUI view state.
+enum ReauthPrompt {
+    static func promptForToken() -> String? {
+        let alert = NSAlert()
+        alert.messageText = "Session Expired"
+        alert.informativeText = "The server rejected the current API token. Enter a new token to continue."
+        alert.addButton(withTitle: "Continue")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let token = field.stringValue
+        return token.isEmpty ? nil : token
     }
 }

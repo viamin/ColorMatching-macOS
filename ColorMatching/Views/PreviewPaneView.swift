@@ -82,12 +82,15 @@ struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
     @Binding var previewMode: PreviewMode
     @State private var compareMode: LightingCompareMode = .predicted
+    @State private var softProofEnabled = false
 
     var body: some View {
+        let softProofPreview = softProofPreviewSelection
+
         VStack(spacing: 0) {
-            previewPicker(selection: $previewMode)
+            previewPicker(softProofPreview: softProofPreview)
             Divider()
-            content(mode: previewMode)
+            content(mode: previewMode, softProofPreview: softProofPreview)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.hasResult {
                 Divider()
@@ -101,18 +104,35 @@ struct PreviewPaneView: View {
         }
     }
 
-    private func previewPicker(selection: Binding<PreviewMode>) -> some View {
-        Picker("Preview", selection: selection) {
-            ForEach(PreviewMode.allCases) { m in
-                Text(m.label).tag(m)
+    private func previewPicker(softProofPreview: SoftProofPreview?) -> some View {
+        VStack(spacing: 8) {
+            Picker("Preview", selection: $previewMode) {
+                ForEach(PreviewMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            // The soft-proof row describes the composite preview; hide it when
+            // that preview is replaced by the all-cells-unmatched notice.
+            if previewMode == .composite, model.hasResult, !model.allCellsUnmatched {
+                HStack(spacing: 12) {
+                    Toggle("Soft Proof", isOn: $softProofEnabled)
+                        .toggleStyle(.switch)
+                    Spacer()
+                    if let preview = softProofPreview {
+                        Text(softProofStatus(for: preview, profileName: model.softProofProfileName))
+                            .font(.caption)
+                            .foregroundStyle(preview.outOfGamutCount > 0 ? .orange : .secondary)
+                    }
+                }
             }
         }
-        .pickerStyle(.segmented)
         .padding(8)
     }
 
     @ViewBuilder
-    private func content(mode: PreviewMode) -> some View {
+    private func content(mode: PreviewMode, softProofPreview: SoftProofPreview?) -> some View {
         if mode == .gamut {
             // The gamut explains why a solve will struggle, so it stays useful
             // before Generate and when nothing could be matched at all.
@@ -132,7 +152,8 @@ struct PreviewPaneView: View {
         } else {
             switch mode {
             case .composite:
-                PreviewImage(image: model.compositePreviewRGBA.flatMap { ImageUtilities.nsImage(from: $0) })
+                let image = softProofPreview?.image ?? model.compositePreviewRGBA
+                PreviewImage(image: image.flatMap { ImageUtilities.nsImage(from: $0) })
             case .errorMap:
                 PreviewImage(image: model.errorMapGrid.flatMap { ImageUtilities.nsImage(from: $0) })
             case .gamut:
@@ -143,6 +164,11 @@ struct PreviewPaneView: View {
         }
     }
 
+    private var softProofPreviewSelection: SoftProofPreview? {
+        guard previewMode == .composite, softProofEnabled else { return nil }
+        return model.softProofPreview
+    }
+
     /// Per-channel comparison: a switch between Predicted, Source, and
     /// Difference when a source grid exists for the channel; otherwise the
     /// predicted preview alone (no comparison is possible without a source).
@@ -151,8 +177,8 @@ struct PreviewPaneView: View {
         if model.hasSource(for: condition) {
             VStack(spacing: 0) {
                 Picker("Compare", selection: $compareMode) {
-                    ForEach(LightingCompareMode.allCases) { m in
-                        Text(m.label).tag(m)
+                    ForEach(LightingCompareMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -189,6 +215,14 @@ struct PreviewPaneView: View {
             compareMode = .predicted
             return
         }
+    }
+
+    private func softProofStatus(for preview: SoftProofPreview, profileName: String) -> String {
+        if preview.outOfGamutCount == 0 {
+            return "\(profileName) preview"
+        }
+        let noun = preview.outOfGamutCount == 1 ? "cell" : "cells"
+        return "\(preview.outOfGamutCount) out-of-gamut \(noun) · \(profileName)"
     }
 }
 
