@@ -6,12 +6,17 @@ import FoundationNetworking
 /// Errors produced by `PaletteAPIClient`.
 public enum PaletteAPIError: Error, LocalizedError, Equatable {
     case invalidURL
+    /// The server rejected the bearer token (HTTP 401), distinct from other
+    /// non-2xx statuses so callers can trigger a re-authentication flow
+    /// (issue #16) instead of surfacing a generic error.
+    case unauthorized
     case badStatus(Int)
     case malformedResponse
 
     public var errorDescription: String? {
         switch self {
         case .invalidURL: return "The server URL is not valid."
+        case .unauthorized: return "The server rejected the current API token."
         case .badStatus(let code): return "The server returned HTTP \(code)."
         case .malformedResponse: return "The server response could not be read."
         }
@@ -68,10 +73,7 @@ public struct PaletteAPIClient: Sendable {
         var request = URLRequest(url: url)
         authorize(&request)
         let (_, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
-        guard (200..<300).contains(http.statusCode) else {
-            throw PaletteAPIError.badStatus(http.statusCode)
-        }
+        try validateStatus(response)
     }
 
     // MARK: - Internals
@@ -91,22 +93,22 @@ public struct PaletteAPIClient: Sendable {
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         authorize(&request)
 
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw error
-        }
-
-        guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
-        guard (200..<300).contains(http.statusCode) else {
-            throw PaletteAPIError.badStatus(http.statusCode)
-        }
+        let (data, response) = try await session.data(for: request)
+        try validateStatus(response)
 
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
             throw PaletteAPIError.malformedResponse
+        }
+    }
+
+    /// Throws `.unauthorized` for a 401 (so callers can trigger re-auth),
+    /// `.badStatus` for any other non-2xx.
+    private func validateStatus(_ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
+        guard (200..<300).contains(http.statusCode) else {
+            throw http.statusCode == 401 ? PaletteAPIError.unauthorized : PaletteAPIError.badStatus(http.statusCode)
         }
     }
 }

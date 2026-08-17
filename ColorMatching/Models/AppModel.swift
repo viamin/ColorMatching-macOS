@@ -10,6 +10,12 @@ final class AppModel {
         catalog.onPaletteChanged = { [weak self] in
             self?.clearCompositionState()
         }
+        catalog.onAuthenticationRequired = {
+            await MainActor.run { ReauthPrompt.promptForToken() }
+        }
+        catalog.onTokenUpdated = { [weak self] newToken in
+            self?.serverToken = newToken
+        }
     }
 
     // MARK: - Catalog / server
