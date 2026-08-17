@@ -162,7 +162,8 @@ struct PreviewPaneView: View {
         if preview.outOfGamutCount == 0 {
             return "Generic printer preview"
         }
-        return "\(preview.outOfGamutCount) out-of-gamut cells"
+        let noun = preview.outOfGamutCount == 1 ? "cell" : "cells"
+        return "\(preview.outOfGamutCount) out-of-gamut \(noun)"
     }
 }
 

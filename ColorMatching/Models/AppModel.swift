@@ -256,16 +256,12 @@ final class AppModel {
     /// using `compositeRGBA` (transparent for unmatched).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        return previewImage(for: result, image: CompositionRenderer.composite(result))
+        return CompositionRenderer.compositePreview(result)
     }
 
     var softProofPreview: SoftProofPreview? {
         guard let result else { return nil }
-        let preview = CompositionRenderer.softProof(result)
-        return SoftProofPreview(
-            image: previewImage(for: result, image: preview.image),
-            outOfGamutCells: preview.outOfGamutCells
-        )
+        return CompositionRenderer.softProofPreview(result)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -337,16 +333,6 @@ final class AppModel {
             }
         }
         return RGBAImage(width: outW, height: outH, rgba: rgba)
-    }
-
-    private func previewImage(for result: CompositionResult, image: RGBAImage) -> RGBAImage {
-        var rgba = image.rgba
-        for cell in 0..<result.cellCount where result.colorIndices[cell] == nil {
-            let base = cell * 4
-            // Visible "no eligible color" marker.
-            rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
-        }
-        return RGBAImage(width: image.width, height: image.height, rgba: rgba)
     }
 
     // MARK: - Export / print

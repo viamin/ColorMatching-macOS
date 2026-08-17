@@ -19,6 +19,19 @@ final class StatisticsAndRendererTests: XCTestCase {
         )
     }
 
+    private func unmatchedResult() -> CompositionResult {
+        CompositionResult(
+            gridWidth: 1,
+            gridHeight: 1,
+            palette: [color(1, "#000000", [.red: 0.0])],
+            weights: ChannelWeights(red: 1),
+            sourceGrids: [.red: BrightnessGrid(width: 1, height: 1, values: [1.0])],
+            colorIndices: [nil],
+            errors: [.infinity],
+            excludedCandidateCount: 1
+        )
+    }
+
     func testErrorStatistics() throws {
         let result = try solve()
         let stats = ErrorStatistics(result: result)
@@ -94,6 +107,20 @@ final class StatisticsAndRendererTests: XCTestCase {
         let preview = CompositionRenderer.softProof(result)
 
         XCTAssertEqual(preview.outOfGamutCells, [false, true])
+    }
+
+    func testCompositePreviewMarksUnmatchedCellsMagenta() {
+        let preview = CompositionRenderer.compositePreview(unmatchedResult())
+
+        XCTAssertEqual(preview.rgba, [255, 0, 255, 255])
+    }
+
+    func testSoftProofPreviewMarksUnmatchedCellsWithoutGamutFlags() {
+        let preview = CompositionRenderer.softProofPreview(unmatchedResult())
+
+        XCTAssertEqual(preview.image.rgba, [255, 0, 255, 255])
+        XCTAssertEqual(preview.outOfGamutCells, [false])
+        XCTAssertEqual(preview.outOfGamutCount, 0)
     }
 
     func testLightingPreviewUsesMeasuredBrightness() throws {
