@@ -160,8 +160,10 @@ final class ColorCatalog {
             }
             let reauthedClient = PaletteAPIClient(baseURL: client.baseURL, token: newToken)
             let result = try await operation(reauthedClient)
-            self.client = reauthedClient
-            onTokenUpdated?(newToken)
+            await MainActor.run {
+                self.client = reauthedClient
+                onTokenUpdated?(newToken)
+            }
             return result
         }
     }

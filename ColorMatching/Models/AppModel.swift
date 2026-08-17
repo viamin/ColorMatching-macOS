@@ -1,13 +1,20 @@
 import Foundation
 import AppKit
+import CoreGraphics
 import ColorComposerCore
 
 private struct SourceLayerSnapshot: Sendable {
     let assignedCondition: LightingCondition?
-    let imageData: Data?
+    let cgImage: SendableCGImage?
     let scalingMode: ImageScalingMode
     let inverted: Bool
     let colorSpace: BrightnessColorSpace
+}
+
+/// `CGImage` instances are immutable snapshots once created, so it is safe to
+/// move the cached image through the off-main solve pipeline.
+private struct SendableCGImage: @unchecked Sendable {
+    let image: CGImage
 }
 
 private enum SourceGridBuildError: LocalizedError {
@@ -455,13 +462,13 @@ final class AppModel {
         }
     }
 
-    /// Captures the current layer settings on the main actor so image decoding
-    /// and resampling can run off-actor in `solveComposition`.
+    /// Captures the current layer settings and cached images on the main actor
+    /// so resampling can run off-actor in `solveComposition` without re-decoding.
     private func sourceLayerSnapshots() -> [SourceLayerSnapshot] {
         layers.map {
             SourceLayerSnapshot(
                 assignedCondition: $0.assignedCondition,
-                imageData: $0.imageData,
+                cgImage: $0.cgImage.map(SendableCGImage.init),
                 scalingMode: $0.scalingMode,
                 inverted: $0.inverted,
                 colorSpace: $0.colorSpace
@@ -470,7 +477,7 @@ final class AppModel {
     }
 
     /// One brightness grid per active condition, or throws when an active
-    /// channel has no assigned source image or its image data is unreadable.
+    /// channel has no assigned source image or its cached image is unavailable.
     private nonisolated static func sourceGrids(
         for active: [LightingCondition],
         from layers: [SourceLayerSnapshot],
@@ -479,11 +486,11 @@ final class AppModel {
     ) throws -> [LightingCondition: BrightnessGrid] {
         var grids: [LightingCondition: BrightnessGrid] = [:]
         for condition in active {
-            guard let layer = layers.first(where: { $0.imageData != nil && $0.assignedCondition == condition }) else {
+            guard let layer = layers.first(where: { $0.cgImage != nil && $0.assignedCondition == condition }) else {
                 throw SourceGridBuildError.missingSourceImage(condition)
             }
             guard let grid = brightnessGrid(for: layer, logicalWidth: logicalWidth, logicalHeight: logicalHeight) else {
-                throw layer.imageData == nil
+                throw layer.cgImage == nil
                     ? SourceGridBuildError.missingSourceImage(condition)
                     : SourceGridBuildError.unreadableSourceImage(condition)
             }
@@ -497,8 +504,7 @@ final class AppModel {
         logicalWidth: Int,
         logicalHeight: Int
     ) -> BrightnessGrid? {
-        guard let imageData = layer.imageData,
-              let cgImage = ImageUtilities.makeCGImage(from: imageData) else { return nil }
+        guard let cgImage = layer.cgImage?.image else { return nil }
         return BrightnessGridSampler.sample(
             cgImage: cgImage,
             targetWidth: logicalWidth,

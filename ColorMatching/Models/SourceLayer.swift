@@ -1,7 +1,6 @@
 import Foundation
 import AppKit
 import CoreGraphics
-import ColorComposerCore
 
 /// One grayscale source image and how it is mapped into the composition.
 @MainActor
@@ -53,18 +52,5 @@ final class SourceLayer: Identifiable {
     var sizeText: String? {
         guard let image = cachedCGImage else { return nil }
         return "\(image.width) × \(image.height)"
-    }
-
-    /// Samples this layer into a brightness grid at the logical output size.
-    func brightnessGrid(width: Int, height: Int) -> BrightnessGrid? {
-        guard let cgImage else { return nil }
-        return BrightnessGridSampler.sample(
-            cgImage: cgImage,
-            targetWidth: width,
-            targetHeight: height,
-            scalingMode: scalingMode,
-            invert: inverted,
-            colorSpace: colorSpace
-        )
     }
 }
