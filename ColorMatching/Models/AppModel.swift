@@ -2,6 +2,28 @@ import Foundation
 import AppKit
 import ColorComposerCore
 
+private struct SourceLayerSnapshot: Sendable {
+    let assignedCondition: LightingCondition?
+    let imageData: Data?
+    let scalingMode: ImageScalingMode
+    let inverted: Bool
+    let colorSpace: BrightnessColorSpace
+}
+
+private enum SourceGridBuildError: LocalizedError {
+    case missingSourceImage(LightingCondition)
+    case unreadableSourceImage(LightingCondition)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingSourceImage(let condition):
+            return "No source image is assigned to the active “\(condition.displayName)” channel."
+        case .unreadableSourceImage(let condition):
+            return "The source image assigned to the active “\(condition.displayName)” channel could not be read."
+        }
+    }
+}
+
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
 ///
@@ -313,13 +335,16 @@ final class AppModel {
             lastError = "Load colors from the server first."
             return
         }
-        guard let grids = sourceGrids(for: active) else { return }
+        let layerSnapshots = sourceLayerSnapshots()
 
         isSolving = true
         lastError = nil
         let outcome = await Self.solveComposition(
             palette: catalog.colors,
-            sourceGrids: grids,
+            activeConditions: active,
+            layerSnapshots: layerSnapshots,
+            logicalWidth: logicalWidth,
+            logicalHeight: logicalHeight,
             weights: weights,
             scorerKind: scorerKind
         )
@@ -355,11 +380,20 @@ final class AppModel {
     /// #14), so the heavy work is funneled through this nonisolated helper.
     private nonisolated static func solveComposition(
         palette: [PaletteColor],
-        sourceGrids: [LightingCondition: BrightnessGrid],
+        activeConditions: [LightingCondition],
+        layerSnapshots: [SourceLayerSnapshot],
+        logicalWidth: Int,
+        logicalHeight: Int,
         weights: ChannelWeights,
         scorerKind: ScorerKind
     ) async -> SolveOutcome {
         do {
+            let sourceGrids = try sourceGrids(
+                for: activeConditions,
+                from: layerSnapshots,
+                logicalWidth: logicalWidth,
+                logicalHeight: logicalHeight
+            )
             let solver = CompositionSolver(scorer: scorerKind.makeScorer())
             let solved = try solver.solve(palette: palette, sourceGrids: sourceGrids, weights: weights)
             return .success(SolvedComposition(
@@ -372,19 +406,58 @@ final class AppModel {
         }
     }
 
-    /// One brightness grid per active condition, or `nil` (having set
-    /// `lastError`) when an active channel has no assigned source image.
-    private func sourceGrids(for active: [LightingCondition]) -> [LightingCondition: BrightnessGrid]? {
+    /// Captures the current layer settings on the main actor so image decoding
+    /// and resampling can run off-actor in `solveComposition`.
+    private func sourceLayerSnapshots() -> [SourceLayerSnapshot] {
+        layers.map {
+            SourceLayerSnapshot(
+                assignedCondition: $0.assignedCondition,
+                imageData: $0.imageData,
+                scalingMode: $0.scalingMode,
+                inverted: $0.inverted,
+                colorSpace: $0.colorSpace
+            )
+        }
+    }
+
+    /// One brightness grid per active condition, or throws when an active
+    /// channel has no assigned source image or its image data is unreadable.
+    private nonisolated static func sourceGrids(
+        for active: [LightingCondition],
+        from layers: [SourceLayerSnapshot],
+        logicalWidth: Int,
+        logicalHeight: Int
+    ) throws -> [LightingCondition: BrightnessGrid] {
         var grids: [LightingCondition: BrightnessGrid] = [:]
         for condition in active {
-            guard let layer = layers.first(where: { $0.hasImage && $0.assignedCondition == condition }),
-                  let grid = layer.brightnessGrid(width: logicalWidth, height: logicalHeight) else {
-                lastError = "No source image is assigned to the active “\(condition.displayName)” channel."
-                return nil
+            guard let layer = layers.first(where: { $0.assignedCondition == condition }) else {
+                throw SourceGridBuildError.missingSourceImage(condition)
+            }
+            guard let grid = brightnessGrid(for: layer, logicalWidth: logicalWidth, logicalHeight: logicalHeight) else {
+                throw layer.imageData == nil
+                    ? SourceGridBuildError.missingSourceImage(condition)
+                    : SourceGridBuildError.unreadableSourceImage(condition)
             }
             grids[condition] = grid
         }
         return grids
+    }
+
+    private nonisolated static func brightnessGrid(
+        for layer: SourceLayerSnapshot,
+        logicalWidth: Int,
+        logicalHeight: Int
+    ) -> BrightnessGrid? {
+        guard let imageData = layer.imageData,
+              let cgImage = ImageUtilities.makeCGImage(from: imageData) else { return nil }
+        return BrightnessGridSampler.sample(
+            cgImage: cgImage,
+            targetWidth: logicalWidth,
+            targetHeight: logicalHeight,
+            scalingMode: layer.scalingMode,
+            invert: layer.inverted,
+            colorSpace: layer.colorSpace
+        )
     }
 
     private func clearCompositionState() {
