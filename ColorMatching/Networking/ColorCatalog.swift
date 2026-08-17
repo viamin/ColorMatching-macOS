@@ -61,6 +61,11 @@ final class ColorCatalog {
     /// selection, whose `didSet` launches a color fetch). Track the count so a
     /// finishing request does not re-enable the UI while another is still live.
     private var inFlightRequests = 0
+    /// Request-activity generation for `isWorking`: invalidating requests for a
+    /// local state restore (like opening a project) must retire their busy
+    /// count immediately, and their eventual completions must not decrement the
+    /// next generation's count.
+    private var requestActivityGeneration = 0
     private var connectionRequestID = 0
     private var profileRefreshRequestID = 0
     private var colorFetchRequestID = 0
@@ -179,12 +184,14 @@ final class ColorCatalog {
         clearCacheBackedServerIfUnused()
     }
 
-    private func beginRequest() {
+    private func beginRequest() -> Int {
         inFlightRequests += 1
         isWorking = true
+        return requestActivityGeneration
     }
 
-    private func endRequest() {
+    private func endRequest(_ generation: Int) {
+        guard generation == requestActivityGeneration else { return }
         inFlightRequests = max(0, inFlightRequests - 1)
         isWorking = inFlightRequests > 0
     }
@@ -212,6 +219,9 @@ final class ColorCatalog {
         connectionRequestID += 1
         profileRefreshRequestID += 1
         colorFetchRequestID += 1
+        requestActivityGeneration += 1
+        inFlightRequests = 0
+        isWorking = false
     }
 
     private func restoreSelectedPrinterProfileID(_ profileID: Int?) {
@@ -305,8 +315,8 @@ final class ColorCatalog {
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         let requestedConfigurationRevision = configurationRevision
         let requestID = nextConnectionRequestID()
-        beginRequest()
-        defer { endRequest() }
+        let activityGeneration = beginRequest()
+        defer { endRequest(activityGeneration) }
         do {
             try await client.testConnection()
             // A late result describes the server it was sent to, which may no
@@ -335,8 +345,8 @@ final class ColorCatalog {
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         let requestedConfigurationRevision = configurationRevision
         let requestID = nextProfileRefreshRequestID()
-        beginRequest()
-        defer { endRequest() }
+        let activityGeneration = beginRequest()
+        defer { endRequest(activityGeneration) }
         do {
             let fetchedProfiles = try await client.fetchPrinterProfiles()
             // The server may have changed while the request was in flight;
@@ -442,8 +452,8 @@ final class ColorCatalog {
         let requestedServer = ProfileColorCache.normalizedServerBaseUrl(client.baseURL.absoluteString)
         let requestedConfigurationRevision = configurationRevision
         let requestID = nextColorFetchRequestID()
-        beginRequest()
-        defer { endRequest() }
+        let activityGeneration = beginRequest()
+        defer { endRequest(activityGeneration) }
         do {
             let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             // The selection or server may have changed while the request was
