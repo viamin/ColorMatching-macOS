@@ -19,8 +19,8 @@ final class ColorCatalog {
     var selectedPrinterProfileID: Int? {
         didSet {
             guard selectedPrinterProfileID != oldValue else { return }
+            clearLoadedColors()
             guard selectedPrinterProfileID != nil else {
-                clearProfileSelection()
                 return
             }
             Task { await fetchColorsIfPossible() }
@@ -110,7 +110,7 @@ final class ColorCatalog {
         }
     }
 
-    private func clearProfileSelection() {
+    private func clearLoadedColors() {
         colors = []
         colorsForProfile = nil
         lastRefresh = nil

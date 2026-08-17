@@ -151,6 +151,7 @@ enum SoftProofing {
     }
 
     static func clamp(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
         min(1, max(0, value))
     }
 

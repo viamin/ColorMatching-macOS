@@ -309,6 +309,27 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(profile.warningOverlayOpacity, 1)
     }
 
+    func testSoftProofProfileTreatsNonFiniteParametersAsZero() {
+        let profile = SoftProofProfile(
+            paperWhite: RGBColor(red: 255, green: 255, blue: 255),
+            paperBlend: .nan,
+            blackFloor: .infinity,
+            contrastScale: -.infinity,
+            baseChromaLimit: .nan,
+            midtoneChromaPenalty: .infinity,
+            shadowChromaPenalty: -.infinity,
+            warningOverlayOpacity: .nan
+        )
+
+        XCTAssertEqual(profile.paperBlend, 0)
+        XCTAssertEqual(profile.blackFloor, 0)
+        XCTAssertEqual(profile.contrastScale, 0)
+        XCTAssertEqual(profile.baseChromaLimit, 0)
+        XCTAssertEqual(profile.midtoneChromaPenalty, 0)
+        XCTAssertEqual(profile.shadowChromaPenalty, 0)
+        XCTAssertEqual(profile.warningOverlayOpacity, 0)
+    }
+
     func testCompositePreviewMarksUnmatchedCellsMagenta() {
         let preview = CompositionRenderer.compositePreview(unmatchedResult())
 
