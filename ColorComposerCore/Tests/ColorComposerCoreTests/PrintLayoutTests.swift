@@ -26,6 +26,31 @@ final class PrintLayoutTests: XCTestCase {
         )
     }
 
+    func testPrintOverlayOptionsClampsNegativeAndNonFiniteMeasurements() {
+        let options = PrintOverlayOptions(
+            showsMarks: true,
+            markInsetMM: -.infinity,
+            bleedMM: -4
+        )
+
+        XCTAssertEqual(
+            options,
+            PrintOverlayOptions(showsMarks: true, markInsetMM: 0.0, bleedMM: 0.0)
+        )
+    }
+
+    func testPrintOverlayOptionsDecodeClampsInvalidMeasurements() throws {
+        let options = try JSONDecoder().decode(
+            PrintOverlayOptions.self,
+            from: #"{"showsMarks":true,"markInsetMM":-2,"bleedMM":-7}"#.data(using: .utf8)!
+        )
+
+        XCTAssertEqual(
+            options,
+            PrintOverlayOptions(showsMarks: true, markInsetMM: 0.0, bleedMM: 0.0)
+        )
+    }
+
     func testLayoutWithoutBleedOrMarksMatchesArtworkSize() {
         let layout = PrintLayout.make(
             physicalSizeMM: .init(width: 100, height: 80),

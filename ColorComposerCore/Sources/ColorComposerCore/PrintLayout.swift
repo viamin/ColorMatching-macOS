@@ -17,8 +17,8 @@ public struct PrintOverlayOptions: Sendable, Equatable, Codable {
         bleedMM: Double = 0.0
     ) {
         self.showsMarks = showsMarks
-        self.markInsetMM = markInsetMM
-        self.bleedMM = bleedMM
+        self.markInsetMM = Self.sanitizedMeasurement(markInsetMM)
+        self.bleedMM = Self.sanitizedMeasurement(bleedMM)
     }
 
     public init(from decoder: Decoder) throws {
@@ -28,6 +28,11 @@ public struct PrintOverlayOptions: Sendable, Equatable, Codable {
             markInsetMM: try container.decodeIfPresent(Double.self, forKey: .markInsetMM) ?? 3.0,
             bleedMM: try container.decodeIfPresent(Double.self, forKey: .bleedMM) ?? 0.0
         )
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 }
 
