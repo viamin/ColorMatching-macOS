@@ -342,13 +342,10 @@ final class AppModel {
 
     private var activePrinterProfile: PrinterProfileDTO? {
         guard let id = catalog.selectedPrinterProfileID else { return nil }
-        if let profile = catalog.printerProfiles.first(where: { $0.id == id }) {
-            return profile
-        }
         if let profile = catalog.colorsForProfile, profile.id == id {
             return profile
         }
-        return nil
+        return catalog.printerProfiles.first(where: { $0.id == id })
     }
 
     // MARK: - Export / print

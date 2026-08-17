@@ -260,6 +260,23 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(accented, plain)
     }
 
+    func testPrinterProfileSoftProofMatchesUppercasePaperAndInkNames() {
+        let uppercased = PrinterProfileDTO(
+            id: 1,
+            printerMakeModel: "Canon PRO-100",
+            paperType: "GLOSSY",
+            inkType: "DYE"
+        ).softProofProfile
+        let mixedCase = PrinterProfileDTO(
+            id: 2,
+            printerMakeModel: "Canon PRO-100",
+            paperType: "Glossy",
+            inkType: "Dye"
+        ).softProofProfile
+
+        XCTAssertEqual(uppercased, mixedCase)
+    }
+
     func testPrinterProfileSoftProofFallsBackToGenericWhenMetadataIsMissing() {
         let profile = PrinterProfileDTO(
             id: 1,

@@ -17,7 +17,14 @@ final class ColorCatalog {
     var colorsForProfile: PrinterProfileDTO?
 
     var selectedPrinterProfileID: Int? {
-        didSet { Task { await fetchColorsIfPossible() } }
+        didSet {
+            guard selectedPrinterProfileID != oldValue else { return }
+            guard selectedPrinterProfileID != nil else {
+                clearProfileSelection()
+                return
+            }
+            Task { await fetchColorsIfPossible() }
+        }
     }
 
     var lastRefresh: Date?
@@ -90,6 +97,13 @@ final class ColorCatalog {
         } catch {
             connectionMessage = "Could not load colors."
         }
+    }
+
+    private func clearProfileSelection() {
+        colors = []
+        colorsForProfile = nil
+        lastRefresh = nil
+        connectionMessage = nil
     }
 
     /// Colors eligible for the solver given the currently active channels.
