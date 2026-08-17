@@ -22,37 +22,7 @@ final class PaletteAPIClientTests: XCTestCase {
         }
     }
 
-    func testFetchPrinterProfilesRetriesOnceAfterUnauthorized() async throws {
-        let lock = NSLock()
-        var requests: [String?] = []
-        let client = makeClient { request in
-            lock.lock()
-            requests.append(request.value(forHTTPHeaderField: "Authorization"))
-            let attempt = requests.count
-            lock.unlock()
-
-            if attempt == 1 {
-                return (.init(statusCode: 401, url: request.url!), Data())
-            }
-
-            let body = """
-            {"printer_profiles":[{"id":7,"printer_make_model":"Epson","paper_type":"Matte","ink_type":"Pigment"}]}
-            """
-            return (.init(statusCode: 200, url: request.url!), Data(body.utf8))
-        }
-
-        var refreshCalls = 0
-        let profiles = try await client.fetchPrinterProfiles {
-            refreshCalls += 1
-            return "fresh-token"
-        }
-
-        XCTAssertEqual(refreshCalls, 1)
-        XCTAssertEqual(requests, ["Bearer stale-token", "Bearer fresh-token"])
-        XCTAssertEqual(profiles.map(\.id), [7])
-    }
-
-    func testFetchPrinterProfilesDoesNotRetryMoreThanOnce() async {
+    func testFetchPrinterProfilesDoesNotRetryAfterUnauthorized() async {
         let lock = NSLock()
         var requests: [String?] = []
         let client = makeClient { request in
@@ -62,18 +32,11 @@ final class PaletteAPIClientTests: XCTestCase {
             return (.init(statusCode: 401, url: request.url!), Data())
         }
 
-        var refreshCalls = 0
-        await XCTAssertThrowsErrorAsync(
-            try await client.fetchPrinterProfiles {
-                refreshCalls += 1
-                return "fresh-token"
-            }
-        ) { error in
+        await XCTAssertThrowsErrorAsync(try await client.fetchPrinterProfiles()) { error in
             XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
         }
 
-        XCTAssertEqual(refreshCalls, 1)
-        XCTAssertEqual(requests, ["Bearer stale-token", "Bearer fresh-token"])
+        XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
     private func makeClient(

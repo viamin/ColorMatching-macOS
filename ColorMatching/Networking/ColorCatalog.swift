@@ -26,7 +26,6 @@ final class ColorCatalog {
     var colors: [PaletteColor] = []
     var colorsForProfile: PrinterProfileDTO?
     var onPaletteChanged: (() -> Void)?
-    var reauthenticate: (@MainActor @Sendable () async -> String?)?
 
     var selectedPrinterProfileID: Int? {
         didSet {
@@ -75,6 +74,7 @@ final class ColorCatalog {
     /// `configure` runs on every edit of the server settings. Bump this so a
     /// late response from superseded credentials/configuration cannot report.
     private var configurationRevision = 0
+    private var configuredToken: String?
     /// Internal state changes sometimes need to update the selection without
     /// triggering an immediate fetch. Opening a saved project is the key case:
     /// the document should restore its embedded palette snapshot exactly as
@@ -101,11 +101,19 @@ final class ColorCatalog {
     }
 
     func configure(baseURL: URL?, token: String?) {
+        let previousServer = cacheServer
+        let previousToken = configuredToken
+        let normalizedToken = normalizedToken(token)
         configurationRevision += 1
         client = normalizedServerURL(from: baseURL).map {
-            PaletteAPIClient(baseURL: $0, token: token?.isEmpty == false ? token : nil)
+            PaletteAPIClient(baseURL: $0, token: normalizedToken)
         }
+        configuredToken = normalizedToken
         printerProfiles = []
+        retireCacheBackedStateIfCredentialsChanged(
+            previousServer: previousServer,
+            previousToken: previousToken
+        )
     }
 
     var isConfigured: Bool { client != nil }
@@ -114,6 +122,21 @@ final class ColorCatalog {
         guard let url else { return nil }
         let normalized = ProfileColorCache.normalizedServerBaseUrl(url.absoluteString)
         return URL(string: normalized) ?? url
+    }
+
+    private func normalizedToken(_ token: String?) -> String? {
+        guard let token = token?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
+            return nil
+        }
+        return token
+    }
+
+    private func retireCacheBackedStateIfCredentialsChanged(
+        previousServer: String?,
+        previousToken: String?
+    ) {
+        guard previousServer == cacheServer, previousToken != configuredToken else { return }
+        dropCacheBackedState()
     }
 
     /// Retires cache-backed state left over from a different server, before
@@ -328,7 +351,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            try await client.testConnection(retryingWith: authRetryHandler())
+            try await client.testConnection()
             // A late result describes the server it was sent to, which may no
             // longer be configured; only a fresh request may report.
             guard cacheServer == requestedServer,
@@ -357,7 +380,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let fetchedProfiles = try await client.fetchPrinterProfiles(retryingWith: authRetryHandler())
+            let fetchedProfiles = try await client.fetchPrinterProfiles()
             // The server may have changed while the request was in flight;
             // the previous server's late response must not populate state.
             guard cacheServer == requestedServer,
@@ -465,10 +488,7 @@ final class ColorCatalog {
         let activityGeneration = beginRequest()
         defer { endRequest(activityGeneration) }
         do {
-            let (dtos, profile) = try await client.fetchColors(
-                printerProfileID: profileID,
-                retryingWith: authRetryHandler()
-            )
+            let (dtos, profile) = try await client.fetchColors(printerProfileID: profileID)
             // The selection or server may have changed while the request was
             // in flight; a late response for another profile must not
             // overwrite it, and another server's response must be neither
@@ -811,10 +831,5 @@ final class ColorCatalog {
     func eligibleColors(activeConditions: [LightingCondition]) -> [PaletteColor] {
         let required = Set(activeConditions)
         return colors.filter { $0.hasMeasurements(for: required) }
-    }
-
-    private func authRetryHandler() -> PaletteAPIReauthentication? {
-        guard let reauthenticate else { return nil }
-        return { await reauthenticate() }
     }
 }

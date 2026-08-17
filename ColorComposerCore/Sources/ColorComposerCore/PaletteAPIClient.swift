@@ -3,8 +3,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-public typealias PaletteAPIReauthentication = @Sendable () async throws -> String?
-
 /// Errors produced by `PaletteAPIClient`.
 public enum PaletteAPIError: Error, LocalizedError, Equatable {
     case invalidURL
@@ -46,11 +44,9 @@ public struct PaletteAPIClient: Sendable {
     // MARK: - Endpoints
 
     /// `GET /api/v1/printer_profiles`
-    public func fetchPrinterProfiles(
-        retryingWith reauthenticate: PaletteAPIReauthentication? = nil
-    ) async throws -> [PrinterProfileDTO] {
+    public func fetchPrinterProfiles() async throws -> [PrinterProfileDTO] {
         let url = endpoint(path: "printer_profiles")
-        let envelope: PrinterProfilesResponse = try await get(url, retryingWith: reauthenticate)
+        let envelope: PrinterProfilesResponse = try await get(url)
         return envelope.printerProfiles
     }
 
@@ -60,24 +56,21 @@ public struct PaletteAPIClient: Sendable {
     /// irrelevant to composition); colors with no measurement for the profile
     /// come back response-less and are excluded by the solver.
     public func fetchColors(
-        printerProfileID: Int,
-        retryingWith reauthenticate: PaletteAPIReauthentication? = nil
+        printerProfileID: Int
     ) async throws -> (colors: [PaletteColorDTO], profile: PrinterProfileDTO?) {
         var components = URLComponents(url: endpoint(path: "colors"), resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "printer_profile_id", value: String(printerProfileID))]
         guard let url = components?.url else { throw PaletteAPIError.invalidURL }
 
-        let envelope: ColorsResponse = try await get(url, retryingWith: reauthenticate)
+        let envelope: ColorsResponse = try await get(url)
         return (envelope.colors, envelope.printerProfile)
     }
 
     /// Lightweight reachability check used by the "Test connection" UI action.
     /// Succeeds on any 2xx from `/api/v1/printer_profiles`.
-    public func testConnection(
-        retryingWith reauthenticate: PaletteAPIReauthentication? = nil
-    ) async throws {
+    public func testConnection() async throws {
         let request = request(url: endpoint(path: "printer_profiles"))
-        _ = try await data(for: request, retryingWith: reauthenticate)
+        _ = try await data(for: request)
     }
 
     // MARK: - Internals
@@ -101,12 +94,9 @@ public struct PaletteAPIClient: Sendable {
         }
     }
 
-    private func get<T: Decodable>(
-        _ url: URL,
-        retryingWith reauthenticate: PaletteAPIReauthentication? = nil
-    ) async throws -> T {
+    private func get<T: Decodable>(_ url: URL) async throws -> T {
         let request = request(url: url)
-        let (data, _) = try await data(for: request, retryingWith: reauthenticate)
+        let (data, _) = try await data(for: request)
 
         do {
             return try decoder.decode(T.self, from: data)
@@ -115,25 +105,12 @@ public struct PaletteAPIClient: Sendable {
         }
     }
 
-    private func data(
-        for request: URLRequest,
-        retryingWith reauthenticate: PaletteAPIReauthentication? = nil
-    ) async throws -> (Data, HTTPURLResponse) {
+    private func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
 
         if http.statusCode == 401 {
-            guard let reauthenticate else { throw PaletteAPIError.unauthorized }
-            guard let refreshedToken = normalizedToken(try await reauthenticate()) else {
-                throw PaletteAPIError.unauthorized
-            }
-            guard let url = request.url else { throw PaletteAPIError.invalidURL }
-            let retriedRequest = request(
-                url: url,
-                acceptJSON: request.value(forHTTPHeaderField: "Accept") != nil,
-                token: refreshedToken
-            )
-            return try await data(for: retriedRequest, retryingWith: nil)
+            throw PaletteAPIError.unauthorized
         }
 
         guard (200..<300).contains(http.statusCode) else { throw PaletteAPIError.badStatus(http.statusCode) }
