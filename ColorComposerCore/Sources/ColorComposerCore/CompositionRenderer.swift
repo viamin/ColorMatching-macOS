@@ -277,6 +277,36 @@ public enum CompositionRenderer {
             }
     }
 
+    /// On-screen composite preview with unmatched cells replaced by a visible
+    /// magenta marker so missing measurements are never invisible.
+    public static func compositePreview(_ result: CompositionResult) -> RGBAImage {
+        previewImage(composite(result), for: result)
+    }
+
+    /// Generic soft-proof preview of the printable composite. This is a
+    /// lightweight approximation of how the palette may compress on paper, not
+    /// an ICC-managed conversion. Cells that exceed the conservative printable
+    /// envelope are flagged in `outOfGamutCells` and tinted with a warning wash.
+    public static func softProof(
+        _ result: CompositionResult,
+        profile: SoftProofProfile = .genericPrinter
+    ) -> SoftProofPreview {
+        SoftProofing.preview(result, profile: profile)
+    }
+
+    /// On-screen soft-proof preview with the same unmatched-cell marker used by
+    /// `compositePreview(_:)`, so proofing does not hide measurement gaps.
+    public static func softProofPreview(
+        _ result: CompositionResult,
+        profile: SoftProofProfile = .genericPrinter
+    ) -> SoftProofPreview {
+        let preview = softProof(result, profile: profile)
+        return SoftProofPreview(
+            image: previewImage(preview.image, for: result),
+            outOfGamutCells: preview.outOfGamutCells
+        )
+    }
+
     /// Normalized error map. Brighter means larger matching error; unmatched
     /// cells are the brightest.
     public static func errorMap(_ result: CompositionResult) -> BrightnessGrid {
@@ -416,5 +446,19 @@ public enum CompositionRenderer {
         } else {
             return (UInt8(magnitude * 255), UInt8(magnitude * 60), 0)
         }
+    }
+
+    private static func previewImage(_ image: RGBAImage, for result: CompositionResult) -> RGBAImage {
+        precondition(image.width == result.gridWidth && image.height == result.gridHeight)
+
+        var rgba = image.rgba
+        for cell in 0..<result.cellCount where result.colorIndices[cell] == nil {
+            let base = cell * 4
+            rgba[base] = 255
+            rgba[base + 1] = 0
+            rgba[base + 2] = 255
+            rgba[base + 3] = 255
+        }
+        return RGBAImage(width: image.width, height: image.height, rgba: rgba)
     }
 }

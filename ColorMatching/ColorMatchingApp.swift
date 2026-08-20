@@ -11,7 +11,6 @@ struct ColorMatchingApp: App {
             ContentView()
                 .environment(model)
                 .frame(minWidth: 1100, minHeight: 720)
-                .task { model.catalog.configure(baseURL: URL(string: model.serverBaseURL), token: model.serverToken) }
         }
         .commands {
             CommandGroup(replacing: .newItem) {
@@ -23,7 +22,15 @@ struct ColorMatchingApp: App {
                 Button("Save Project As…") { saveProjectAs() }.keyboardShortcut("s", modifiers: [.command, .option])
                 Divider()
                 Button("Export Composite…") { exportComposite() }.keyboardShortcut("e")
-                Button("Print…") { model.printComposite() }.keyboardShortcut("p")
+                Button("Print…") { model.printComposite() }
+                    .keyboardShortcut("p")
+                    .disabled(!model.canPrintComposite)
+                if model.tilingEnabled {
+                    Divider()
+                    Button("Export Tiles…") { exportTiles() }
+                    Button("Print Tiles") { model.printTiles() }
+                        .disabled(!model.canPrintTiles)
+                }
             }
         }
     }
@@ -61,6 +68,13 @@ struct ColorMatchingApp: App {
             catch { NSApp.presentError(error) }
         }
     }
+
+    private func exportTiles() {
+        FilePanels.chooseDirectory { url in
+            do { try model.exportTiles(to: url) }
+            catch { NSApp.presentError(error) }
+        }
+    }
 }
 
 /// Native file-panel helpers.
@@ -93,5 +107,37 @@ enum FilePanels {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         if panel.runModal() == .OK { onComplete(panel.urls) }
+    }
+
+    /// Prompts for a destination folder, used to export one image file per
+    /// tile for large-format artwork.
+    static func chooseDirectory(onComplete: @escaping (URL) -> Void) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let url = panel.url { onComplete(url) }
+    }
+}
+
+/// Native re-authentication prompt shown when the server responds 401
+/// (issue #16). A modal secure field keeps the re-entered token out of
+/// SwiftUI view state.
+enum ReauthPrompt {
+    static func promptForToken() -> String? {
+        let alert = NSAlert()
+        alert.messageText = "Session Expired"
+        alert.informativeText = "The server rejected the current API token. Enter a new token to continue."
+        alert.addButton(withTitle: "Continue")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let token = field.stringValue
+        return token.isEmpty ? nil : token
     }
 }

@@ -4,8 +4,21 @@ import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+@MainActor
 @Observable
 final class AppModel {
+    init() {
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+        catalog.onPaletteChanged = { [weak self] in
+            self?.clearCompositionState()
+        }
+        catalog.onAuthenticationRequired = {
+            await MainActor.run { ReauthPrompt.promptForToken() }
+        }
+        catalog.onTokenUpdated = { [weak self] newToken in
+            self?.serverToken = newToken
+        }
+    }
 
     // MARK: - Catalog / server
 
@@ -78,15 +91,61 @@ final class AppModel {
     // MARK: - Composition settings
 
     var weights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1)
+    var scorerKind: ScorerKind = .weightedSquaredError
     var logicalWidth = 200
     var logicalHeight = 200
     var pixelsPerCell = 4
     var rasterMode: RasterMode = .flat
     var physicalWidthMM = 200.0
     var physicalHeightMM = 200.0
+    var showsPrintMarks = false
+    var printMarksInsetMM = 3.0
+    var printBleedMM = 0.0
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
+    }
+
+
+    // MARK: - Auto-regenerate
+
+    /// When enabled, composition settings changes trigger a debounced background solve.
+    var autoRegenerate: Bool {
+        get { UserDefaults.standard.bool(forKey: "autoRegenerate") }
+        set { UserDefaults.standard.set(newValue, forKey: "autoRegenerate") }
+    }
+
+    private var solveTask: Task<Void, Never>?
+    private var debounceTask: Task<Void, Never>?
+
+    /// Schedules a debounced background solve. Safe to call on every settings
+    /// change — earlier pending solves are canceled, so only the latest input
+    /// produces a result.
+    func scheduleAutoRegenerate() {
+        guard autoRegenerate, hasResult, !catalog.colors.isEmpty else { return }
+
+        debounceTask?.cancel()
+        debounceTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+            } catch { return }
+            runSolve()
+        }
+    }
+
+    /// Cancels any in-flight solve and starts a new one. Both the manual
+    /// Generate action and the debounced auto-regenerate pipeline go through
+    /// here so the prior task is always canceled *before* the new task is
+    /// launched — and so `solveTask` never points to the task currently
+    /// executing `generate()` (which would cancel itself).
+    func runSolve() {
+        solveTask?.cancel()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.generate()
+        }
+        solveTask = task
     }
 
     // MARK: - Result
@@ -95,7 +154,6 @@ final class AppModel {
     private(set) var errorStatistics: ErrorStatistics?
     private(set) var isSolving = false
     private(set) var lastError: String?
-
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
@@ -120,31 +178,48 @@ final class AppModel {
 
     /// Builds source grids from layers and solves the composition.
     func generate() async {
+        // Cancel any pending debounce; a manual Generate overrides it.
+        // We intentionally do not cancel `solveTask` here: `runSolve` already
+        // cancels the prior task before launching this one, and when
+        // `generate()` is invoked via `runSolve`, `solveTask` IS the task
+        // currently executing this method — cancelling it would cancel
+        // ourselves, the solver would bail at the cancellation guard below,
+        // and the result would never reach the UI.
+        debounceTask?.cancel()
+
         let active = weights.activeConditions
         guard !active.isEmpty else {
             lastError = "Set at least one channel weight above zero."
             return
         }
         guard !catalog.colors.isEmpty else {
-            lastError = "Load colors from the server first."
+            lastError = "Load colors from the server, cache, or a project first."
             return
         }
         guard let grids = sourceGrids(for: active) else { return }
 
         let candidateColors = catalog.colors
         let weights = self.weights
-        let solver = CompositionSolver()
+        let solver = CompositionSolver(scorer: scorerKind.makeScorer())
         isSolving = true
         lastError = nil
 
         let solved: Result<CompositionResult, Error>
         do {
             let r = try solver.solve(palette: candidateColors, sourceGrids: grids, weights: weights)
+            guard !Task.isCancelled else {
+                isSolving = false
+                return
+            }
             solved = .success(r)
         } catch {
             solved = .failure(error)
         }
 
+        guard !Task.isCancelled else {
+            isSolving = false
+            return
+        }
         isSolving = false
         switch solved {
         case .success(let r):
@@ -175,6 +250,18 @@ final class AppModel {
         return grids
     }
 
+    private func clearCompositionState() {
+        solveTask?.cancel()
+        solveTask = nil
+        debounceTask?.cancel()
+        debounceTask = nil
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
+        isSolving = false
+    }
+
     // MARK: - Derived images
 
     var compositeRGBA: RGBAImage? {
@@ -182,24 +269,30 @@ final class AppModel {
         return CompositionRenderer.composite(result)
     }
 
+    var canPrintComposite: Bool {
+        hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
+    }
+
+    var canPrintTiles: Bool {
+        hasResult && hasFinitePositiveTileSize && tilePlan != nil
+    }
+
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
     /// no-data or partial-match result is never invisible. Export/print keep
     /// using `compositeRGBA` (transparent for unmatched).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        for cell in 0..<result.cellCount {
-            let base = cell * 4
-            if let index = result.colorIndices[cell] {
-                let color = result.palette[index].rgb
-                rgba[base] = color.red; rgba[base + 1] = color.green
-                rgba[base + 2] = color.blue; rgba[base + 3] = 255
-            } else {
-                // Visible "no eligible color" marker.
-                rgba[base] = 255; rgba[base + 1] = 0; rgba[base + 2] = 255; rgba[base + 3] = 255
-            }
-        }
-        return RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba)
+        return CompositionRenderer.compositePreview(result)
+    }
+
+    var softProofProfileName: String {
+        activePrinterProfile?.displayName ?? "Generic printer"
+    }
+
+    var softProofPreview: SoftProofPreview? {
+        guard let result else { return nil }
+        let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
+        return CompositionRenderer.softProofPreview(result, profile: profile)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -259,6 +352,14 @@ final class AppModel {
         )
     }
 
+    private var activePrinterProfile: PrinterProfileDTO? {
+        guard let id = catalog.selectedPrinterProfileID else { return nil }
+        if let profile = catalog.colorsForProfile, profile.id == id {
+            return profile
+        }
+        return catalog.printerProfiles.first(where: { $0.id == id })
+    }
+
     // MARK: - Export / print
 
     func exportComposite(to url: URL) throws {
@@ -270,9 +371,77 @@ final class AppModel {
     }
 
     func printComposite() {
-        guard let raster = exportRaster,
-              let image = ImageUtilities.nsImage(from: raster) else { return }
-        PrintSupport.print(image, physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM))
+        guard hasFinitePositivePhysicalPrintSize, let raster = exportRaster else { return }
+        PrintSupport.print(
+            raster,
+            physicalSizeMM: CGSize(width: physicalWidthMM, height: physicalHeightMM),
+            overlay: printOverlayOptions
+        )
+    }
+
+    // MARK: - Large-format tiling
+
+    /// When enabled, `exportTiles`/`printTiles` split the export raster into
+    /// page-sized tiles instead of producing one oversized file/job — for
+    /// artwork larger than the printer's paper (issue #11).
+    var tilingEnabled = false
+    var tileWidthMM = 200.0
+    var tileHeightMM = 200.0
+    var tileOverlapMM = 10.0
+
+    /// The planned tile layout for the current export raster, in image pixel
+    /// coordinates. `nil` when tiling is disabled or there is no result yet.
+    /// Tile edges snap to `pixelsPerCell` boundaries so a logical cell is not
+    /// split across two tiles.
+    var tilePlan: [TileSpec]? {
+        guard tilingEnabled, let raster = exportRaster else { return nil }
+        guard hasFinitePositivePhysicalPrintSize else { return nil }
+        guard hasFinitePositiveTileSize else { return nil }
+        let scaleX = Double(raster.width) / physicalWidthMM
+        let scaleY = Double(raster.height) / physicalHeightMM
+        let tileWidthPx = max(1, Int((tileWidthMM * scaleX).rounded()))
+        let tileHeightPx = max(1, Int((tileHeightMM * scaleY).rounded()))
+        let overlapPx = max(0, Int((tileOverlapMM * scaleX).rounded()))
+        return RasterTiler.plan(
+            imageWidth: raster.width,
+            imageHeight: raster.height,
+            tileWidth: tileWidthPx,
+            tileHeight: tileHeightPx,
+            overlap: overlapPx,
+            cellSize: pixelsPerCell
+        )
+    }
+
+    /// Exports one image file per tile into `directoryURL`, named
+    /// `tile_<row>_<column>.png`.
+    func exportTiles(to directoryURL: URL) throws {
+        guard let raster = exportRaster, let tiles = tilePlan else { return }
+        for tile in tiles {
+            let tileImage = RasterTiler.extract(raster, tile: tile)
+            guard let cgImage = ImageUtilities.makeCGImage(from: tileImage) else {
+                throw ImageWriteError.writeFailed
+            }
+            let url = directoryURL.appendingPathComponent("tile_\(tile.row)_\(tile.column).png")
+            try ImageUtilities.write(cgImage, to: url)
+        }
+    }
+
+    /// Presents one native print job per tile, in row-major order.
+    func printTiles() {
+        guard let raster = exportRaster, let tiles = tilePlan else { return }
+        guard raster.width > 0, raster.height > 0 else { return }
+        let scaleX = physicalWidthMM / Double(raster.width)
+        let scaleY = physicalHeightMM / Double(raster.height)
+        for tile in tiles {
+            let tileImage = RasterTiler.extract(raster, tile: tile)
+            let size = CGSize(width: Double(tile.width) * scaleX, height: Double(tile.height) * scaleY)
+            PrintSupport.print(
+                tileImage,
+                physicalSizeMM: size,
+                overlay: tilePrintOverlayOptions,
+                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
+            )
+        }
     }
 
     // MARK: - Project persistence
@@ -311,33 +480,50 @@ final class AppModel {
             serverBaseURL: serverBaseURL,
             apiToken: serverToken,
             printerProfileID: catalog.selectedPrinterProfileID,
+            printerProfileSnapshot: activePrinterProfile,
             colorSnapshot: catalog.colors.map { ColorSnapshot($0) },
             weights: weights,
+            scorerKind: scorerKind,
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
             rasterMode: rasterMode,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
+            printOverlayOptions: printOverlayOptions,
+            tilingEnabled: tilingEnabled,
+            tileWidthMM: tileWidthMM,
+            tileHeightMM: tileHeightMM,
+            tileOverlapMM: tileOverlapMM,
             layers: layerSnaps
         )
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
-        catalog.selectedPrinterProfileID = s.printerProfileID
-        catalog.colors = s.colorSnapshot.map { $0.toColor() }
-        catalog.lastRefresh = Date()
-        catalog.connectionMessage = "Loaded \(s.colorSnapshot.count) color(s) from project."
+        catalog.restoreSnapshot(
+            printerProfileID: s.printerProfileID,
+            printerProfile: s.printerProfileSnapshot,
+            colors: s.colorSnapshot.map { $0.toColor() }
+        )
 
         weights = s.weights
+        scorerKind = s.scorerKind
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
         rasterMode = s.rasterMode
-        physicalWidthMM = s.physicalWidthMM
-        physicalHeightMM = s.physicalHeightMM
+        physicalWidthMM = Self.sanitizedMeasurement(s.physicalWidthMM)
+        physicalHeightMM = Self.sanitizedMeasurement(s.physicalHeightMM)
+        showsPrintMarks = s.printOverlayOptions.showsMarks
+        printMarksInsetMM = Self.sanitizedMeasurement(s.printOverlayOptions.markInsetMM)
+        printBleedMM = Self.sanitizedMeasurement(s.printOverlayOptions.bleedMM)
+        tilingEnabled = s.tilingEnabled
+        tileWidthMM = Self.sanitizedMeasurement(s.tileWidthMM)
+        tileHeightMM = Self.sanitizedMeasurement(s.tileHeightMM)
+        tileOverlapMM = Self.sanitizedMeasurement(s.tileOverlapMM)
 
         let restored = s.layers.enumerated().map { (index, snap) -> SourceLayer in
             let layer = index < layers.count ? layers[index] : SourceLayer()
@@ -353,5 +539,34 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
+    }
+
+    private var printOverlayOptions: PrintOverlayOptions {
+        PrintOverlayOptions(
+            showsMarks: showsPrintMarks,
+            markInsetMM: Self.sanitizedMeasurement(printMarksInsetMM),
+            bleedMM: Self.sanitizedMeasurement(printBleedMM)
+        )
+    }
+
+    private var tilePrintOverlayOptions: PrintOverlayOptions {
+        // Tile sizes are planned against the configured page size, so overlays
+        // must stay off here or macOS will enlarge/clamp each printed sheet.
+        PrintOverlayOptions()
+    }
+
+    private var hasFinitePositivePhysicalPrintSize: Bool {
+        physicalWidthMM.isFinite && physicalWidthMM > 0 &&
+            physicalHeightMM.isFinite && physicalHeightMM > 0
+    }
+
+    private var hasFinitePositiveTileSize: Bool {
+        tileWidthMM.isFinite && tileWidthMM > 0 &&
+            tileHeightMM.isFinite && tileHeightMM > 0
+    }
+
+    private static func sanitizedMeasurement(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value)
     }
 }

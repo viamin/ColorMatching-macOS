@@ -21,6 +21,8 @@ struct ServerConfigurationSection: View {
                     .disabled(catalog.isWorking)
                 Button("Refresh") { Task { await catalog.refreshAll() } }
                     .disabled(catalog.isWorking)
+                Button("Clear Cache") { catalog.clearCache() }
+                    .disabled(catalog.isWorking)
             }
             if let message = catalog.connectionMessage {
                 Text(message).font(.caption).foregroundStyle(.secondary)
@@ -42,21 +44,30 @@ struct ProfileSection: View {
             Picker("Printer profile", selection: $catalog.selectedPrinterProfileID) {
                 Text("None").tag(Int?.none)
                 ForEach(catalog.printerProfiles) { profile in
-                    Text(profileLabel(profile)).tag(Int?.some(profile.id))
+                    Text(profile.displayName).tag(Int?.some(profile.id))
                 }
             }
 
             LabeledContent("Colors loaded", value: "\(catalog.colors.count)")
             LabeledContent("Eligible for current weights", value: "\(model.eligibleColorCount)")
+            if catalog.isServingFromCache {
+                Label("Offline — cached colors", systemImage: "clock.badge.exclamationmark")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .help("The last fetch failed, so these colors were loaded from the local cache and may be stale.")
+            } else if catalog.colorsLoadedFromProject {
+                Label("Loaded from project snapshot", systemImage: "doc.badge.clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("These colors came from the opened project file rather than a live server fetch.")
+            }
             if let refreshed = catalog.lastRefresh {
-                LabeledContent("Last refreshed", value: refreshed.formatted(.dateTime.month().day().hour().minute()))
+                LabeledContent(
+                    catalog.isServingFromCache ? "Cached from" : "Last refreshed",
+                    value: refreshed.formatted(.dateTime.month().day().hour().minute())
+                )
             }
         }
-    }
-
-    private func profileLabel(_ profile: PrinterProfileDTO) -> String {
-        let parts = [profile.printerMakeModel, profile.paperType].compactMap { $0 }
-        return parts.isEmpty ? "Profile #\(profile.id)" : parts.joined(separator: " · ")
     }
 }
 
@@ -150,6 +161,10 @@ struct SourceLayerRow: View {
         }
         .padding(6)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
+        .onChange(of: layer.inverted) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.scalingMode) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.assignedCondition) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.colorSpace) { model.scheduleAutoRegenerate() }
     }
 }
 
@@ -199,6 +214,20 @@ struct CompositionSettingsSection: View {
                 Stepper("Print size (mm): \(Int(model.physicalWidthMM))", value: $model.physicalWidthMM, in: 10...2000, step: 5)
                 Stepper("× \(Int(model.physicalHeightMM))", value: $model.physicalHeightMM, in: 10...2000, step: 5)
             }
+            Stepper("Bleed (mm): \(Int(model.printBleedMM))", value: $model.printBleedMM, in: 0...50, step: 1)
+            Toggle("Crop + registration marks", isOn: $model.showsPrintMarks)
+            Stepper("Mark inset (mm): \(Int(model.printMarksInsetMM))", value: $model.printMarksInsetMM, in: 0...50, step: 1)
+                .disabled(!model.showsPrintMarks)
+
+            Divider()
+            Picker("Scorer", selection: $model.scorerKind) {
+                ForEach(ScorerKind.allCases, id: \.self) { kind in
+                    Text(kind.displayName).tag(kind)
+                }
+            }
+
+            Toggle("Auto-regenerate on settings change", isOn: $model.autoRegenerate)
+                .font(.subheadline)
 
             Divider()
             Text("Channel weights").font(.subheadline)
@@ -220,6 +249,10 @@ struct CompositionSettingsSection: View {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
         }
+        .onChange(of: model.weights) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.logicalWidth) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.logicalHeight) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.scorerKind) { model.scheduleAutoRegenerate() }
     }
 
     private func weightBinding(_ keyPath: WritableKeyPath<ChannelWeights, Double>) -> Binding<Double> {
@@ -227,6 +260,37 @@ struct CompositionSettingsSection: View {
             get: { model.weights[keyPath: keyPath] },
             set: { model.weights[keyPath: keyPath] = $0 }
         )
+    }
+}
+
+// MARK: - Large-format tiling
+
+struct TilingSettingsSection: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        @Bindable var model = model
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Large-format tiling").font(.headline)
+
+            Toggle("Split into page-sized tiles", isOn: $model.tilingEnabled)
+
+            if model.tilingEnabled {
+                HStack {
+                    Stepper("Tile size (mm): \(Int(model.tileWidthMM))", value: $model.tileWidthMM, in: 10...2000, step: 5)
+                    Stepper("× \(Int(model.tileHeightMM))", value: $model.tileHeightMM, in: 10...2000, step: 5)
+                }
+                Stepper("Overlap (mm): \(Int(model.tileOverlapMM))", value: $model.tileOverlapMM, in: 0...200, step: 1)
+
+                if let tiles = model.tilePlan {
+                    let columns = Set(tiles.map(\.column)).count
+                    let rows = Set(tiles.map(\.row)).count
+                    Text("\(tiles.count) tile(s) — \(columns) × \(rows)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 

@@ -23,7 +23,7 @@ struct ContentView: View {
                 }
 
                 Button {
-                    Task { await model.generate() }
+                    model.runSolve()
                 } label: {
                     Label("Generate", systemImage: "wand.and.stars")
                 }
@@ -45,7 +45,26 @@ struct ContentView: View {
                 } label: {
                     Label("Print", systemImage: "printer")
                 }
-                .disabled(!model.hasResult)
+                .disabled(!model.canPrintComposite)
+
+                if model.tilingEnabled {
+                    Button {
+                        FilePanels.chooseDirectory { url in
+                            do { try model.exportTiles(to: url) }
+                            catch { NSAlert(error: error).runModal() }
+                        }
+                    } label: {
+                        Label("Export Tiles", systemImage: "square.grid.3x3")
+                    }
+                    .disabled(!model.hasResult)
+
+                    Button {
+                        model.printTiles()
+                    } label: {
+                        Label("Print Tiles", systemImage: "printer.filled.and.paper")
+                    }
+                    .disabled(!model.canPrintTiles)
+                }
             }
         }
     }
@@ -62,6 +81,7 @@ struct SidebarView: View {
                 ProfileSection()
                 SourceImagesSection()
                 CompositionSettingsSection()
+                TilingSettingsSection()
             }
             .padding()
         }
