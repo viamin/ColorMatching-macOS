@@ -278,11 +278,13 @@ final class AppModel {
     }
 
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
-    /// no-data or partial-match result is never invisible. Export/print keep
-    /// using `compositeRGBA` (transparent for unmatched).
+    /// no-data or partial-match result is never invisible. Rendered in the
+    /// selected `rasterMode`/`pixelsPerCell` so the preview always matches
+    /// what export/print will actually produce. Export/print keep using
+    /// `compositeRGBA` (transparent for unmatched, flat mode).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        return CompositionRenderer.compositePreview(result)
+        return CompositionRenderer.compositePreview(result, mode: rasterMode, pixelsPerCell: pixelsPerCell)
     }
 
     var softProofProfileName: String {
@@ -292,7 +294,7 @@ final class AppModel {
     var softProofPreview: SoftProofPreview? {
         guard let result else { return nil }
         let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
-        return CompositionRenderer.softProofPreview(result, profile: profile)
+        return CompositionRenderer.softProofPreview(result, profile: profile, mode: rasterMode, pixelsPerCell: pixelsPerCell)
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.

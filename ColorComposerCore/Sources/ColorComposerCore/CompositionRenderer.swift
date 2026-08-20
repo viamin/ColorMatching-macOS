@@ -278,9 +278,15 @@ public enum CompositionRenderer {
     }
 
     /// On-screen composite preview with unmatched cells replaced by a visible
-    /// magenta marker so missing measurements are never invisible.
-    public static func compositePreview(_ result: CompositionResult) -> RGBAImage {
-        previewImage(composite(result), for: result)
+    /// magenta marker so missing measurements are never invisible. Rendered in
+    /// the same `mode`/`pixelsPerCell` as the export/print raster so the
+    /// preview always matches what will actually be produced.
+    public static func compositePreview(
+        _ result: CompositionResult,
+        mode: RasterMode = .flat,
+        pixelsPerCell: Int = 1
+    ) -> RGBAImage {
+        previewImage(composite(result, mode: mode, pixelsPerCell: pixelsPerCell), for: result, factor: pixelsPerCell)
     }
 
     /// Generic soft-proof preview of the printable composite. This is a
@@ -289,21 +295,26 @@ public enum CompositionRenderer {
     /// envelope are flagged in `outOfGamutCells` and tinted with a warning wash.
     public static func softProof(
         _ result: CompositionResult,
-        profile: SoftProofProfile = .genericPrinter
+        profile: SoftProofProfile = .genericPrinter,
+        mode: RasterMode = .flat,
+        pixelsPerCell: Int = 1
     ) -> SoftProofPreview {
-        SoftProofing.preview(result, profile: profile)
+        SoftProofing.preview(result, profile: profile, mode: mode, pixelsPerCell: pixelsPerCell)
     }
 
     /// On-screen soft-proof preview with the same unmatched-cell marker used by
     /// `compositePreview(_:)`, so proofing does not hide measurement gaps.
     public static func softProofPreview(
         _ result: CompositionResult,
-        profile: SoftProofProfile = .genericPrinter
+        profile: SoftProofProfile = .genericPrinter,
+        mode: RasterMode = .flat,
+        pixelsPerCell: Int = 1
     ) -> SoftProofPreview {
-        let preview = softProof(result, profile: profile)
+        let preview = softProof(result, profile: profile, mode: mode, pixelsPerCell: pixelsPerCell)
         return SoftProofPreview(
-            image: previewImage(preview.image, for: result),
-            outOfGamutCells: preview.outOfGamutCells
+            image: previewImage(preview.image, for: result, factor: pixelsPerCell),
+            outOfGamutCells: preview.outOfGamutCells,
+            outOfGamutCount: preview.outOfGamutCount
         )
     }
 
@@ -448,16 +459,28 @@ public enum CompositionRenderer {
         }
     }
 
-    private static func previewImage(_ image: RGBAImage, for result: CompositionResult) -> RGBAImage {
-        precondition(image.width == result.gridWidth && image.height == result.gridHeight)
+    /// Overlays the magenta unmatched-cell marker onto `image`, which may be
+    /// rasterized at `factor` pixels per logical cell (halftone/two-color
+    /// modes). The whole `factor × factor` block for an unmatched cell is
+    /// marked, since those modes may otherwise have painted paper or a
+    /// two-color mix into cells the solver never actually matched.
+    private static func previewImage(_ image: RGBAImage, for result: CompositionResult, factor: Int = 1) -> RGBAImage {
+        let factor = max(factor, 1)
+        precondition(image.width == result.gridWidth * factor && image.height == result.gridHeight * factor)
 
         var rgba = image.rgba
         for cell in 0..<result.cellCount where result.colorIndices[cell] == nil {
-            let base = cell * 4
-            rgba[base] = 255
-            rgba[base + 1] = 0
-            rgba[base + 2] = 255
-            rgba[base + 3] = 255
+            let cellX = (cell % result.gridWidth) * factor
+            let cellY = (cell / result.gridWidth) * factor
+            for dy in 0..<factor {
+                for dx in 0..<factor {
+                    let base = ((cellY + dy) * image.width + cellX + dx) * 4
+                    rgba[base] = 255
+                    rgba[base + 1] = 0
+                    rgba[base + 2] = 255
+                    rgba[base + 3] = 255
+                }
+            }
         }
         return RGBAImage(width: image.width, height: image.height, rgba: rgba)
     }
