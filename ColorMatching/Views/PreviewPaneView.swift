@@ -99,8 +99,8 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
-        .onChange(of: previewMode) { oldMode, newMode in
-            resetCompareModeIfNeeded(from: oldMode, to: newMode)
+        .onChange(of: previewMode) { _, _ in
+            compareMode = .predicted
         }
     }
 
@@ -204,17 +204,6 @@ struct PreviewPaneView: View {
             image = model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         }
         PreviewImage(image: image)
-    }
-
-    private func resetCompareModeIfNeeded(from oldMode: PreviewMode, to newMode: PreviewMode) {
-        guard case .lighting(let condition) = newMode, model.hasSource(for: condition) else {
-            compareMode = .predicted
-            return
-        }
-        guard case .lighting(let previousCondition) = oldMode, previousCondition == condition else {
-            compareMode = .predicted
-            return
-        }
     }
 
     private func softProofStatus(for preview: SoftProofPreview, profileName: String) -> String {
