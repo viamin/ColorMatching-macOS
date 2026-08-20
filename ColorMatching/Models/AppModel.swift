@@ -1,5 +1,6 @@
 import Foundation
 import CoreGraphics
+import Observation
 import ColorComposerCore
 
 private struct SourceLayerSnapshot: Sendable {
@@ -39,6 +40,19 @@ private enum SourceGridBuildError: LocalizedError {
 @MainActor
 @Observable
 final class AppModel {
+    /// Keep the interactive preview bounded; 200×200 logical cells still fit in
+    /// a 1600×1600 preview at this cap, while export/print retain the full raster.
+    private static let maxPreviewPixelsPerCell = 8
+
+    @ObservationIgnored
+    private var previewRevision = 0
+
+    @ObservationIgnored
+    private var cachedCompositePreview: (key: CompositePreviewKey, image: RGBAImage)?
+
+    @ObservationIgnored
+    private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
+
     init() {
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         catalog.onPaletteChanged = { [weak self] in
@@ -157,6 +171,12 @@ final class AppModel {
             noteEdit(kind: "exportScale", actionName: "Export Scale") { $0.pixelsPerCell = oldValue }
         }
     }
+    var rasterMode: RasterMode = .flat {
+        didSet {
+            guard oldValue != rasterMode else { return }
+            noteEdit(kind: "rasterMode", actionName: "Raster Mode") { $0.rasterMode = oldValue }
+        }
+    }
     var physicalWidthMM = 200.0 {
         didSet {
             guard oldValue != physicalWidthMM else { return }
@@ -234,6 +254,7 @@ final class AppModel {
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
+            rasterMode: rasterMode,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
             showsPrintMarks: showsPrintMarks,
@@ -265,6 +286,7 @@ final class AppModel {
         logicalWidth = edit.logicalWidth
         logicalHeight = edit.logicalHeight
         pixelsPerCell = edit.pixelsPerCell
+        rasterMode = edit.rasterMode
         physicalWidthMM = edit.physicalWidthMM
         physicalHeightMM = edit.physicalHeightMM
         showsPrintMarks = edit.showsPrintMarks
@@ -300,6 +322,19 @@ final class AppModel {
                 self?.noteLayerEdit(layer, edit: edit)
             }
         }
+    }
+
+    private struct CompositePreviewKey: Equatable {
+        let revision: Int
+        let mode: RasterMode
+        let pixelsPerCell: Int
+    }
+
+    private struct SoftProofPreviewKey: Equatable {
+        let revision: Int
+        let mode: RasterMode
+        let pixelsPerCell: Int
+        let profile: SoftProofProfile
     }
 
     // MARK: - Auto-regenerate
@@ -415,6 +450,7 @@ final class AppModel {
             result = solved.result
             errorStatistics = solved.statistics
             solvedGamut = solved.gamut
+            invalidatePreviewCaches()
         case .failure(let error):
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -525,14 +561,10 @@ final class AppModel {
         lastError = nil
         solvedGamut = nil
         isSolving = false
+        invalidatePreviewCaches()
     }
 
     // MARK: - Derived images
-
-    var compositeRGBA: RGBAImage? {
-        guard let result else { return nil }
-        return CompositionRenderer.composite(result)
-    }
 
     var canPrintComposite: Bool {
         hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
@@ -543,11 +575,31 @@ final class AppModel {
     }
 
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
-    /// no-data or partial-match result is never invisible. Export/print keep
-    /// using `compositeRGBA` (transparent for unmatched).
+    /// no-data or partial-match result is never invisible. The preview uses
+    /// the selected raster mode, but caps the per-cell rasterization cost and
+    /// caches the resulting image so SwiftUI refreshes do not re-render large
+    /// export-sized rasters on the main actor. Export/print (`exportRaster`)
+    /// render the same raster mode without the magenta marker: unmatched
+    /// cells come out opaque paper-white in halftone mode, or as a
+    /// transparent hole in flat and two-color modes.
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        return CompositionRenderer.compositePreview(result)
+        let key = CompositePreviewKey(
+            revision: previewRevision,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        if let cachedCompositePreview, cachedCompositePreview.key == key {
+            return cachedCompositePreview.image
+        }
+
+        let image = CompositionRenderer.compositePreview(
+            result,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        cachedCompositePreview = (key, image)
+        return image
     }
 
     var softProofProfileName: String {
@@ -557,7 +609,24 @@ final class AppModel {
     var softProofPreview: SoftProofPreview? {
         guard let result else { return nil }
         let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
-        return CompositionRenderer.softProofPreview(result, profile: profile)
+        let key = SoftProofPreviewKey(
+            revision: previewRevision,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell,
+            profile: profile
+        )
+        if let cachedSoftProofPreview, cachedSoftProofPreview.key == key {
+            return cachedSoftProofPreview.preview
+        }
+
+        let preview = CompositionRenderer.softProofPreview(
+            result,
+            profile: profile,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        cachedSoftProofPreview = (key, preview)
+        return preview
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -603,32 +672,20 @@ final class AppModel {
         return CompositionRenderer.lightingDifferenceTinted(result, for: condition)
     }
 
-    /// The upscaled composite raster (logical size × pixelsPerCell), suitable
-    /// for export and printing.
+    /// The export/print raster: the solved composition rendered in the
+    /// selected `rasterMode` at `pixelsPerCell` resolution. Flat mode is the
+    /// v1 one-color-per-cell baseline; halftone and two-color turn each cell
+    /// into a sub-cell pattern that better matches targets no single color
+    /// can hit. Unlike `compositePreviewRGBA`, this has no magenta
+    /// unmatched-cell marker: halftone renders unmatched cells as opaque
+    /// paper-white, while flat and two-color leave them fully transparent.
     var exportRaster: RGBAImage? {
         guard let result else { return nil }
-        let base = CompositionRenderer.composite(result)
-        guard pixelsPerCell > 1 else { return base }
-        return upscale(base, by: pixelsPerCell)
-    }
-
-    private func upscale(_ image: RGBAImage, by factor: Int) -> RGBAImage {
-        let outW = image.width * factor
-        let outH = image.height * factor
-        var rgba = [UInt8](repeating: 0, count: outW * outH * 4)
-        for y in 0..<image.height {
-            for x in 0..<image.width {
-                let base = (y * image.width + x) * 4
-                let (r, g, b, a) = (image.rgba[base], image.rgba[base+1], image.rgba[base+2], image.rgba[base+3])
-                for dy in 0..<factor {
-                    for dx in 0..<factor {
-                        let o = ((y*factor+dy)*outW + (x*factor+dx)) * 4
-                        rgba[o] = r; rgba[o+1] = g; rgba[o+2] = b; rgba[o+3] = a
-                    }
-                }
-            }
-        }
-        return RGBAImage(width: outW, height: outH, rgba: rgba)
+        return CompositionRenderer.composite(
+            result,
+            mode: rasterMode,
+            pixelsPerCell: pixelsPerCell
+        )
     }
 
     private var activePrinterProfile: PrinterProfileDTO? {
@@ -786,6 +843,7 @@ final class AppModel {
             logicalWidth: logicalWidth,
             logicalHeight: logicalHeight,
             pixelsPerCell: pixelsPerCell,
+            rasterMode: rasterMode,
             physicalWidthMM: physicalWidthMM,
             physicalHeightMM: physicalHeightMM,
             printOverlayOptions: printOverlayOptions,
@@ -820,6 +878,7 @@ final class AppModel {
         logicalWidth = s.logicalWidth
         logicalHeight = s.logicalHeight
         pixelsPerCell = s.pixelsPerCell
+        rasterMode = s.rasterMode
         physicalWidthMM = Self.sanitizedMeasurement(s.physicalWidthMM)
         physicalHeightMM = Self.sanitizedMeasurement(s.physicalHeightMM)
         showsPrintMarks = s.printOverlayOptions.showsMarks
@@ -873,5 +932,15 @@ final class AppModel {
     private static func sanitizedMeasurement(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
         return max(0, value)
+    }
+
+    private var previewPixelsPerCell: Int {
+        min(max(pixelsPerCell, 1), Self.maxPreviewPixelsPerCell)
+    }
+
+    private func invalidatePreviewCaches() {
+        previewRevision += 1
+        cachedCompositePreview = nil
+        cachedSoftProofPreview = nil
     }
 }

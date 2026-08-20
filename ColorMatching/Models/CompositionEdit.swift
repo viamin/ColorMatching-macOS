@@ -10,6 +10,7 @@ struct CompositionEdit: Sendable {
     var logicalWidth: Int
     var logicalHeight: Int
     var pixelsPerCell: Int
+    var rasterMode: RasterMode
     var physicalWidthMM: Double
     var physicalHeightMM: Double
     var showsPrintMarks: Bool
