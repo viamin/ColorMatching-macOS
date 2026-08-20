@@ -73,7 +73,7 @@ public enum CompositionRenderer {
     }
 
     private struct TwoColorContext {
-        let entries: [ChannelWeights.Entry]
+        let entries: [(condition: LightingCondition, weight: Double)]
         let candidates: [TwoColorCandidate]
         let pairs: [TwoColorPair]
     }
@@ -213,7 +213,7 @@ public enum CompositionRenderer {
     }
 
     private static func makeTwoColorPairs(
-        entries: [ChannelWeights.Entry],
+        entries: [(condition: LightingCondition, weight: Double)],
         candidates: [TwoColorCandidate]
     ) -> [TwoColorPair] {
         guard candidates.count > 1 else { return [] }
