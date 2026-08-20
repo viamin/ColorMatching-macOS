@@ -21,6 +21,15 @@ final class AppModel {
     @ObservationIgnored
     private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
 
+    /// The token this catalog's last `configure(...)` call was made with. Every
+    /// `AppModel` window shares the same `UserDefaults`-backed `serverToken`, so
+    /// when another window's re-auth persists a fresher token here, this
+    /// window's `onAuthenticationRequired` can hand it back without prompting
+    /// (see below) rather than showing a redundant prompt for a token that is
+    /// already stale in `UserDefaults`.
+    @ObservationIgnored
+    private var configuredToken = ""
+
     init() {
         // No deinit-time cleanup is needed: these catalog callbacks capture self
         // weakly and no-op after deallocation, and in-flight catalog requests are
@@ -28,13 +37,24 @@ final class AppModel {
         catalog.onPaletteChanged = { [weak self] in
             self?.handleUpstreamChange()
         }
-        catalog.onAuthenticationRequired = {
-            await MainActor.run { ReauthPrompt.promptForToken() }
+        catalog.onAuthenticationRequired = { [weak self] in
+            await MainActor.run {
+                guard let self else { return nil }
+                // Another window's re-auth may have stored a fresher token
+                // than this catalog was configured with.
+                let stored = self.serverToken
+                if !stored.isEmpty, stored != self.configuredToken {
+                    return stored
+                }
+                return ReauthPrompt.promptForToken()
+            }
         }
-        catalog.onTokenUpdated = { newToken in
+        catalog.onTokenUpdated = { [weak self] newToken in
             UserDefaults.standard.set(newToken, forKey: "serverToken")
+            self?.configuredToken = newToken
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+        configuredToken = serverToken
     }
 
     // MARK: - Catalog / server
@@ -46,6 +66,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
             catalog.configure(baseURL: URL(string: newValue), token: serverToken)
+            configuredToken = serverToken
             scheduleCatalogConfigurationChange()
         }
     }
@@ -55,6 +76,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
+            configuredToken = newValue
             scheduleCatalogConfigurationChange()
         }
     }
