@@ -293,11 +293,6 @@ final class AppModel {
 
     // MARK: - Derived images
 
-    var compositeRGBA: RGBAImage? {
-        guard let result else { return nil }
-        return CompositionRenderer.composite(result)
-    }
-
     var canPrintComposite: Bool {
         hasResult && exportRaster != nil && hasFinitePositivePhysicalPrintSize
     }
@@ -310,8 +305,10 @@ final class AppModel {
     /// no-data or partial-match result is never invisible. The preview uses
     /// the selected raster mode, but caps the per-cell rasterization cost and
     /// caches the resulting image so SwiftUI refreshes do not re-render large
-    /// export-sized rasters on the main actor. Export/print keep using
-    /// `compositeRGBA` (transparent for unmatched, flat mode).
+    /// export-sized rasters on the main actor. Export/print (`exportRaster`)
+    /// render the same raster mode without the magenta marker: unmatched
+    /// cells come out opaque paper-white in halftone mode, or as a
+    /// transparent hole in flat and two-color modes.
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
         let key = CompositePreviewKey(
@@ -406,7 +403,9 @@ final class AppModel {
     /// selected `rasterMode` at `pixelsPerCell` resolution. Flat mode is the
     /// v1 one-color-per-cell baseline; halftone and two-color turn each cell
     /// into a sub-cell pattern that better matches targets no single color
-    /// can hit.
+    /// can hit. Unlike `compositePreviewRGBA`, this has no magenta
+    /// unmatched-cell marker: halftone renders unmatched cells as opaque
+    /// paper-white, while flat and two-color leave them fully transparent.
     var exportRaster: RGBAImage? {
         guard let result else { return nil }
         return CompositionRenderer.composite(
