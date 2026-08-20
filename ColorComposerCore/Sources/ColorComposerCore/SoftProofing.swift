@@ -26,13 +26,13 @@ public struct SoftProofProfile: Sendable, Equatable {
         warningOverlayOpacity: Double
     ) {
         self.paperWhite = paperWhite
-        self.paperBlend = Self.clamp(paperBlend)
-        self.blackFloor = Self.clamp(blackFloor)
-        self.contrastScale = Self.clamp(contrastScale)
-        self.baseChromaLimit = Self.clamp(baseChromaLimit)
-        self.midtoneChromaPenalty = Self.clamp(midtoneChromaPenalty)
-        self.shadowChromaPenalty = Self.clamp(shadowChromaPenalty)
-        self.warningOverlayOpacity = Self.clamp(warningOverlayOpacity)
+        self.paperBlend = SoftProofing.clamp(paperBlend)
+        self.blackFloor = SoftProofing.clamp(blackFloor)
+        self.contrastScale = SoftProofing.clamp(contrastScale)
+        self.baseChromaLimit = SoftProofing.clamp(baseChromaLimit)
+        self.midtoneChromaPenalty = SoftProofing.clamp(midtoneChromaPenalty)
+        self.shadowChromaPenalty = SoftProofing.clamp(shadowChromaPenalty)
+        self.warningOverlayOpacity = SoftProofing.clamp(warningOverlayOpacity)
     }
 
     public static let genericPrinter = SoftProofProfile(
@@ -47,53 +47,93 @@ public struct SoftProofProfile: Sendable, Equatable {
     )
 }
 
-/// A soft-proofed raster plus one gamut-warning bit per logical output cell.
+/// A soft-proofed raster plus one gamut-warning bit per rendered pixel.
 public struct SoftProofPreview: Sendable, Equatable {
     public let image: RGBAImage
     public let outOfGamutCells: [Bool]
 
-    public init(image: RGBAImage, outOfGamutCells: [Bool]) {
+    /// Number of *logical* cells containing at least one out-of-gamut pixel.
+    /// Tracked separately from `outOfGamutCells` (which is pixel-resolution,
+    /// since halftone/two-color modes rasterize each cell into several
+    /// pixels) so the count reported to users stays in cell units regardless
+    /// of `pixelsPerCell`.
+    public let outOfGamutCount: Int
+
+    public init(image: RGBAImage, outOfGamutCells: [Bool], outOfGamutCount: Int) {
         precondition(outOfGamutCells.count == image.width * image.height)
         self.image = image
         self.outOfGamutCells = outOfGamutCells
-    }
-
-    public var outOfGamutCount: Int {
-        outOfGamutCells.lazy.filter { $0 }.count
+        self.outOfGamutCount = outOfGamutCount
     }
 
     public func isOutOfGamut(x: Int, y: Int) -> Bool {
         precondition(x >= 0 && x < image.width && y >= 0 && y < image.height)
-        outOfGamutCells[y * image.width + x]
+        return outOfGamutCells[y * image.width + x]
     }
 }
 
 enum SoftProofing {
     private static let warningColor = (red: 1.0, green: 0.55, blue: 0.0)
 
+    /// Renders the same rasterized composite used for export/print (so
+    /// halftone dots and two-color mixes are proofed pixel-by-pixel, not just
+    /// the flat one-color-per-cell baseline), then proofs each opaque pixel's
+    /// color independently. Fully-transparent pixels (unmatched cells in flat
+    /// mode) are left as-is; the caller overlays the unmatched marker.
     static func preview(
         _ result: CompositionResult,
-        profile: SoftProofProfile
+        profile: SoftProofProfile,
+        mode: RasterMode = .flat,
+        pixelsPerCell: Int = 1
     ) -> SoftProofPreview {
-        var rgba = [UInt8](repeating: 0, count: result.cellCount * 4)
-        var outOfGamut = [Bool](repeating: false, count: result.cellCount)
+        let base = CompositionRenderer.composite(result, mode: mode, pixelsPerCell: pixelsPerCell)
+        var rgba = base.rgba
+        var outOfGamut = [Bool](repeating: false, count: base.width * base.height)
 
-        for cell in 0..<result.cellCount {
-            guard let index = result.colorIndices[cell] else { continue }
+        for pixel in 0..<(base.width * base.height) {
+            let offset = pixel * 4
+            guard rgba[offset + 3] != 0 else { continue }
 
-            let proof = proofedColor(for: result.palette[index].rgb, profile: profile)
-            let base = cell * 4
-            rgba[base] = proof.rgb.red
-            rgba[base + 1] = proof.rgb.green
-            rgba[base + 2] = proof.rgb.blue
-            rgba[base + 3] = 255
-            outOfGamut[cell] = proof.isOutOfGamut
+            let color = RGBColor(red: rgba[offset], green: rgba[offset + 1], blue: rgba[offset + 2])
+            let proof = proofedColor(for: color, profile: profile)
+            rgba[offset] = proof.rgb.red
+            rgba[offset + 1] = proof.rgb.green
+            rgba[offset + 2] = proof.rgb.blue
+            outOfGamut[pixel] = proof.isOutOfGamut
         }
 
         return SoftProofPreview(
-            image: RGBAImage(width: result.gridWidth, height: result.gridHeight, rgba: rgba),
-            outOfGamutCells: outOfGamut
+            image: RGBAImage(width: base.width, height: base.height, rgba: rgba),
+            outOfGamutCells: outOfGamut,
+            outOfGamutCount: outOfGamutCellCount(
+                outOfGamut,
+                imageWidth: base.width,
+                for: result,
+                factor: max(pixelsPerCell, 1)
+            )
         )
+    }
+
+    /// Counts logical cells with at least one out-of-gamut pixel in their
+    /// `factor × factor` rasterized block.
+    private static func outOfGamutCellCount(
+        _ pixelFlags: [Bool],
+        imageWidth: Int,
+        for result: CompositionResult,
+        factor: Int
+    ) -> Int {
+        var count = 0
+        for cell in 0..<result.cellCount {
+            let cellX = (cell % result.gridWidth) * factor
+            let cellY = (cell / result.gridWidth) * factor
+            let flagged = (0..<factor).contains { dy in
+                (0..<factor).contains { dx in
+                    pixelFlags[(cellY + dy) * imageWidth + cellX + dx]
+                }
+            }
+            if flagged { count += 1 }
+        }
+        return count
     }
 
     private static func proofedColor(
@@ -152,7 +192,7 @@ enum SoftProofing {
 
     static func clamp(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
-        min(1, max(0, value))
+        return min(1, max(0, value))
     }
 
     private static func toRGBColor(_ value: (red: Double, green: Double, blue: Double)) -> RGBColor {
