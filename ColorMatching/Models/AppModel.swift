@@ -269,9 +269,10 @@ final class AppModel {
         }
     }
 
-    /// Server settings changes discard the loaded palette immediately, but if a
-    /// solve was previously visible we still want the next successful refresh to
-    /// restore it automatically when auto-regenerate is enabled.
+    /// Server settings changes invalidate the generated composition immediately
+    /// (the loaded palette survives until the next fetch/refresh replaces it),
+    /// but if a solve was previously visible we still want the next successful
+    /// refresh to restore it automatically when auto-regenerate is enabled.
     private func handleCatalogConfigurationChange() {
         catalogConfigDebounceTask = nil
         let shouldAutoRegenerate = autoRegenerate &&
