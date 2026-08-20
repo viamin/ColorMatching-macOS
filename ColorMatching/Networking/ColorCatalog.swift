@@ -124,7 +124,7 @@ final class ColorCatalog {
     /// or offline project snapshots that still embed color data.
     var hasLoadedColorsForSelection: Bool {
         guard let selectedPrinterProfileID else {
-            return colorsLoadedFromProject && loadedColorsProfileID == nil
+            return colorsLoadedFromProject
         }
         return loadedColorsProfileID == selectedPrinterProfileID
     }

@@ -31,8 +31,8 @@ final class AppModel {
         catalog.onAuthenticationRequired = {
             await MainActor.run { ReauthPrompt.promptForToken() }
         }
-        catalog.onTokenUpdated = { [weak self] newToken in
-            self?.serverToken = newToken
+        catalog.onTokenUpdated = { newToken in
+            UserDefaults.standard.set(newToken, forKey: "serverToken")
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
     }
