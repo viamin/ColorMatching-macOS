@@ -26,13 +26,13 @@ public struct SoftProofProfile: Sendable, Equatable {
         warningOverlayOpacity: Double
     ) {
         self.paperWhite = paperWhite
-        self.paperBlend = Self.clamp(paperBlend)
-        self.blackFloor = Self.clamp(blackFloor)
-        self.contrastScale = Self.clamp(contrastScale)
-        self.baseChromaLimit = Self.clamp(baseChromaLimit)
-        self.midtoneChromaPenalty = Self.clamp(midtoneChromaPenalty)
-        self.shadowChromaPenalty = Self.clamp(shadowChromaPenalty)
-        self.warningOverlayOpacity = Self.clamp(warningOverlayOpacity)
+        self.paperBlend = SoftProofing.clamp(paperBlend)
+        self.blackFloor = SoftProofing.clamp(blackFloor)
+        self.contrastScale = SoftProofing.clamp(contrastScale)
+        self.baseChromaLimit = SoftProofing.clamp(baseChromaLimit)
+        self.midtoneChromaPenalty = SoftProofing.clamp(midtoneChromaPenalty)
+        self.shadowChromaPenalty = SoftProofing.clamp(shadowChromaPenalty)
+        self.warningOverlayOpacity = SoftProofing.clamp(warningOverlayOpacity)
     }
 
     public static let genericPrinter = SoftProofProfile(
@@ -68,7 +68,7 @@ public struct SoftProofPreview: Sendable, Equatable {
 
     public func isOutOfGamut(x: Int, y: Int) -> Bool {
         precondition(x >= 0 && x < image.width && y >= 0 && y < image.height)
-        outOfGamutCells[y * image.width + x]
+        return outOfGamutCells[y * image.width + x]
     }
 }
 
@@ -192,7 +192,7 @@ enum SoftProofing {
 
     static func clamp(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
-        min(1, max(0, value))
+        return min(1, max(0, value))
     }
 
     private static func toRGBColor(_ value: (red: Double, green: Double, blue: Double)) -> RGBColor {

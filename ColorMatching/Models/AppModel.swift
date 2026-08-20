@@ -21,17 +21,40 @@ final class AppModel {
     @ObservationIgnored
     private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
 
+    /// The token this catalog's last `configure(...)` call was made with. Every
+    /// `AppModel` window shares the same `UserDefaults`-backed `serverToken`, so
+    /// when another window's re-auth persists a fresher token here, this
+    /// window's `onAuthenticationRequired` can hand it back without prompting
+    /// (see below) rather than showing a redundant prompt for a token that is
+    /// already stale in `UserDefaults`.
+    @ObservationIgnored
+    private var configuredToken = ""
+
     init() {
-        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+        // No deinit-time cleanup is needed: these catalog callbacks capture self
+        // weakly and no-op after deallocation, and in-flight catalog requests are
+        // generation-guarded inside ColorCatalog.
         catalog.onPaletteChanged = { [weak self] in
-            self?.clearCompositionState()
+            self?.handleUpstreamChange()
         }
-        catalog.onAuthenticationRequired = {
-            await MainActor.run { ReauthPrompt.promptForToken() }
+        catalog.onAuthenticationRequired = { [weak self] in
+            await MainActor.run {
+                guard let self else { return nil }
+                // Another window's re-auth may have stored a fresher token
+                // than this catalog was configured with.
+                let stored = self.serverToken
+                if !stored.isEmpty, stored != self.configuredToken {
+                    return stored
+                }
+                return ReauthPrompt.promptForToken()
+            }
         }
         catalog.onTokenUpdated = { [weak self] newToken in
-            self?.serverToken = newToken
+            UserDefaults.standard.set(newToken, forKey: "serverToken")
+            self?.configuredToken = newToken
         }
+        catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
+        configuredToken = serverToken
     }
 
     // MARK: - Catalog / server
@@ -43,6 +66,8 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
             catalog.configure(baseURL: URL(string: newValue), token: serverToken)
+            configuredToken = serverToken
+            scheduleCatalogConfigurationChange()
         }
     }
 
@@ -51,6 +76,8 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
+            configuredToken = newValue
+            scheduleCatalogConfigurationChange()
         }
     }
 
@@ -60,18 +87,21 @@ final class AppModel {
 
     static let maxLayers = 4
 
-    func loadLayer(_ index: Int, from url: URL) {
-        guard index >= 0 && index < layers.count else { return }
+    @discardableResult
+    func loadLayer(_ index: Int, from url: URL) -> Bool {
+        guard index >= 0 && index < layers.count else { return false }
         do {
+            let defaultCondition = layers[index].assignedCondition ?? nextUnassignedCondition()
             let (data, filename, _) = try ImageUtilities.load(from: url)
+            layers[index].assignedCondition = defaultCondition
             layers[index].imageData = data
             layers[index].filename = filename
-            // Auto-assign a condition if none yet, preferring unused ones.
-            if layers[index].assignedCondition == nil {
-                layers[index].assignedCondition = nextUnassignedCondition()
-            }
+            lastError = nil
+            handleUpstreamChange()
+            return true
         } catch {
             lastError = error.localizedDescription
+            return false
         }
     }
 
@@ -82,8 +112,9 @@ final class AppModel {
         for url in urls {
             while slot < layers.count && layers[slot].hasImage { slot += 1 }
             guard slot < layers.count else { return }
-            loadLayer(slot, from: url)
-            slot += 1
+            if loadLayer(slot, from: url) {
+                slot += 1
+            }
         }
     }
 
@@ -91,6 +122,7 @@ final class AppModel {
         guard index >= 0 && index < layers.count else { return }
         layers[index].imageData = nil
         layers[index].filename = nil
+        handleUpstreamChange()
     }
 
     private func nextUnassignedCondition() -> LightingCondition? {
@@ -144,22 +176,11 @@ final class AppModel {
 
     private var solveTask: Task<Void, Never>?
     private var debounceTask: Task<Void, Never>?
-
-    /// Schedules a debounced background solve. Safe to call on every settings
-    /// change — earlier pending solves are canceled, so only the latest input
-    /// produces a result.
-    func scheduleAutoRegenerate() {
-        guard autoRegenerate, hasResult, !catalog.colors.isEmpty else { return }
-
-        debounceTask?.cancel()
-        debounceTask = Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await Task.sleep(for: .milliseconds(300))
-            } catch { return }
-            runSolve()
-        }
-    }
+    private var catalogConfigDebounceTask: Task<Void, Never>?
+    private var pendingAutoRegenerate = false
+    private var solveQueued = false
+    private var solveGeneration = 0
+    private var isRestoringProject = false
 
     /// Cancels any in-flight solve and starts a new one. Both the manual
     /// Generate action and the debounced auto-regenerate pipeline go through
@@ -167,12 +188,36 @@ final class AppModel {
     /// launched — and so `solveTask` never points to the task currently
     /// executing `generate()` (which would cancel itself).
     func runSolve() {
+        debounceTask?.cancel()
+        debounceTask = nil
         solveTask?.cancel()
+        pendingAutoRegenerate = false
+        solveQueued = true
+        solveGeneration += 1
+        let generation = solveGeneration
         let task = Task { [weak self] in
             guard let self else { return }
             await self.generate()
+            guard self.solveGeneration == generation else { return }
+            self.solveTask = nil
         }
         solveTask = task
+    }
+
+    /// Stops any pending debounce or in-flight solve before the project's state
+    /// is replaced, so stale work cannot write results into the next document.
+    func cancelPendingWork() {
+        catalog.cancelPendingWork()
+        catalogConfigDebounceTask?.cancel()
+        catalogConfigDebounceTask = nil
+        debounceTask?.cancel()
+        debounceTask = nil
+        solveTask?.cancel()
+        solveTask = nil
+        isSolving = false
+        pendingAutoRegenerate = false
+        solveQueued = false
+        solveGeneration += 1
     }
 
     // MARK: - Result
@@ -181,9 +226,82 @@ final class AppModel {
     private(set) var errorStatistics: ErrorStatistics?
     private(set) var isSolving = false
     private(set) var lastError: String?
+    private(set) var documentStateID = UUID()
     private var solvedGamut: ResponseGamut?
 
     var hasResult: Bool { result != nil }
+    var canGenerate: Bool {
+        let active = weights.activeConditions
+        return catalog.hasLoadedColorsForSelection &&
+            !catalog.colors.isEmpty &&
+            !active.isEmpty &&
+            active.allSatisfy(hasAssignedSource)
+    }
+    var canExportComposite: Bool { hasResult }
+    var canExportTiles: Bool { tilingEnabled && hasResult }
+
+    /// Discards the solved composition when upstream inputs such as the active
+    /// palette change, so export/print cannot operate on stale output.
+    func invalidateGeneratedOutput() {
+        debounceTask?.cancel()
+        debounceTask = nil
+        solveTask?.cancel()
+        solveTask = nil
+        isSolving = false
+        pendingAutoRegenerate = false
+        clearGeneratedOutput()
+        solveQueued = false
+        solveGeneration += 1
+    }
+
+    /// Handles edits to any solver input. Existing output is invalidated
+    /// immediately; when auto-regenerate is enabled, a fresh solve is queued.
+    /// Keep the pipeline alive across repeated edits while a debounced or
+    /// in-flight solve is already pending, or while an async palette refresh is
+    /// still in flight, otherwise a later edit could cancel that work and leave
+    /// the document with no replacement result.
+    func handleUpstreamChange() {
+        guard !isRestoringProject else { return }
+        let shouldAutoRegenerate = autoRegenerate &&
+            (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
+        invalidateGeneratedOutput()
+        guard shouldAutoRegenerate else { return }
+        guard canGenerate else {
+            pendingAutoRegenerate = true
+            return
+        }
+        pendingAutoRegenerate = false
+        scheduleDebouncedSolve()
+    }
+
+    /// `serverBaseURL`/`serverToken` are bound directly to a `TextField`/
+    /// `SecureField`, which write back on every keystroke. Debounce the
+    /// invalidation so a multi-character edit doesn't cancel an in-flight
+    /// solve and blank the preview once per typed character; `catalog.configure`
+    /// is still called synchronously on each edit and guards stale fetches
+    /// itself via `configurationRevision`.
+    private func scheduleCatalogConfigurationChange() {
+        guard !isRestoringProject else { return }
+        catalogConfigDebounceTask?.cancel()
+        catalogConfigDebounceTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+            } catch { return }
+            self?.handleCatalogConfigurationChange()
+        }
+    }
+
+    /// Server settings changes invalidate the generated composition immediately
+    /// (the loaded palette survives until the next fetch/refresh replaces it),
+    /// but if a solve was previously visible we still want the next successful
+    /// refresh to restore it automatically when auto-regenerate is enabled.
+    private func handleCatalogConfigurationChange() {
+        catalogConfigDebounceTask = nil
+        let shouldAutoRegenerate = autoRegenerate &&
+            (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
+        invalidateGeneratedOutput()
+        pendingAutoRegenerate = shouldAutoRegenerate
+    }
 
     var eligibleColorCount: Int {
         catalog.eligibleColors(activeConditions: weights.activeConditions).count
@@ -213,17 +331,30 @@ final class AppModel {
         // ourselves, the solver would bail at the cancellation guard below,
         // and the result would never reach the UI.
         debounceTask?.cancel()
+        solveQueued = false
 
         let active = weights.activeConditions
         guard !active.isEmpty else {
+            clearGeneratedOutput()
             lastError = "Set at least one channel weight above zero."
             return
         }
-        guard !catalog.colors.isEmpty else {
+        guard catalog.hasLoadedColorsForSelection else {
+            clearGeneratedOutput()
             lastError = "Load colors from the server, cache, or a project first."
             return
         }
-        guard let grids = sourceGrids(for: active) else { return }
+        guard !catalog.colors.isEmpty else {
+            clearGeneratedOutput()
+            lastError = "The selected profile has no colors to generate with."
+            return
+        }
+        guard let grids = sourceGrids(for: active) else {
+            result = nil
+            errorStatistics = nil
+            solvedGamut = nil
+            return
+        }
 
         let candidateColors = catalog.colors
         let weights = self.weights
@@ -259,6 +390,7 @@ final class AppModel {
             )
             invalidatePreviewCaches()
         case .failure(let error):
+            clearGeneratedOutput()
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
@@ -278,6 +410,21 @@ final class AppModel {
         return grids
     }
 
+    private func hasAssignedSource(for condition: LightingCondition) -> Bool {
+        layers.contains { $0.hasImage && $0.assignedCondition == condition }
+    }
+
+    private func scheduleDebouncedSolve() {
+        debounceTask?.cancel()
+        debounceTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+            } catch { return }
+            runSolve()
+        }
+    }
+
     private func clearCompositionState() {
         solveTask?.cancel()
         solveTask = nil
@@ -288,6 +435,9 @@ final class AppModel {
         lastError = nil
         solvedGamut = nil
         isSolving = false
+        pendingAutoRegenerate = false
+        solveQueued = false
+        solveGeneration += 1
         invalidatePreviewCaches()
     }
 
@@ -523,6 +673,9 @@ final class AppModel {
     func loadProject(from url: URL) throws {
         let data = try Data(contentsOf: url)
         let snapshot = try JSONDecoder().decode(ProjectDocument.self, from: data)
+        // Keep the current document running unless the replacement snapshot is
+        // structurally valid; a failed open should not cancel its pending work.
+        cancelPendingWork()
         applySnapshot(snapshot)
         projectURL = url
     }
@@ -563,6 +716,8 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        isRestoringProject = true
+        defer { isRestoringProject = false }
         clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
@@ -602,6 +757,14 @@ final class AppModel {
         for i in 0..<Self.maxLayers {
             layers[i] = i < restored.count ? restored[i] : SourceLayer()
         }
+        documentStateID = UUID()
+    }
+
+    private func clearGeneratedOutput() {
+        result = nil
+        errorStatistics = nil
+        lastError = nil
+        solvedGamut = nil
     }
 
     private var printOverlayOptions: PrintOverlayOptions {
