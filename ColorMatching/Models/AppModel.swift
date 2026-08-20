@@ -29,7 +29,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverBaseURL")
             catalog.configure(baseURL: URL(string: newValue), token: serverToken)
-            handleCatalogConfigurationChange()
+            scheduleCatalogConfigurationChange()
         }
     }
 
@@ -38,7 +38,7 @@ final class AppModel {
         set {
             UserDefaults.standard.set(newValue, forKey: "serverToken")
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
-            handleCatalogConfigurationChange()
+            scheduleCatalogConfigurationChange()
         }
     }
 
@@ -129,6 +129,7 @@ final class AppModel {
 
     private var solveTask: Task<Void, Never>?
     private var debounceTask: Task<Void, Never>?
+    private var catalogConfigDebounceTask: Task<Void, Never>?
     private var pendingAutoRegenerate = false
     private var solveQueued = false
     private var solveGeneration = 0
@@ -160,6 +161,8 @@ final class AppModel {
     /// is replaced, so stale work cannot write results into the next document.
     func cancelPendingWork() {
         catalog.cancelPendingWork()
+        catalogConfigDebounceTask?.cancel()
+        catalogConfigDebounceTask = nil
         debounceTask?.cancel()
         debounceTask = nil
         solveTask?.cancel()
@@ -224,11 +227,28 @@ final class AppModel {
         scheduleDebouncedSolve()
     }
 
+    /// `serverBaseURL`/`serverToken` are bound directly to a `TextField`/
+    /// `SecureField`, which write back on every keystroke. Debounce the
+    /// invalidation so a multi-character edit doesn't cancel an in-flight
+    /// solve and blank the preview once per typed character; `catalog.configure`
+    /// is still called synchronously on each edit and guards stale fetches
+    /// itself via `configurationRevision`.
+    private func scheduleCatalogConfigurationChange() {
+        guard !isRestoringProject else { return }
+        catalogConfigDebounceTask?.cancel()
+        catalogConfigDebounceTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+            } catch { return }
+            self?.handleCatalogConfigurationChange()
+        }
+    }
+
     /// Server settings changes discard the loaded palette immediately, but if a
     /// solve was previously visible we still want the next successful refresh to
     /// restore it automatically when auto-regenerate is enabled.
     private func handleCatalogConfigurationChange() {
-        guard !isRestoringProject else { return }
+        catalogConfigDebounceTask = nil
         let shouldAutoRegenerate = autoRegenerate &&
             (hasResult || isSolving || debounceTask != nil || solveQueued || pendingAutoRegenerate)
         invalidateGeneratedOutput()
