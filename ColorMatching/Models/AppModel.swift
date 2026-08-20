@@ -8,6 +8,9 @@ import ColorComposerCore
 @Observable
 final class AppModel {
     init() {
+        // No deinit-time cleanup is needed: these catalog callbacks capture self
+        // weakly and no-op after deallocation, and in-flight catalog requests are
+        // generation-guarded inside ColorCatalog.
         catalog.onPaletteChanged = { [weak self] in
             self?.handleUpstreamChange()
         }
@@ -40,12 +43,6 @@ final class AppModel {
             catalog.configure(baseURL: URL(string: serverBaseURL), token: newValue)
             scheduleCatalogConfigurationChange()
         }
-    }
-
-    deinit {
-        // No MainActor-isolated cleanup is safe from here: the catalog callbacks
-        // capture self weakly and no-op after deallocation, and in-flight catalog
-        // requests are generation-guarded inside ColorCatalog.
     }
 
     // MARK: - Source layers
