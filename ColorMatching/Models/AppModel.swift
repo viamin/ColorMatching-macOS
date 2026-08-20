@@ -4,6 +4,7 @@ import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+@MainActor
 @Observable
 final class AppModel {
     init() {
@@ -42,10 +43,9 @@ final class AppModel {
     }
 
     deinit {
-        catalog.onPaletteChanged = nil
-        catalog.onAuthenticationRequired = nil
-        catalog.onTokenUpdated = nil
-        cancelPendingWork()
+        // No MainActor-isolated cleanup is safe from here: the catalog callbacks
+        // capture self weakly and no-op after deallocation, and in-flight catalog
+        // requests are generation-guarded inside ColorCatalog.
     }
 
     // MARK: - Source layers
