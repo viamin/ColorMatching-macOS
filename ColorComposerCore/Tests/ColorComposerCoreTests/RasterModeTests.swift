@@ -212,6 +212,41 @@ final class RasterModeTests: XCTestCase {
         }
     }
 
+    func testTwoColorModeIgnoresColorsMissingActiveConditionMeasurements() throws {
+        let palette = [
+            color(1, "#000000", [.red: 0.0, .green: 0.0]),
+            color(2, "#ff0000", [.red: 1.0]),
+            color(3, "#00ff00", [.red: 0.0, .green: 1.0]),
+            color(4, "#ffff00", [.red: 1.0, .green: 1.0])
+        ]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [
+                .red: grid(1, 1, [0.5]),
+                .green: grid(1, 1, [0.5])
+            ],
+            weights: ChannelWeights(red: 1, green: 1)
+        )
+
+        let image = CompositionRenderer.composite(
+            result,
+            mode: .twoColor,
+            pixelsPerCell: 4
+        )
+        let cellColors = stride(from: 0, to: image.rgba.count, by: 4).reduce(into: Set<RGB>()) { colors, offset in
+            colors.insert(RGB(
+                red: image.rgba[offset],
+                green: image.rgba[offset + 1],
+                blue: image.rgba[offset + 2]
+            ))
+        }
+
+        XCTAssertEqual(cellColors, [
+            RGB(red: 0, green: 0, blue: 0),
+            RGB(red: 255, green: 255, blue: 0)
+        ])
+    }
+
     // MARK: - Flat mode is the v1 baseline (compatibility with no-argument call)
 
     func testFlatModeMatchesLegacyDefault() throws {

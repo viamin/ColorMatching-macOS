@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Observation
 import ColorComposerCore
 
 /// The root application state: server/profile & color sync, source layers, composition
@@ -7,6 +8,19 @@ import ColorComposerCore
 @MainActor
 @Observable
 final class AppModel {
+    /// Keep the interactive preview bounded; 200×200 logical cells still fit in
+    /// a 1600×1600 preview at this cap, while export/print retain the full raster.
+    private static let maxPreviewPixelsPerCell = 8
+
+    @ObservationIgnored
+    private var previewRevision = 0
+
+    @ObservationIgnored
+    private var cachedCompositePreview: (key: CompositePreviewKey, image: RGBAImage)?
+
+    @ObservationIgnored
+    private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
+
     init() {
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         catalog.onPaletteChanged = { [weak self] in
@@ -104,6 +118,19 @@ final class AppModel {
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
+    }
+
+    private struct CompositePreviewKey: Equatable {
+        let revision: Int
+        let mode: RasterMode
+        let pixelsPerCell: Int
+    }
+
+    private struct SoftProofPreviewKey: Equatable {
+        let revision: Int
+        let mode: RasterMode
+        let pixelsPerCell: Int
+        let profile: SoftProofProfile
     }
 
 
@@ -230,6 +257,7 @@ final class AppModel {
                 sourceGrids: grids,
                 weights: weights
             )
+            invalidatePreviewCaches()
         case .failure(let error):
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -260,6 +288,7 @@ final class AppModel {
         lastError = nil
         solvedGamut = nil
         isSolving = false
+        invalidatePreviewCaches()
     }
 
     // MARK: - Derived images
@@ -278,13 +307,29 @@ final class AppModel {
     }
 
     /// On-screen composite that visibly marks unmatched cells (magenta) so a
-    /// no-data or partial-match result is never invisible. Rendered in the
-    /// selected `rasterMode`/`pixelsPerCell` so the preview always matches
-    /// what export/print will actually produce. Export/print keep using
+    /// no-data or partial-match result is never invisible. The preview uses
+    /// the selected raster mode, but caps the per-cell rasterization cost and
+    /// caches the resulting image so SwiftUI refreshes do not re-render large
+    /// export-sized rasters on the main actor. Export/print keep using
     /// `compositeRGBA` (transparent for unmatched, flat mode).
     var compositePreviewRGBA: RGBAImage? {
         guard let result else { return nil }
-        return CompositionRenderer.compositePreview(result, mode: rasterMode, pixelsPerCell: pixelsPerCell)
+        let key = CompositePreviewKey(
+            revision: previewRevision,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        if let cachedCompositePreview, cachedCompositePreview.key == key {
+            return cachedCompositePreview.image
+        }
+
+        let image = CompositionRenderer.compositePreview(
+            result,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        cachedCompositePreview = (key, image)
+        return image
     }
 
     var softProofProfileName: String {
@@ -294,7 +339,24 @@ final class AppModel {
     var softProofPreview: SoftProofPreview? {
         guard let result else { return nil }
         let profile = activePrinterProfile?.softProofProfile ?? .genericPrinter
-        return CompositionRenderer.softProofPreview(result, profile: profile, mode: rasterMode, pixelsPerCell: pixelsPerCell)
+        let key = SoftProofPreviewKey(
+            revision: previewRevision,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell,
+            profile: profile
+        )
+        if let cachedSoftProofPreview, cachedSoftProofPreview.key == key {
+            return cachedSoftProofPreview.preview
+        }
+
+        let preview = CompositionRenderer.softProofPreview(
+            result,
+            profile: profile,
+            mode: rasterMode,
+            pixelsPerCell: previewPixelsPerCell
+        )
+        cachedSoftProofPreview = (key, preview)
+        return preview
     }
 
     /// True when every cell failed to match — usually a missing-measurement gap.
@@ -570,5 +632,15 @@ final class AppModel {
     private static func sanitizedMeasurement(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
         return max(0, value)
+    }
+
+    private var previewPixelsPerCell: Int {
+        min(max(pixelsPerCell, 1), Self.maxPreviewPixelsPerCell)
+    }
+
+    private func invalidatePreviewCaches() {
+        previewRevision += 1
+        cachedCompositePreview = nil
+        cachedSoftProofPreview = nil
     }
 }

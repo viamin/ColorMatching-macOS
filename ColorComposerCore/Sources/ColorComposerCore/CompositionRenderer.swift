@@ -53,6 +53,15 @@ public extension BrightnessGrid {
 /// the printable color composite, a normalized error map, and per-condition
 /// predicted lighting previews.
 public enum CompositionRenderer {
+    private struct TwoColorCandidate {
+        let color: PaletteColor
+        let responses: [Double]
+    }
+
+    private struct TwoColorContext {
+        let entries: [ChannelWeights.Entry]
+        let candidates: [TwoColorCandidate]
+    }
 
     public static func composite(
         _ result: CompositionResult,
@@ -65,6 +74,7 @@ public enum CompositionRenderer {
         var rgba = [UInt8](repeating: 0, count: outWidth * outHeight * 4)
         let dotOrder = mode == .halftone ? dotPixelOrder(for: factor) : []
         let screenOrder = mode == .twoColor ? screenPixelOrder(for: factor) : []
+        let twoColorContext = mode == .twoColor ? makeTwoColorContext(for: result) : nil
 
         for y in 0..<result.gridHeight {
             for x in 0..<result.gridWidth {
@@ -85,7 +95,8 @@ public enum CompositionRenderer {
                         for: result,
                         cell: cell,
                         factor: factor,
-                        order: screenOrder
+                        order: screenOrder,
+                        context: twoColorContext
                     )
                 }
                 for position in positions {
@@ -145,9 +156,10 @@ public enum CompositionRenderer {
         for result: CompositionResult,
         cell: Int,
         factor: Int,
-        order: [(x: Int, y: Int)]
+        order: [(x: Int, y: Int)],
+        context: TwoColorContext?
     ) -> [(x: Int, y: Int, color: RGBColor?)] {
-        guard let mix = bestTwoColorMix(for: result, cell: cell) else {
+        guard let context, let mix = bestTwoColorMix(for: result, cell: cell, context: context) else {
             return filledCell(for: result, cell: cell, factor: factor)
         }
         let firstCount = Int((mix.fraction * Double(order.count)).rounded())
@@ -181,16 +193,24 @@ public enum CompositionRenderer {
         return max(0, min(1, weighted / totalWeight))
     }
 
-    private static func bestTwoColorMix(
-        for result: CompositionResult,
-        cell: Int
-    ) -> (first: RGBColor, second: RGBColor, fraction: Double)? {
+    private static func makeTwoColorContext(for result: CompositionResult) -> TwoColorContext {
         let entries = result.weights.activeEntries
-        let candidates = result.palette.enumerated().compactMap { index, color in
-            responseVector(for: color, conditions: entries.map(\.condition)).map {
-                (index: index, color: color, responses: $0)
+        let conditions = entries.map(\.condition)
+        let candidates = result.palette.compactMap { color in
+            responseVector(for: color, conditions: conditions).map {
+                TwoColorCandidate(color: color, responses: $0)
             }
         }
+        return TwoColorContext(entries: entries, candidates: candidates)
+    }
+
+    private static func bestTwoColorMix(
+        for result: CompositionResult,
+        cell: Int,
+        context: TwoColorContext
+    ) -> (first: RGBColor, second: RGBColor, fraction: Double)? {
+        let entries = context.entries
+        let candidates = context.candidates
         guard candidates.count > 1 else {
             return candidates.first.map { (first: $0.color.rgb, second: $0.color.rgb, fraction: 1) }
         }
@@ -278,9 +298,7 @@ public enum CompositionRenderer {
     }
 
     /// On-screen composite preview with unmatched cells replaced by a visible
-    /// magenta marker so missing measurements are never invisible. Rendered in
-    /// the same `mode`/`pixelsPerCell` as the export/print raster so the
-    /// preview always matches what will actually be produced.
+    /// magenta marker so missing measurements are never invisible.
     public static func compositePreview(
         _ result: CompositionResult,
         mode: RasterMode = .flat,
