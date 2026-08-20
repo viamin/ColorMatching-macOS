@@ -204,6 +204,12 @@ struct CompositionSettingsSection: View {
 
             Stepper("Export pixels/cell: \(model.pixelsPerCell)", value: $model.pixelsPerCell, in: 1...32)
 
+            Picker("Raster mode", selection: $model.rasterMode) {
+                ForEach(RasterMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+
             HStack {
                 Stepper("Print size (mm): \(Int(model.physicalWidthMM))", value: $model.physicalWidthMM, in: 10...2000, step: 5)
                 Stepper("× \(Int(model.physicalHeightMM))", value: $model.physicalHeightMM, in: 10...2000, step: 5)

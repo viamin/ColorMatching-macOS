@@ -344,6 +344,65 @@ final class StatisticsAndRendererTests: XCTestCase {
         XCTAssertEqual(preview.outOfGamutCount, 0)
     }
 
+    /// One unmatched cell next to one matched cell, both rasterized. Verifies
+    /// `compositePreview` honors `mode`/`pixelsPerCell` (the preview must
+    /// reflect the same output mode as export/print — see #24) and that the
+    /// unmatched marker covers the whole rasterized block, not just one pixel.
+    func testCompositePreviewMarksUnmatchedCellBlockAtPixelsPerCell() {
+        let palette = [color(1, "#000000", [.red: 0.0])]
+        let result = CompositionResult(
+            gridWidth: 2,
+            gridHeight: 1,
+            palette: palette,
+            weights: ChannelWeights(red: 1),
+            sourceGrids: [.red: BrightnessGrid(width: 2, height: 1, values: [1.0, 0.0])],
+            colorIndices: [nil, 0],
+            errors: [.infinity, 0],
+            excludedCandidateCount: 0
+        )
+
+        let preview = CompositionRenderer.compositePreview(result, mode: .halftone, pixelsPerCell: 3)
+
+        XCTAssertEqual(preview.width, 6)
+        XCTAssertEqual(preview.height, 3)
+        for y in 0..<3 {
+            for x in 0..<3 {
+                let base = (y * preview.width + x) * 4
+                XCTAssertEqual(Array(preview.rgba[base..<base + 4]), [255, 0, 255, 255])
+            }
+        }
+        // The matched cell must not be touched by the unmatched marker.
+        for y in 0..<3 {
+            for x in 3..<6 {
+                let base = (y * preview.width + x) * 4
+                XCTAssertNotEqual(Array(preview.rgba[base..<base + 4]), [255, 0, 255, 255])
+            }
+        }
+    }
+
+    /// A saturated (out-of-gamut) cell rasterized at `pixelsPerCell: 4` must
+    /// still report exactly one out-of-gamut *cell*, not sixteen — the count
+    /// shown to users stays in logical cell units regardless of raster
+    /// resolution (see #24).
+    func testSoftProofPreviewOutOfGamutCountStaysInCellUnitsWhenRasterized() throws {
+        let palette = [
+            color(1, "#ff0000", [.red: 1.0]),
+            color(2, "#808080", [.red: 0.0])
+        ]
+        let result = try CompositionSolver().solve(
+            palette: palette,
+            sourceGrids: [.red: BrightnessGrid(width: 2, height: 1, values: [1.0, 0.0])],
+            weights: ChannelWeights(red: 1)
+        )
+
+        let preview = CompositionRenderer.softProofPreview(result, mode: .flat, pixelsPerCell: 4)
+
+        XCTAssertEqual(preview.image.width, 8)
+        XCTAssertEqual(preview.image.height, 4)
+        XCTAssertEqual(preview.outOfGamutCells.count, 8 * 4)
+        XCTAssertEqual(preview.outOfGamutCount, 1)
+    }
+
     func testLightingPreviewUsesMeasuredBrightness() throws {
         let result = try solve()
         let preview = CompositionRenderer.lightingPreview(result, for: .red)

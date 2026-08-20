@@ -13,6 +13,7 @@ struct ProjectDocument: Codable {
     var logicalWidth: Int
     var logicalHeight: Int
     var pixelsPerCell: Int
+    var rasterMode: RasterMode
     var physicalWidthMM: Double
     var physicalHeightMM: Double
     var printOverlayOptions: PrintOverlayOptions
@@ -25,7 +26,7 @@ struct ProjectDocument: Codable {
     private enum CodingKeys: String, CodingKey {
         case serverBaseURL, apiToken, printerProfileID, printerProfileSnapshot, colorSnapshot
         case weights, scorerKind
-        case logicalWidth, logicalHeight, pixelsPerCell
+        case logicalWidth, logicalHeight, pixelsPerCell, rasterMode
         case physicalWidthMM, physicalHeightMM
         case printOverlayOptions
         case tilingEnabled, tileWidthMM, tileHeightMM, tileOverlapMM
@@ -43,6 +44,7 @@ struct ProjectDocument: Codable {
         logicalWidth: Int,
         logicalHeight: Int,
         pixelsPerCell: Int,
+        rasterMode: RasterMode,
         physicalWidthMM: Double,
         physicalHeightMM: Double,
         printOverlayOptions: PrintOverlayOptions,
@@ -62,6 +64,7 @@ struct ProjectDocument: Codable {
         self.logicalWidth = logicalWidth
         self.logicalHeight = logicalHeight
         self.pixelsPerCell = pixelsPerCell
+        self.rasterMode = rasterMode
         self.physicalWidthMM = physicalWidthMM
         self.physicalHeightMM = physicalHeightMM
         self.printOverlayOptions = printOverlayOptions
@@ -86,6 +89,9 @@ struct ProjectDocument: Codable {
         logicalWidth = try c.decode(Int.self, forKey: .logicalWidth)
         logicalHeight = try c.decode(Int.self, forKey: .logicalHeight)
         pixelsPerCell = try c.decode(Int.self, forKey: .pixelsPerCell)
+        // Older projects predate raster modes; default to the v1 flat output
+        // so they round-trip identically to how they were originally authored.
+        rasterMode = try c.decodeIfPresent(RasterMode.self, forKey: .rasterMode) ?? .flat
         physicalWidthMM = try c.decode(Double.self, forKey: .physicalWidthMM)
         physicalHeightMM = try c.decode(Double.self, forKey: .physicalHeightMM)
         printOverlayOptions = try c.decodeIfPresent(PrintOverlayOptions.self, forKey: .printOverlayOptions) ?? PrintOverlayOptions()
