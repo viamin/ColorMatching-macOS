@@ -58,9 +58,24 @@ public enum CompositionRenderer {
         let responses: [Double]
     }
 
+    /// Precomputed per-pair terms for `bestTwoColorMix`. `differences`,
+    /// `weightedDifferences`, `denominator`, and `offset` depend only on the
+    /// pair's two candidate responses and the (fixed) channel weights, never
+    /// on the cell being solved, so they are computed once per pair here
+    /// instead of once per pair per cell.
+    private struct TwoColorPair {
+        let firstIndex: Int
+        let secondIndex: Int
+        let differences: [Double]
+        let weightedDifferences: [Double]
+        let denominator: Double
+        let offset: Double
+    }
+
     private struct TwoColorContext {
         let entries: [ChannelWeights.Entry]
         let candidates: [TwoColorCandidate]
+        let pairs: [TwoColorPair]
     }
 
     public static func composite(
@@ -110,14 +125,6 @@ public enum CompositionRenderer {
             }
         }
         return RGBAImage(width: outWidth, height: outHeight, rgba: rgba)
-    }
-
-    public static func rasterized(
-        _ result: CompositionResult,
-        mode: RasterMode,
-        pixelsPerCell: Int
-    ) -> RGBAImage {
-        composite(result, mode: mode, pixelsPerCell: pixelsPerCell)
     }
 
     private static func filledCell(
@@ -201,7 +208,43 @@ public enum CompositionRenderer {
                 TwoColorCandidate(color: color, responses: $0)
             }
         }
-        return TwoColorContext(entries: entries, candidates: candidates)
+        let pairs = makeTwoColorPairs(entries: entries, candidates: candidates)
+        return TwoColorContext(entries: entries, candidates: candidates, pairs: pairs)
+    }
+
+    private static func makeTwoColorPairs(
+        entries: [ChannelWeights.Entry],
+        candidates: [TwoColorCandidate]
+    ) -> [TwoColorPair] {
+        guard candidates.count > 1 else { return [] }
+        var pairs: [TwoColorPair] = []
+        for first in 0..<(candidates.count - 1) {
+            for second in (first + 1)..<candidates.count {
+                let a = candidates[first].responses
+                let b = candidates[second].responses
+                var differences = [Double](repeating: 0, count: entries.count)
+                var weightedDifferences = [Double](repeating: 0, count: entries.count)
+                var denominator = 0.0
+                var offset = 0.0
+                for channel in 0..<entries.count {
+                    let difference = a[channel] - b[channel]
+                    let weightedDifference = entries[channel].weight * difference
+                    differences[channel] = difference
+                    weightedDifferences[channel] = weightedDifference
+                    denominator += weightedDifference * difference
+                    offset += weightedDifference * b[channel]
+                }
+                pairs.append(TwoColorPair(
+                    firstIndex: first,
+                    secondIndex: second,
+                    differences: differences,
+                    weightedDifferences: weightedDifferences,
+                    denominator: denominator,
+                    offset: offset
+                ))
+            }
+        }
+        return pairs
     }
 
     private static func bestTwoColorMix(
@@ -214,36 +257,31 @@ public enum CompositionRenderer {
         guard candidates.count > 1 else {
             return candidates.first.map { (first: $0.color.rgb, second: $0.color.rgb, fraction: 1) }
         }
-        let target = entries.map { result.sourceGrids[$0.condition]!.values[cell] }
+        let target = entries.map { result.sourceGrids[$0.condition]?.values[cell] ?? 0 }
         var best: (first: RGBColor, second: RGBColor, fraction: Double)?
         var bestError = Double.infinity
 
-        for first in 0..<(candidates.count - 1) {
-            for second in (first + 1)..<candidates.count {
-                let a = candidates[first].responses
-                let b = candidates[second].responses
-                var numerator = 0.0
-                var denominator = 0.0
-                for channel in 0..<entries.count {
-                    let difference = a[channel] - b[channel]
-                    numerator += entries[channel].weight * (target[channel] - b[channel]) * difference
-                    denominator += entries[channel].weight * difference * difference
-                }
-                let fraction = denominator > 0 ? max(0, min(1, numerator / denominator)) : 0
-                var error = 0.0
-                for channel in 0..<entries.count {
-                    let prediction = b[channel] + fraction * (a[channel] - b[channel])
-                    let difference = prediction - target[channel]
-                    error += entries[channel].weight * difference * difference
-                }
-                if error < bestError {
-                    bestError = error
-                    best = (
-                        first: candidates[first].color.rgb,
-                        second: candidates[second].color.rgb,
-                        fraction: fraction
-                    )
-                }
+        for pair in context.pairs {
+            var numerator = 0.0
+            for channel in 0..<entries.count {
+                numerator += pair.weightedDifferences[channel] * target[channel]
+            }
+            numerator -= pair.offset
+            let fraction = pair.denominator > 0 ? max(0, min(1, numerator / pair.denominator)) : 0
+            let b = candidates[pair.secondIndex].responses
+            var error = 0.0
+            for channel in 0..<entries.count {
+                let prediction = b[channel] + fraction * pair.differences[channel]
+                let difference = prediction - target[channel]
+                error += entries[channel].weight * difference * difference
+            }
+            if error < bestError {
+                bestError = error
+                best = (
+                    first: candidates[pair.firstIndex].color.rgb,
+                    second: candidates[pair.secondIndex].color.rgb,
+                    fraction: fraction
+                )
             }
         }
         return best
