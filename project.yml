@@ -30,8 +30,8 @@ targets:
           - "Info.plist"
           - "ColorMatching.entitlements"
           - "Assets.xcassets"
-    resources:
       - path: ColorMatching/Assets.xcassets
+        buildPhase: resources
     dependencies:
       - package: ColorComposerCore
     settings:
