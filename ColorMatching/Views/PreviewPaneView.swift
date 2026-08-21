@@ -192,18 +192,19 @@ struct PreviewPaneView: View {
         }
     }
 
-    @ViewBuilder
     private func compareImage(for condition: LightingCondition) -> some View {
-        let image: NSImage?
+        PreviewImage(image: compareImageValue(for: condition))
+    }
+
+    private func compareImageValue(for condition: LightingCondition) -> NSImage? {
         switch compareMode {
         case .predicted:
-            image = model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            return model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         case .source:
-            image = model.sourcePreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            return model.sourcePreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         case .difference:
-            image = model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            return model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         }
-        PreviewImage(image: image)
     }
 
     private func softProofStatus(for preview: SoftProofPreview, profileName: String) -> String {
