@@ -152,7 +152,7 @@ private struct DocumentCommandContextKey: FocusedValueKey {
 }
 
 extension FocusedValues {
-    var documentCommandContext: DocumentCommandContext? {
+    fileprivate var documentCommandContext: DocumentCommandContext? {
         get { self[DocumentCommandContextKey.self] }
         set { self[DocumentCommandContextKey.self] = newValue }
     }

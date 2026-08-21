@@ -30,13 +30,15 @@ targets:
           - "Info.plist"
           - "ColorMatching.entitlements"
           - "Assets.xcassets"
-    resources:
       - path: ColorMatching/Assets.xcassets
+        buildPhase: resources
     dependencies:
       - package: ColorComposerCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.viamin.colormatching.composer
+        PRODUCT_MODULE_NAME: ColorMatching
+        PRODUCT_NAME: Color Composer
         INFOPLIST_FILE: ColorMatching/Info.plist
         CODE_SIGN_ENTITLEMENTS: ColorMatching/ColorMatching.entitlements
         GENERATE_INFOPLIST_FILE: NO
@@ -64,3 +66,16 @@ targets:
       - path: ColorMatchingTests
     dependencies:
       - target: ColorMatching
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Color Composer.app/Contents/MacOS/Color Composer"
+
+schemes:
+  ColorMatching:
+    build:
+      targets:
+        ColorMatching: all
+    test:
+      targets:
+        - ColorMatchingTests

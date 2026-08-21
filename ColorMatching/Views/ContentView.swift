@@ -92,6 +92,8 @@ struct SidebarView: View {
                 TilingSettingsSection()
             }
             .padding()
+            .padding(.leading, 48)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

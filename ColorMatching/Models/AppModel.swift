@@ -652,7 +652,7 @@ final class AppModel {
                 tileImage,
                 physicalSizeMM: size,
                 overlay: tilePrintOverlayOptions,
-                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
+                title: "Color Composer – Tile \(tile.row + 1)×\(tile.column + 1)"
             )
         }
     }

@@ -16,7 +16,7 @@ struct ServerConfigurationSection: View {
             SecureField("API token (optional)", text: $model.serverToken)
                 .textFieldStyle(.roundedBorder)
 
-            HStack {
+            HStack(spacing: 8) {
                 Button("Test") { Task { await catalog.testConnection() } }
                     .disabled(catalog.isWorking)
                 Button("Refresh") { Task { await catalog.refreshAll() } }
@@ -24,10 +24,13 @@ struct ServerConfigurationSection: View {
                 Button("Clear Cache") { catalog.clearCache() }
                     .disabled(catalog.isWorking)
             }
+            .controlSize(.small)
             if let message = catalog.connectionMessage {
                 Text(message).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -72,6 +75,7 @@ struct ProfileSection: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: catalog.selectedPrinterProfileID) { _, _ in
             model.handleUpstreamChange()
         }
@@ -105,6 +109,7 @@ struct SourceImagesSection: View {
                 SourceLayerRow(index: index, layer: layer)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -115,19 +120,22 @@ struct SourceLayerRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            HStack(alignment: .top, spacing: 8) {
                 if layer.hasImage, let cg = layer.cgImage {
                     ThumbnailView(cgImage: cg)
                 } else {
                     Rectangle().fill(.quaternary).frame(width: 40, height: 40)
                 }
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(layer.hasImage ? layer.displayName : "Empty slot \(index + 1)")
                         .font(.callout)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                     if let size = layer.sizeText {
                         Text(size).font(.caption2).foregroundStyle(.secondary)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer()
                 if layer.hasImage {
                     Button { model.removeLayer(index) } label: {
@@ -137,38 +145,56 @@ struct SourceLayerRow: View {
                 }
             }
 
-            HStack {
-                Picker("Channel", selection: $layer.assignedCondition) {
-                    Text("—").tag(LightingCondition?.none)
-                    ForEach(LightingCondition.all, id: \.self) { c in
-                        Text(c.displayName).tag(LightingCondition?.some(c))
+            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 4) {
+                GridRow {
+                    Text("Channel")
+                        .foregroundStyle(.secondary)
+                    Picker("Channel", selection: $layer.assignedCondition) {
+                        Text("—").tag(LightingCondition?.none)
+                        ForEach(LightingCondition.all, id: \.self) { c in
+                            Text(c.displayName).tag(LightingCondition?.some(c))
+                        }
                     }
-                }
-                .labelsHidden()
-                .disabled(!layer.hasImage)
-
-                Picker("Fit", selection: $layer.scalingMode) {
-                    ForEach(ImageScalingMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue.capitalized).tag(mode)
-                    }
-                }
-                .labelsHidden()
-                .disabled(!layer.hasImage)
-
-                Picker("Color", selection: $layer.colorSpace) {
-                    ForEach(BrightnessColorSpace.allCases, id: \.self) { space in
-                        Text(space.rawValue.capitalized).tag(space)
-                    }
-                }
-                .labelsHidden()
-                .disabled(!layer.hasImage)
-
-                Toggle("Invert", isOn: $layer.inverted)
-                    .toggleStyle(.checkbox)
+                    .labelsHidden()
                     .disabled(!layer.hasImage)
+                }
+                GridRow {
+                    Text("Fit")
+                        .foregroundStyle(.secondary)
+                    Picker("Fit", selection: $layer.scalingMode) {
+                        ForEach(ImageScalingMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue.capitalized).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .disabled(!layer.hasImage)
+                }
+                GridRow {
+                    Text("Color")
+                        .foregroundStyle(.secondary)
+                    Picker("Color", selection: $layer.colorSpace) {
+                        ForEach(BrightnessColorSpace.allCases, id: \.self) { space in
+                            Text(space.rawValue.capitalized).tag(space)
+                        }
+                    }
+                    .labelsHidden()
+                    .disabled(!layer.hasImage)
+                }
+                GridRow {
+                    Color.clear
+                        .gridCellUnsizedAxes([.horizontal, .vertical])
+                        .frame(width: 0, height: 0)
+                    Toggle("Invert", isOn: $layer.inverted)
+                        .toggleStyle(.checkbox)
+                        .disabled(!layer.hasImage)
+                }
             }
+            .font(.caption)
+            .controlSize(.small)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(6)
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
         .onChange(of: layer.inverted) {
             guard layer.hasImage else { return }
@@ -210,9 +236,9 @@ struct CompositionSettingsSection: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Composition").font(.headline)
 
-            HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Stepper("Logical width: \(model.logicalWidth)", value: $model.logicalWidth, in: 10...1000, step: 10)
-                Stepper("height: \(model.logicalHeight)", value: $model.logicalHeight, in: 10...1000, step: 10)
+                Stepper("Logical height: \(model.logicalHeight)", value: $model.logicalHeight, in: 10...1000, step: 10)
             }
             Picker("Preset", selection: Binding(
                 get: { model.logicalWidth },
@@ -231,9 +257,9 @@ struct CompositionSettingsSection: View {
                 }
             }
 
-            HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Stepper("Print size (mm): \(Int(model.physicalWidthMM))", value: $model.physicalWidthMM, in: 10...2000, step: 5)
-                Stepper("× \(Int(model.physicalHeightMM))", value: $model.physicalHeightMM, in: 10...2000, step: 5)
+                Stepper("Print height (mm): \(Int(model.physicalHeightMM))", value: $model.physicalHeightMM, in: 10...2000, step: 5)
             }
             Stepper("Bleed (mm): \(Int(model.printBleedMM))", value: $model.printBleedMM, in: 0...50, step: 1)
             Toggle("Crop + registration marks", isOn: $model.showsPrintMarks)
@@ -270,6 +296,7 @@ struct CompositionSettingsSection: View {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: model.weights) { model.handleUpstreamChange() }
         .onChange(of: model.logicalWidth) { model.handleUpstreamChange() }
         .onChange(of: model.logicalHeight) { model.handleUpstreamChange() }
@@ -297,9 +324,9 @@ struct TilingSettingsSection: View {
             Toggle("Split into page-sized tiles", isOn: $model.tilingEnabled)
 
             if model.tilingEnabled {
-                HStack {
+                VStack(alignment: .leading, spacing: 4) {
                     Stepper("Tile size (mm): \(Int(model.tileWidthMM))", value: $model.tileWidthMM, in: 10...2000, step: 5)
-                    Stepper("× \(Int(model.tileHeightMM))", value: $model.tileHeightMM, in: 10...2000, step: 5)
+                    Stepper("Tile height (mm): \(Int(model.tileHeightMM))", value: $model.tileHeightMM, in: 10...2000, step: 5)
                 }
                 Stepper("Overlap (mm): \(Int(model.tileOverlapMM))", value: $model.tileOverlapMM, in: 0...200, step: 1)
 
@@ -312,6 +339,7 @@ struct TilingSettingsSection: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
