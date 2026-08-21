@@ -141,7 +141,7 @@ struct PreviewPaneView: View {
             ContentUnavailableView(
                 "No composition yet",
                 systemImage: "wand.and.stars",
-                description: Text("Add source images, assign lighting channels, then Generate.")
+                description: Text("Add source images, choose lighting channels, then generate an image from the selected color pairs.")
             )
         } else if model.allCellsUnmatched {
             ContentUnavailableView(

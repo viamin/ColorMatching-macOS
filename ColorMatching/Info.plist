@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ColorMatching</string>
+    <string>Color Composer</string>
     <key>CFBundleDisplayName</key>
-    <string>ColorMatching</string>
+    <string>Color Composer</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>
@@ -23,12 +23,12 @@
     <key>NSHumanReadableCopyright</key>
     <string>Open source</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>ColorMatching reads image files you select to compose illumination-dependent artwork.</string>
+    <string>Color Composer reads image files you select to compose illumination-dependent artwork.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
             <key>CFBundleTypeName</key>
-            <string>ColorMatching Project</string>
+            <string>Color Composer Project</string>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>LSItemContentTypes</key>
@@ -45,7 +45,7 @@
             <key>UTTypeIdentifier</key>
             <string>com.viamin.colormatching.project</string>
             <key>UTTypeDescription</key>
-            <string>ColorMatching Project</string>
+            <string>Color Composer Project</string>
             <key>UTTypeConformsTo</key>
             <array>
                 <string>public.json</string>
