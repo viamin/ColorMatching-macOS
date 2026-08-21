@@ -16,7 +16,7 @@ public enum PaletteAPIError: Error, LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidURL: return "The server URL is not valid."
-        case .unauthorized: return "The server rejected the current API token."
+        case .unauthorized: return "The API token was rejected. Enter a new token and try again."
         case .badStatus(let code): return "The server returned HTTP \(code)."
         case .malformedResponse: return "The server response could not be read."
         }
@@ -69,11 +69,7 @@ public struct PaletteAPIClient: Sendable {
     /// Lightweight reachability check used by the "Test connection" UI action.
     /// Succeeds on any 2xx from `/api/v1/printer_profiles`.
     public func testConnection() async throws {
-        let url = endpoint(path: "printer_profiles")
-        var request = URLRequest(url: url)
-        authorize(&request)
-        let (_, response) = try await session.data(for: request)
-        try validateStatus(response)
+        _ = try await data(for: request(url: endpoint(path: "printer_profiles")))
     }
 
     // MARK: - Internals
@@ -82,19 +78,21 @@ public struct PaletteAPIClient: Sendable {
         baseURL.appendingPathComponent("api/v1").appendingPathComponent(path)
     }
 
+    private func request(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        authorize(&request)
+        return request
+    }
+
     private func authorize(_ request: inout URLRequest) {
-        if let token, !token.isEmpty {
-            request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let token = normalizedToken(token) {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
     }
 
     private func get<T: Decodable>(_ url: URL) async throws -> T {
-        var request = URLRequest(url: url)
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        authorize(&request)
-
-        let (data, response) = try await session.data(for: request)
-        try validateStatus(response)
+        let data = try await data(for: request(url: url))
 
         do {
             return try decoder.decode(T.self, from: data)
@@ -103,12 +101,22 @@ public struct PaletteAPIClient: Sendable {
         }
     }
 
-    /// Throws `.unauthorized` for a 401 (so callers can trigger re-auth),
-    /// `.badStatus` for any other non-2xx.
-    private func validateStatus(_ response: URLResponse) throws {
+    private func data(for request: URLRequest) async throws -> Data {
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw PaletteAPIError.malformedResponse }
-        guard (200..<300).contains(http.statusCode) else {
-            throw http.statusCode == 401 ? PaletteAPIError.unauthorized : PaletteAPIError.badStatus(http.statusCode)
+
+        if http.statusCode == 401 {
+            throw PaletteAPIError.unauthorized
         }
+
+        guard (200..<300).contains(http.statusCode) else { throw PaletteAPIError.badStatus(http.statusCode) }
+        return data
+    }
+
+    private func normalizedToken(_ token: String?) -> String? {
+        guard let token = token?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
+            return nil
+        }
+        return token
     }
 }
