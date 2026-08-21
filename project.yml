@@ -57,3 +57,10 @@ targets:
           COPY_PHASE_STRIP: YES
           STRIP_INSTALLED_PRODUCT: YES
           VALIDATE_PRODUCT: YES
+  ColorMatchingTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ColorMatchingTests
+    dependencies:
+      - target: ColorMatching

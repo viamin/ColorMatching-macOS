@@ -4,21 +4,29 @@ import ColorComposerCore
 struct ContentView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.undoManager) private var undoManager
+    @State private var previewMode: PreviewMode = .composite
+    let addImages: () -> Void
 
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
-            SidebarView()
+            SidebarView(addImages: addImages)
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340)
         } detail: {
-            PreviewPaneView()
+            PreviewPaneView(previewMode: $previewMode)
+        }
+        // Keep preview shortcuts active for the whole frontmost document
+        // window, even while focus is in the sidebar or toolbar.
+        .focusedSceneValue(\.previewModeBinding, $previewMode)
+        // Reset the selected preview only when this window loads a different
+        // document. Normal input edits should preserve the chosen tab.
+        .onChange(of: model.documentStateID) {
+            previewMode = .composite
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
-                    FilePanels.openImages { urls in
-                        model.appendImages(from: urls)
-                    }
+                    addImages()
                 } label: {
                     Label("Add Images", systemImage: "photo.on.rectangle.angled")
                 }
@@ -28,8 +36,7 @@ struct ContentView: View {
                 } label: {
                     Label("Generate", systemImage: "wand.and.stars")
                 }
-                .disabled(model.catalog.colors.isEmpty)
-                .keyboardShortcut(.return, modifiers: [.command])
+                .disabled(!model.canGenerate)
 
                 Button {
                     FilePanels.exportImage { url in
@@ -39,7 +46,7 @@ struct ContentView: View {
                 } label: {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
-                .disabled(!model.hasResult)
+                .disabled(!model.canExportComposite)
 
                 Button {
                     model.printComposite()
@@ -57,7 +64,7 @@ struct ContentView: View {
                     } label: {
                         Label("Export Tiles", systemImage: "square.grid.3x3")
                     }
-                    .disabled(!model.hasResult)
+                    .disabled(!model.canExportTiles)
 
                     Button {
                         model.printTiles()
@@ -87,6 +94,7 @@ struct ContentView: View {
 
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
+    let addImages: () -> Void
 
     var body: some View {
         @Bindable var model = model
@@ -94,7 +102,7 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 16) {
                 ServerConfigurationSection()
                 ProfileSection()
-                SourceImagesSection()
+                SourceImagesSection(addImages: addImages)
                 CompositionSettingsSection()
                 TilingSettingsSection()
             }

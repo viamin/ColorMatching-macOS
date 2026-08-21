@@ -46,6 +46,10 @@ struct ProfileSection: View {
                 ForEach(catalog.printerProfiles) { profile in
                     Text(profile.displayName).tag(Int?.some(profile.id))
                 }
+                if let missingSelectedProfileID {
+                    Text("Saved profile #\(missingSelectedProfileID)")
+                        .tag(Int?.some(missingSelectedProfileID))
+                }
             }
 
             LabeledContent("Colors loaded", value: "\(catalog.colors.count)")
@@ -68,6 +72,15 @@ struct ProfileSection: View {
                 )
             }
         }
+        .onChange(of: catalog.selectedPrinterProfileID) { _, _ in
+            model.handleUpstreamChange()
+        }
+    }
+
+    private var missingSelectedProfileID: Int? {
+        guard let selectedProfileID = model.catalog.selectedPrinterProfileID else { return nil }
+        guard !model.catalog.printerProfiles.contains(where: { $0.id == selectedProfileID }) else { return nil }
+        return selectedProfileID
     }
 }
 
@@ -75,18 +88,14 @@ struct ProfileSection: View {
 
 struct SourceImagesSection: View {
     @Environment(AppModel.self) private var model
+    let addImages: () -> Void
 
     var body: some View {
-        @Bindable var model = model
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Source images").font(.headline)
                 Spacer()
-                Button {
-                    FilePanels.openImages { urls in
-                        model.appendImages(from: urls)
-                    }
-                } label: {
+                Button(action: addImages) {
                     Label("Add", systemImage: "plus")
                 }
                 .buttonStyle(.borderless)
@@ -161,10 +170,22 @@ struct SourceLayerRow: View {
         }
         .padding(6)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
-        .onChange(of: layer.inverted) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.scalingMode) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.assignedCondition) { model.scheduleAutoRegenerate() }
-        .onChange(of: layer.colorSpace) { model.scheduleAutoRegenerate() }
+        .onChange(of: layer.inverted) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.scalingMode) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.assignedCondition) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
+        .onChange(of: layer.colorSpace) {
+            guard layer.hasImage else { return }
+            model.handleUpstreamChange()
+        }
     }
 }
 
@@ -249,10 +270,10 @@ struct CompositionSettingsSection: View {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
         }
-        .onChange(of: model.weights) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.logicalWidth) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.logicalHeight) { model.scheduleAutoRegenerate() }
-        .onChange(of: model.scorerKind) { model.scheduleAutoRegenerate() }
+        .onChange(of: model.weights) { model.handleUpstreamChange() }
+        .onChange(of: model.logicalWidth) { model.handleUpstreamChange() }
+        .onChange(of: model.logicalHeight) { model.handleUpstreamChange() }
+        .onChange(of: model.scorerKind) { model.handleUpstreamChange() }
     }
 
     private func weightBinding(_ keyPath: WritableKeyPath<ChannelWeights, Double>) -> Binding<Double> {

@@ -44,9 +44,21 @@ xcodebuild -project ColorMatching.xcodeproj -scheme ColorMatching -configuration
    - **Composite** — the printable color image (exact palette RGBs; export/print use this). Toggle **Soft Proof** for a printer-profile preview derived from the selected profile's paper/ink metadata: warmed paper white, lifted blacks, compressed saturation, and an orange wash on out-of-gamut cells.
    - **Error map** — where the palette can't represent the targets well.
    - **Gamut** — parallel-coordinates plot of the loaded colors' response vectors against the target vectors the source images ask for, highlighting targets no color can reach and naming the channel that runs out.
-   - **Preview · Red / Green / Blue / LPS / White** — predicted appearance under each light, tinted by channel color.
+   - **Preview · White / Red / Green / Blue / LPS** — predicted appearance under each light, tinted by channel color.
    - **Statistics** — mean / median / max error, and % of cells below a quality threshold.
 6. **Export** PNG/TIFF, **Print** via the native macOS print dialog at a controlled physical size, or **Save Project** (`.cmpj`) with embedded images + palette snapshot.
+
+### Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| ⌘1 – ⌘8 | Switch the preview tab in the frontmost window, numbered in on-screen order (Composite, Error Map, Gamut, White, Red, Green, Blue, LPS) |
+| ⌘↩ | Generate (requires colors loaded for the selected profile, from the server or a saved project) |
+| ⌘O / ⌘⌥O | Open Project… / Add Images… |
+| ⌘S / ⌘⌥S | Save Project / Save Project As… |
+| ⇧⌘E / ⌥⇧⌘E | Export Composite… / Export Tiles… (tile export appears only when tiling is enabled; both require generated output) |
+| ⌘P | Print… (requires a generated composition) |
+| ⌘N | New Project |
 
 ## Architecture
 

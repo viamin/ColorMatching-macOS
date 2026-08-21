@@ -1,6 +1,17 @@
 import SwiftUI
 import ColorComposerCore
 
+private struct PreviewModeBindingKey: FocusedValueKey {
+    typealias Value = Binding<PreviewMode>
+}
+
+extension FocusedValues {
+    var previewModeBinding: Binding<PreviewMode>? {
+        get { self[PreviewModeBindingKey.self] }
+        set { self[PreviewModeBindingKey.self] = newValue }
+    }
+}
+
 enum PreviewMode: Hashable, CaseIterable, Identifiable {
     case composite
     case errorMap
@@ -18,8 +29,33 @@ enum PreviewMode: Hashable, CaseIterable, Identifiable {
         }
     }
 
-    static var allCases: [PreviewMode] {
+    /// Explicit preview order shared by the segmented control and the Preview
+    /// menu shortcuts, so those two entry points cannot drift apart.
+    static var orderedModes: [PreviewMode] {
         [.composite, .errorMap, .gamut] + LightingCondition.all.map { .lighting($0) }
+    }
+
+    static var allCases: [PreviewMode] { orderedModes }
+
+    /// Title in the Preview menu. Numbered menu items mirror `allCases` so
+    /// ⌘1–⌘8 always select the Nth visible tab; `label`'s "Preview ·" prefix
+    /// would read redundant inside that menu.
+    var menuTitle: String {
+        switch self {
+        case .composite, .errorMap, .gamut: return label
+        case .lighting(let condition): return condition.displayName
+        }
+    }
+
+    var shortcutKey: KeyEquivalent {
+        precondition(
+            Self.orderedModes.count <= 9,
+            "Preview shortcuts support at most nine tabs."
+        )
+        guard let index = Self.orderedModes.firstIndex(of: self) else {
+            preconditionFailure("Preview mode must appear in orderedModes.")
+        }
+        return KeyEquivalent(Character(String(index + 1)))
     }
 }
 
@@ -44,7 +80,7 @@ enum LightingCompareMode: Hashable, CaseIterable, Identifiable {
 
 struct PreviewPaneView: View {
     @Environment(AppModel.self) private var model
-    @State private var mode: PreviewMode = .composite
+    @Binding var previewMode: PreviewMode
     @State private var compareMode: LightingCompareMode = .predicted
     @State private var softProofEnabled = false
 
@@ -54,7 +90,7 @@ struct PreviewPaneView: View {
         VStack(spacing: 0) {
             previewPicker(softProofPreview: softProofPreview)
             Divider()
-            content(softProofPreview: softProofPreview)
+            content(mode: previewMode, softProofPreview: softProofPreview)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.hasResult {
                 Divider()
@@ -63,20 +99,23 @@ struct PreviewPaneView: View {
             }
         }
         .background(Color(nsColor: .textBackgroundColor))
+        .onChange(of: previewMode) { _, _ in
+            compareMode = .predicted
+        }
     }
 
     private func previewPicker(softProofPreview: SoftProofPreview?) -> some View {
         VStack(spacing: 8) {
-            Picker("Preview", selection: $mode) {
-                ForEach(PreviewMode.allCases) { m in
-                    Text(m.label).tag(m)
+            Picker("Preview", selection: $previewMode) {
+                ForEach(PreviewMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
 
             // The soft-proof row describes the composite preview; hide it when
             // that preview is replaced by the all-cells-unmatched notice.
-            if mode == .composite, model.hasResult, !model.allCellsUnmatched {
+            if previewMode == .composite, model.hasResult, !model.allCellsUnmatched {
                 HStack(spacing: 12) {
                     Toggle("Soft Proof", isOn: $softProofEnabled)
                         .toggleStyle(.switch)
@@ -93,7 +132,7 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private func content(softProofPreview: SoftProofPreview?) -> some View {
+    private func content(mode: PreviewMode, softProofPreview: SoftProofPreview?) -> some View {
         if mode == .gamut {
             // The gamut explains why a solve will struggle, so it stays useful
             // before Generate and when nothing could be matched at all.
@@ -126,7 +165,7 @@ struct PreviewPaneView: View {
     }
 
     private var softProofPreviewSelection: SoftProofPreview? {
-        guard mode == .composite, softProofEnabled else { return nil }
+        guard previewMode == .composite, softProofEnabled else { return nil }
         return model.softProofPreview
     }
 
@@ -138,8 +177,8 @@ struct PreviewPaneView: View {
         if model.hasSource(for: condition) {
             VStack(spacing: 0) {
                 Picker("Compare", selection: $compareMode) {
-                    ForEach(LightingCompareMode.allCases) { m in
-                        Text(m.label).tag(m)
+                    ForEach(LightingCompareMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)

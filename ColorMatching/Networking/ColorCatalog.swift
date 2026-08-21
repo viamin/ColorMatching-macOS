@@ -117,6 +117,18 @@ final class ColorCatalog {
 
     var isConfigured: Bool { client != nil }
 
+    /// A selection counts as loaded once the fetch (or project restore) for the
+    /// currently selected profile has completed, even if that profile contains
+    /// zero measured colors. A restored project palette with no current profile
+    /// selection also counts as loaded, so Generate stays available for legacy
+    /// or offline project snapshots that still embed color data.
+    var hasLoadedColorsForSelection: Bool {
+        guard let selectedPrinterProfileID else {
+            return colorsLoadedFromProject
+        }
+        return loadedColorsProfileID == selectedPrinterProfileID
+    }
+
     private func normalizedServerURL(from url: URL?) -> URL? {
         guard let url else { return nil }
         let normalized = ProfileColorCache.normalizedServerBaseUrl(url.absoluteString)
@@ -320,6 +332,12 @@ final class ColorCatalog {
     }
 
     // MARK: - Actions
+
+    /// Prevents stale palette loads from mutating the current selection or a
+    /// just-opened project after the user has moved on.
+    func cancelPendingWork() {
+        invalidateOutstandingRequests()
+    }
 
     func testConnection() async {
         guard let client else {
