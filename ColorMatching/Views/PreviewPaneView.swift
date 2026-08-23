@@ -141,7 +141,7 @@ struct PreviewPaneView: View {
             ContentUnavailableView(
                 "No composition yet",
                 systemImage: "wand.and.stars",
-                description: Text("Add source images, choose lighting channels, then generate an image from the selected color pairs.")
+                description: Text("Add source images, assign lighting channels, then Generate.")
             )
         } else if model.allCellsUnmatched {
             ContentUnavailableView(
@@ -192,19 +192,18 @@ struct PreviewPaneView: View {
         }
     }
 
+    @ViewBuilder
     private func compareImage(for condition: LightingCondition) -> some View {
-        PreviewImage(image: compareImageValue(for: condition))
-    }
-
-    private func compareImageValue(for condition: LightingCondition) -> NSImage? {
+        let image: NSImage?
         switch compareMode {
         case .predicted:
-            return model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            image = model.lightingPreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         case .source:
-            return model.sourcePreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            image = model.sourcePreviewTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         case .difference:
-            return model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
+            image = model.lightingDifferenceTinted(for: condition).flatMap { ImageUtilities.nsImage(from: $0) }
         }
+        PreviewImage(image: image)
     }
 
     private func softProofStatus(for preview: SoftProofPreview, profileName: String) -> String {

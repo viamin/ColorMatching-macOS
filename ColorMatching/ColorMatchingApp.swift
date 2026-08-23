@@ -41,7 +41,6 @@ struct ColorMatchingApp: App {
 private struct DocumentSceneView: View {
     @State private var model = AppModel()
     @State private var didConsumePendingProject = false
-    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         ContentView(addImages: addImages)
@@ -51,7 +50,6 @@ private struct DocumentSceneView: View {
             // state instead of a process-wide model shared by every scene.
             .focusedSceneValue(\.documentCommandContext, commandContext)
             .task {
-                model.setUndoManager(undoManager)
                 consumePendingProjectIfNeeded()
             }
     }
@@ -154,7 +152,7 @@ private struct DocumentCommandContextKey: FocusedValueKey {
 }
 
 extension FocusedValues {
-    fileprivate var documentCommandContext: DocumentCommandContext? {
+    var documentCommandContext: DocumentCommandContext? {
         get { self[DocumentCommandContextKey.self] }
         set { self[DocumentCommandContextKey.self] = newValue }
     }
@@ -165,9 +163,6 @@ private struct DocumentCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
-        // Preserve the system undo/redo group so focused AppKit controls keep
-        // responder-chain editing undo, while the window's UndoManager still
-        // handles composition edits when no control owns the action.
         CommandGroup(replacing: .newItem) {
             Button("New Project") { newProject() }
                 .keyboardShortcut("n")

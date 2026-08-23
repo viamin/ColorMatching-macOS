@@ -13,7 +13,7 @@ enum PrintSupport {
         _ raster: RGBAImage,
         physicalSizeMM: CGSize,
         overlay: PrintOverlayOptions = PrintOverlayOptions(),
-        title: String = "Color Composer"
+        title: String = "ColorMatching"
     ) {
         guard physicalSizeMM.width.isFinite, physicalSizeMM.width > 0,
               physicalSizeMM.height.isFinite, physicalSizeMM.height > 0 else { return }
