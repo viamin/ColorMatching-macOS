@@ -64,3 +64,16 @@ targets:
       - path: ColorMatchingTests
     dependencies:
       - target: ColorMatching
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ColorMatching.app/Contents/MacOS/ColorMatching"
+
+schemes:
+  ColorMatching:
+    build:
+      targets:
+        ColorMatching: all
+    test:
+      targets:
+        - ColorMatchingTests

@@ -62,6 +62,15 @@ final class AppModel {
     @ObservationIgnored
     private var configuredToken = ""
 
+    private struct LayerState {
+        let imageData: Data?
+        let filename: String?
+        let assignedCondition: LightingCondition?
+        let inverted: Bool
+        let scalingMode: ImageScalingMode
+        let colorSpace: BrightnessColorSpace
+    }
+
     init() {
         // No deinit-time cleanup is needed: these catalog callbacks capture self
         // weakly and no-op after deallocation, and in-flight catalog requests are
@@ -124,13 +133,12 @@ final class AppModel {
     func loadLayer(_ index: Int, from url: URL) -> Bool {
         guard index >= 0 && index < layers.count else { return false }
         do {
+            let previousState = layerState(at: index)
             let (data, filename, _) = try ImageUtilities.load(from: url)
-            // Importing an image is not a user composition edit, so the
-            // auto-assigned channel must not register an undo action.
-            undo.performWithoutRegistration {
+            registerLayerRestoreUndo(actionName: "Load Layer", index: index, restore: previousState)
+            undoController.performWithoutRegistration {
                 layers[index].imageData = data
                 layers[index].filename = filename
-                // Auto-assign a condition if none yet, preferring unused ones.
                 if layers[index].assignedCondition == nil {
                     layers[index].assignedCondition = nextUnassignedCondition()
                 }
@@ -159,8 +167,12 @@ final class AppModel {
 
     func removeLayer(_ index: Int) {
         guard index >= 0 && index < layers.count else { return }
-        layers[index].imageData = nil
-        layers[index].filename = nil
+        guard layers[index].hasImage else { return }
+        registerLayerRestoreUndo(actionName: "Remove Layer", index: index, restore: layerState(at: index))
+        undoController.performWithoutRegistration {
+            layers[index].imageData = nil
+            layers[index].filename = nil
+        }
         handleUpstreamChange()
     }
 
@@ -178,67 +190,67 @@ final class AppModel {
     var weights: ChannelWeights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1) {
         didSet {
             guard oldValue != weights else { return }
-            noteEdit(kind: "weights", actionName: "Weights") { $0.weights = oldValue }
+            noteEdit(kind: "weights", actionName: "Change Weight") { $0.weights = oldValue }
         }
     }
     var scorerKind: ScorerKind = .weightedSquaredError {
         didSet {
             guard oldValue != scorerKind else { return }
-            noteEdit(kind: "scorer", actionName: "Scorer") { $0.scorerKind = oldValue }
+            noteEdit(kind: "scorer", actionName: "Change Scorer") { $0.scorerKind = oldValue }
         }
     }
     var logicalWidth = 200 {
         didSet {
             guard oldValue != logicalWidth else { return }
-            noteEdit(kind: "resolution", actionName: "Resolution") { $0.logicalWidth = oldValue }
+            noteEdit(kind: "resolution", actionName: "Change Resolution") { $0.logicalWidth = oldValue }
         }
     }
     var logicalHeight = 200 {
         didSet {
             guard oldValue != logicalHeight else { return }
-            noteEdit(kind: "resolution", actionName: "Resolution") { $0.logicalHeight = oldValue }
+            noteEdit(kind: "resolution", actionName: "Change Resolution") { $0.logicalHeight = oldValue }
         }
     }
     var pixelsPerCell = 4 {
         didSet {
             guard oldValue != pixelsPerCell else { return }
-            noteEdit(kind: "exportScale", actionName: "Export Scale") { $0.pixelsPerCell = oldValue }
+            noteEdit(kind: "exportScale", actionName: "Change Export Scale") { $0.pixelsPerCell = oldValue }
         }
     }
     var rasterMode: RasterMode = .flat {
         didSet {
             guard oldValue != rasterMode else { return }
-            noteEdit(kind: "rasterMode", actionName: "Raster Mode") { $0.rasterMode = oldValue }
+            noteEdit(kind: "rasterMode", actionName: "Change Raster Mode") { $0.rasterMode = oldValue }
         }
     }
     var physicalWidthMM = 200.0 {
         didSet {
             guard oldValue != physicalWidthMM else { return }
-            noteEdit(kind: "printSize", actionName: "Print Size") { $0.physicalWidthMM = oldValue }
+            noteEdit(kind: "printSize", actionName: "Change Print Size") { $0.physicalWidthMM = oldValue }
         }
     }
     var physicalHeightMM = 200.0 {
         didSet {
             guard oldValue != physicalHeightMM else { return }
-            noteEdit(kind: "printSize", actionName: "Print Size") { $0.physicalHeightMM = oldValue }
+            noteEdit(kind: "printSize", actionName: "Change Print Size") { $0.physicalHeightMM = oldValue }
         }
     }
     var showsPrintMarks = false {
         didSet {
             guard oldValue != showsPrintMarks else { return }
-            noteEdit(kind: "printMarks", actionName: "Print Marks") { $0.showsPrintMarks = oldValue }
+            noteEdit(kind: "printMarks", actionName: "Toggle Print Marks") { $0.showsPrintMarks = oldValue }
         }
     }
     var printMarksInsetMM = 3.0 {
         didSet {
             guard oldValue != printMarksInsetMM else { return }
-            noteEdit(kind: "printMarks", actionName: "Print Marks") { $0.printMarksInsetMM = oldValue }
+            noteEdit(kind: "printMarks", actionName: "Change Print Marks") { $0.printMarksInsetMM = oldValue }
         }
     }
     var printBleedMM = 0.0 {
         didSet {
             guard oldValue != printBleedMM else { return }
-            noteEdit(kind: "printBleed", actionName: "Bleed") { $0.printBleedMM = oldValue }
+            noteEdit(kind: "printBleed", actionName: "Change Bleed") { $0.printBleedMM = oldValue }
         }
     }
 
@@ -251,12 +263,95 @@ final class AppModel {
     /// Registers user composition edits with the window's undo manager so
     /// ⌘Z / ⇧⌘Z and the Edit menu's Undo/Redo drive them. Only edits noted
     /// here reach the undo stack — solves and results never do.
-    let undo = CompositionUndo()
+    let undoController = CompositionUndo()
 
     /// Connects window undo support; called when the window's undo manager
     /// becomes available and again when a fresh model takes over.
     func attachUndoManager(_ manager: UndoManager?) {
-        undo.attach(manager)
+        undoController.attach(manager)
+    }
+
+    func setUndoManager(_ manager: UndoManager?) {
+        attachUndoManager(manager)
+    }
+
+    var canUndo: Bool { undoController.undoManager?.canUndo ?? false }
+    var canRedo: Bool { undoController.undoManager?.canRedo ?? false }
+
+    var undoMenuTitle: String {
+        menuTitle(prefix: "Undo", actionName: undoController.undoManager?.undoActionName)
+    }
+
+    var redoMenuTitle: String {
+        menuTitle(prefix: "Redo", actionName: undoController.undoManager?.redoActionName)
+    }
+
+    func undo() {
+        undoController.undoManager?.undo()
+    }
+
+    func redo() {
+        undoController.undoManager?.redo()
+    }
+
+    func setWeight(_ keyPath: WritableKeyPath<ChannelWeights, Double>, to newValue: Double) {
+        var updated = weights
+        guard updated[keyPath: keyPath] != newValue else { return }
+        updated[keyPath: keyPath] = newValue
+        weights = updated
+        handleUpstreamChange()
+    }
+
+    func setLogicalWidth(_ newValue: Int) {
+        guard logicalWidth != newValue else { return }
+        logicalWidth = newValue
+        handleUpstreamChange()
+    }
+
+    func setLogicalHeight(_ newValue: Int) {
+        guard logicalHeight != newValue else { return }
+        logicalHeight = newValue
+        handleUpstreamChange()
+    }
+
+    func setLogicalSize(width: Int, height: Int) {
+        guard logicalWidth != width || logicalHeight != height else { return }
+        var restore = compositionEdit()
+        restore.logicalWidth = logicalWidth
+        restore.logicalHeight = logicalHeight
+        undoController.noteUserEdit(kind: "resolution", actionName: "Change Resolution", restore: restore, swap: editSwap)
+        undoController.performWithoutRegistration {
+            logicalWidth = width
+            logicalHeight = height
+        }
+        handleUpstreamChange()
+    }
+
+    func setPixelsPerCell(_ newValue: Int) {
+        guard pixelsPerCell != newValue else { return }
+        pixelsPerCell = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerAssignedCondition(_ index: Int, to newValue: LightingCondition?) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].assignedCondition != newValue else { return }
+        layers[index].assignedCondition = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerScalingMode(_ index: Int, to newValue: ImageScalingMode) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].scalingMode != newValue else { return }
+        layers[index].scalingMode = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerInverted(_ index: Int, to newValue: Bool) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].inverted != newValue else { return }
+        layers[index].inverted = newValue
+        handleUpstreamChange()
     }
 
     /// Builds the pre-edit snapshot for a settings edit by reverting one
@@ -264,7 +359,7 @@ final class AppModel {
     private func noteEdit(kind: String, actionName: String, revert: (inout CompositionEdit) -> Void) {
         var restore = compositionEdit()
         revert(&restore)
-        undo.noteUserEdit(kind: kind, actionName: actionName, restore: restore, swap: editSwap)
+        undoController.noteUserEdit(kind: kind, actionName: actionName, restore: restore, swap: editSwap)
     }
 
     /// Builds the pre-edit snapshot for a layer-field edit.
@@ -272,7 +367,7 @@ final class AppModel {
         guard let index = layers.firstIndex(where: { $0 === layer }) else { return }
         var restore = compositionEdit()
         restore.layers[index] = edit.reverted(restore.layers[index])
-        undo.noteUserEdit(
+        undoController.noteUserEdit(
             kind: "layer.\(layer.id.uuidString).\(edit.key)",
             actionName: edit.actionName,
             restore: restore,
@@ -356,6 +451,47 @@ final class AppModel {
                 self?.noteLayerEdit(layer, edit: edit)
             }
         }
+    }
+
+    private func layerState(at index: Int) -> LayerState {
+        let layer = layers[index]
+        return LayerState(
+            imageData: layer.imageData,
+            filename: layer.filename,
+            assignedCondition: layer.assignedCondition,
+            inverted: layer.inverted,
+            scalingMode: layer.scalingMode,
+            colorSpace: layer.colorSpace
+        )
+    }
+
+    private func registerLayerRestoreUndo(actionName: String, index: Int, restore: LayerState) {
+        guard let undoManager = undoController.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            target.restoreLayer(at: index, to: restore, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func restoreLayer(at index: Int, to state: LayerState, actionName: String) {
+        guard index >= 0 && index < layers.count else { return }
+        let inverse = layerState(at: index)
+        registerLayerRestoreUndo(actionName: actionName, index: index, restore: inverse)
+        undoController.performWithoutRegistration {
+            let layer = layers[index]
+            layer.imageData = state.imageData
+            layer.filename = state.filename
+            layer.assignedCondition = state.assignedCondition
+            layer.inverted = state.inverted
+            layer.scalingMode = state.scalingMode
+            layer.colorSpace = state.colorSpace
+        }
+        handleUpstreamChange()
+    }
+
+    private func menuTitle(prefix: String, actionName: String?) -> String {
+        guard let actionName, !actionName.isEmpty else { return prefix }
+        return "\(prefix) \(actionName)"
     }
 
     private struct CompositePreviewKey: Equatable {
@@ -1010,9 +1146,9 @@ final class AppModel {
         // and stale pre-load undo actions would restore a half-replaced model.
         isRestoringProject = true
         defer { isRestoringProject = false }
-        undo.performWithoutRegistration { applySnapshotContents(s) }
+        undoController.performWithoutRegistration { applySnapshotContents(s) }
         wireUndoHooks()
-        undo.reset()
+        undoController.reset()
     }
 
     private func applySnapshotContents(_ s: ProjectDocument) {

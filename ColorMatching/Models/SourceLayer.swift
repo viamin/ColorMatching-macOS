@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import CoreGraphics
+import ColorComposerCore
 
 /// One grayscale source image and how it is mapped into the composition.
 @MainActor
