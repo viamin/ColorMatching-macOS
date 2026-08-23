@@ -3,6 +3,7 @@ import ColorComposerCore
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.undoManager) private var undoManager
     @State private var previewMode: PreviewMode = .composite
     let addImages: () -> Void
 
@@ -21,6 +22,9 @@ struct ContentView: View {
         // document. Normal input edits should preserve the chosen tab.
         .onChange(of: model.documentStateID) {
             previewMode = .composite
+        }
+        .onAppear {
+            model.attachUndoManager(undoManager)
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {

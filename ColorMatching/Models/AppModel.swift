@@ -21,6 +21,9 @@ final class AppModel {
     @ObservationIgnored
     private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
 
+    @ObservationIgnored
+    private weak var undoManager: UndoManager?
+
     /// The token this catalog's last `configure(...)` call was made with. Every
     /// `AppModel` window shares the same `UserDefaults`-backed `serverToken`, so
     /// when another window's re-auth persists a fresher token here, this
@@ -55,6 +58,10 @@ final class AppModel {
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         configuredToken = serverToken
+    }
+
+    func attachUndoManager(_ undoManager: UndoManager?) {
+        self.undoManager = undoManager
     }
 
     // MARK: - Catalog / server
@@ -152,6 +159,103 @@ final class AppModel {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
     }
 
+    func setWeight(_ keyPath: WritableKeyPath<ChannelWeights, Double>, to newValue: Double) {
+        applyUndoableChange(
+            actionName: "Change Weight",
+            currentValue: { self.weights[keyPath: keyPath] },
+            newValue: newValue,
+            update: { self.weights[keyPath: keyPath] = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLogicalWidth(_ newValue: Int) {
+        applyUndoableChange(
+            actionName: "Change Resolution",
+            currentValue: { self.logicalWidth },
+            newValue: newValue,
+            update: { self.logicalWidth = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLogicalHeight(_ newValue: Int) {
+        applyUndoableChange(
+            actionName: "Change Resolution",
+            currentValue: { self.logicalHeight },
+            newValue: newValue,
+            update: { self.logicalHeight = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLogicalSize(width: Int, height: Int) {
+        let newSize = CGSize(width: width, height: height)
+        applyUndoableChange(
+            actionName: "Change Resolution",
+            currentValue: { CGSize(width: self.logicalWidth, height: self.logicalHeight) },
+            newValue: newSize,
+            update: { size in
+                self.logicalWidth = Int(size.width)
+                self.logicalHeight = Int(size.height)
+            },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setPixelsPerCell(_ newValue: Int) {
+        applyUndoableChange(
+            actionName: "Change Export Scaling",
+            currentValue: { self.pixelsPerCell },
+            newValue: newValue,
+            update: { self.pixelsPerCell = $0 }
+        )
+    }
+
+    func setLayerAssignedCondition(_ newValue: LightingCondition?, for index: Int) {
+        guard index >= 0 && index < layers.count else { return }
+        applyUndoableChange(
+            actionName: "Change Layer Assignment",
+            currentValue: { self.layers[index].assignedCondition },
+            newValue: newValue,
+            update: { self.layers[index].assignedCondition = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLayerScalingMode(_ newValue: ImageScalingMode, for index: Int) {
+        guard index >= 0 && index < layers.count else { return }
+        applyUndoableChange(
+            actionName: "Change Layer Scaling",
+            currentValue: { self.layers[index].scalingMode },
+            newValue: newValue,
+            update: { self.layers[index].scalingMode = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLayerColorSpace(_ newValue: BrightnessColorSpace, for index: Int) {
+        guard index >= 0 && index < layers.count else { return }
+        applyUndoableChange(
+            actionName: "Change Layer Color Space",
+            currentValue: { self.layers[index].colorSpace },
+            newValue: newValue,
+            update: { self.layers[index].colorSpace = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
+    func setLayerInverted(_ newValue: Bool, for index: Int) {
+        guard index >= 0 && index < layers.count else { return }
+        applyUndoableChange(
+            actionName: "Invert Layer",
+            currentValue: { self.layers[index].inverted },
+            newValue: newValue,
+            update: { self.layers[index].inverted = $0 },
+            afterChange: handleUpstreamChange
+        )
+    }
+
     private struct CompositePreviewKey: Equatable {
         let revision: Int
         let mode: RasterMode
@@ -163,6 +267,49 @@ final class AppModel {
         let mode: RasterMode
         let pixelsPerCell: Int
         let profile: SoftProofProfile
+    }
+
+    private func applyUndoableChange<Value: Equatable>(
+        actionName: String,
+        currentValue: @escaping () -> Value,
+        newValue: Value,
+        update: @escaping (Value) -> Void,
+        afterChange: @escaping () -> Void = {}
+    ) {
+        let oldValue = currentValue()
+        guard oldValue != newValue else { return }
+        registerUndo(
+            actionName: actionName,
+            currentValue: currentValue,
+            restoreValue: oldValue,
+            update: update,
+            afterChange: afterChange
+        )
+        update(newValue)
+        afterChange()
+    }
+
+    private func registerUndo<Value: Equatable>(
+        actionName: String,
+        currentValue: @escaping () -> Value,
+        restoreValue: Value,
+        update: @escaping (Value) -> Void,
+        afterChange: @escaping () -> Void
+    ) {
+        guard let undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let redoValue = currentValue()
+            target.registerUndo(
+                actionName: actionName,
+                currentValue: currentValue,
+                restoreValue: redoValue,
+                update: update,
+                afterChange: afterChange
+            )
+            update(restoreValue)
+            afterChange()
+        }
+        undoManager.setActionName(actionName)
     }
 
 
@@ -718,6 +865,7 @@ final class AppModel {
     private func applySnapshot(_ s: ProjectDocument) {
         isRestoringProject = true
         defer { isRestoringProject = false }
+        undoManager?.removeAllActions()
         clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken
