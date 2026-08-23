@@ -30,6 +30,9 @@ final class AppModel {
     @ObservationIgnored
     private var configuredToken = ""
 
+    @ObservationIgnored
+    private weak var undoManager: UndoManager?
+
     init() {
         // No deinit-time cleanup is needed: these catalog callbacks capture self
         // weakly and no-op after deallocation, and in-flight catalog requests are
@@ -55,6 +58,29 @@ final class AppModel {
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         configuredToken = serverToken
+    }
+
+    func setUndoManager(_ undoManager: UndoManager?) {
+        self.undoManager = undoManager
+    }
+
+    var canUndo: Bool { undoManager?.canUndo ?? false }
+    var canRedo: Bool { undoManager?.canRedo ?? false }
+
+    var undoMenuTitle: String {
+        menuTitle(prefix: "Undo", actionName: undoManager?.undoActionName)
+    }
+
+    var redoMenuTitle: String {
+        menuTitle(prefix: "Redo", actionName: undoManager?.redoActionName)
+    }
+
+    func undo() {
+        undoManager?.undo()
+    }
+
+    func redo() {
+        undoManager?.redo()
     }
 
     // MARK: - Catalog / server
@@ -150,6 +176,73 @@ final class AppModel {
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
+    }
+
+    func setWeight(_ keyPath: WritableKeyPath<ChannelWeights, Double>, to newValue: Double) {
+        let currentValue = weights[keyPath: keyPath]
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Weight") { target in
+            target.setWeight(keyPath, to: currentValue)
+        }
+        weights[keyPath: keyPath] = newValue
+        handleUpstreamChange()
+    }
+
+    func setLogicalWidth(_ newValue: Int) {
+        setCompositionValue(\.logicalWidth, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLogicalHeight(_ newValue: Int) {
+        setCompositionValue(\.logicalHeight, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLogicalSize(width: Int, height: Int) {
+        guard logicalWidth != width || logicalHeight != height else { return }
+        let oldWidth = logicalWidth
+        let oldHeight = logicalHeight
+        registerUndo(actionName: "Change Resolution") { target in
+            target.setLogicalSize(width: oldWidth, height: oldHeight)
+        }
+        logicalWidth = width
+        logicalHeight = height
+        handleUpstreamChange()
+    }
+
+    func setPixelsPerCell(_ newValue: Int) {
+        setCompositionValue(\.pixelsPerCell, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLayerAssignedCondition(_ index: Int, to newValue: LightingCondition?) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.assignedCondition
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Layer Assignment") { target in
+            target.setLayerAssignedCondition(index, to: currentValue)
+        }
+        layer.assignedCondition = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerScalingMode(_ index: Int, to newValue: ImageScalingMode) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.scalingMode
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Layer Scaling") { target in
+            target.setLayerScalingMode(index, to: currentValue)
+        }
+        layer.scalingMode = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerInverted(_ index: Int, to newValue: Bool) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.inverted
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Invert Layer") { target in
+            target.setLayerInverted(index, to: currentValue)
+        }
+        layer.inverted = newValue
+        handleUpstreamChange()
     }
 
     private struct CompositePreviewKey: Equatable {
@@ -804,5 +897,37 @@ final class AppModel {
         previewRevision += 1
         cachedCompositePreview = nil
         cachedSoftProofPreview = nil
+    }
+
+    private func menuTitle(prefix: String, actionName: String?) -> String {
+        guard let actionName, !actionName.isEmpty else { return prefix }
+        return "\(prefix) \(actionName)"
+    }
+
+    private func setCompositionValue<Value: Equatable>(
+        _ keyPath: ReferenceWritableKeyPath<AppModel, Value>,
+        to newValue: Value,
+        actionName: String
+    ) {
+        let currentValue = self[keyPath: keyPath]
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: actionName) { target in
+            target.setCompositionValue(keyPath, to: currentValue, actionName: actionName)
+        }
+        self[keyPath: keyPath] = newValue
+        handleUpstreamChange()
+    }
+
+    private func registerUndo(
+        actionName: String,
+        handler: @escaping (AppModel) -> Void
+    ) {
+        undoManager?.registerUndo(withTarget: self, handler: handler)
+        undoManager?.setActionName(actionName)
+    }
+
+    private func layer(at index: Int) -> SourceLayer? {
+        guard index >= 0 && index < layers.count else { return nil }
+        return layers[index]
     }
 }

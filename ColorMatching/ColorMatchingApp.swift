@@ -41,6 +41,7 @@ struct ColorMatchingApp: App {
 private struct DocumentSceneView: View {
     @State private var model = AppModel()
     @State private var didConsumePendingProject = false
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         ContentView(addImages: addImages)
@@ -50,6 +51,7 @@ private struct DocumentSceneView: View {
             // state instead of a process-wide model shared by every scene.
             .focusedSceneValue(\.documentCommandContext, commandContext)
             .task {
+                model.setUndoManager(undoManager)
                 consumePendingProjectIfNeeded()
             }
     }
@@ -119,12 +121,18 @@ private struct DocumentSceneView: View {
             printTiles: model.printTiles,
             addImages: addImages,
             generate: model.runSolve,
+            undo: model.undo,
+            redo: model.redo,
             tilingEnabled: model.tilingEnabled,
             canGenerate: model.canGenerate,
             canExportComposite: model.canExportComposite,
             canExportTiles: model.canExportTiles,
             canPrintComposite: model.canPrintComposite,
-            canPrintTiles: model.canPrintTiles
+            canPrintTiles: model.canPrintTiles,
+            canUndo: model.canUndo,
+            canRedo: model.canRedo,
+            undoMenuTitle: model.undoMenuTitle,
+            redoMenuTitle: model.redoMenuTitle
         )
     }
 }
@@ -139,12 +147,18 @@ private struct DocumentCommandContext {
     let printTiles: () -> Void
     let addImages: () -> Void
     let generate: () -> Void
+    let undo: () -> Void
+    let redo: () -> Void
     let tilingEnabled: Bool
     let canGenerate: Bool
     let canExportComposite: Bool
     let canExportTiles: Bool
     let canPrintComposite: Bool
     let canPrintTiles: Bool
+    let canUndo: Bool
+    let canRedo: Bool
+    let undoMenuTitle: String
+    let redoMenuTitle: String
 }
 
 private struct DocumentCommandContextKey: FocusedValueKey {
@@ -163,6 +177,14 @@ private struct DocumentCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        CommandGroup(replacing: .undoRedo) {
+            Button(context?.undoMenuTitle ?? "Undo") { context?.undo() }
+                .keyboardShortcut("z")
+                .disabled(!(context?.canUndo ?? false))
+            Button(context?.redoMenuTitle ?? "Redo") { context?.redo() }
+                .keyboardShortcut("z", modifiers: [.command, .shift])
+                .disabled(!(context?.canRedo ?? false))
+        }
         CommandGroup(replacing: .newItem) {
             Button("New Project") { newProject() }
                 .keyboardShortcut("n")
