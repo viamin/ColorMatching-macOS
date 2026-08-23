@@ -1,10 +1,42 @@
 import Foundation
-import AppKit
+import CoreGraphics
 import Observation
 import ColorComposerCore
 
+private struct SourceLayerSnapshot: Sendable {
+    let assignedCondition: LightingCondition?
+    let cgImage: SendableCGImage?
+    let scalingMode: ImageScalingMode
+    let inverted: Bool
+    let colorSpace: BrightnessColorSpace
+}
+
+/// `CGImage` instances are immutable snapshots once created, so it is safe to
+/// move the cached image through the off-main solve pipeline.
+private struct SendableCGImage: @unchecked Sendable {
+    let image: CGImage
+}
+
+private enum SourceGridBuildError: LocalizedError {
+    case missingSourceImage(LightingCondition)
+    case unreadableSourceImage(LightingCondition)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingSourceImage(let condition):
+            return "No source image is assigned to the active “\(condition.displayName)” channel."
+        case .unreadableSourceImage(let condition):
+            return "The source image assigned to the active “\(condition.displayName)” channel could not be read."
+        }
+    }
+}
+
 /// The root application state: server/profile & color sync, source layers, composition
 /// settings, and the solved result with derived preview images.
+///
+/// Main-actor isolated so it can register edits with the main-actor-isolated
+/// `UndoManager` (issue #14); the heavy solve runs off the main actor in
+/// `solveComposition(_:…)`.
 @MainActor
 @Observable
 final class AppModel {
@@ -21,9 +53,6 @@ final class AppModel {
     @ObservationIgnored
     private var cachedSoftProofPreview: (key: SoftProofPreviewKey, preview: SoftProofPreview)?
 
-    @ObservationIgnored
-    private weak var undoManager: UndoManager?
-
     /// The token this catalog's last `configure(...)` call was made with. Every
     /// `AppModel` window shares the same `UserDefaults`-backed `serverToken`, so
     /// when another window's re-auth persists a fresher token here, this
@@ -32,6 +61,15 @@ final class AppModel {
     /// already stale in `UserDefaults`.
     @ObservationIgnored
     private var configuredToken = ""
+
+    private struct LayerState {
+        let imageData: Data?
+        let filename: String?
+        let assignedCondition: LightingCondition?
+        let inverted: Bool
+        let scalingMode: ImageScalingMode
+        let colorSpace: BrightnessColorSpace
+    }
 
     init() {
         // No deinit-time cleanup is needed: these catalog callbacks capture self
@@ -58,10 +96,7 @@ final class AppModel {
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         configuredToken = serverToken
-    }
-
-    func attachUndoManager(_ undoManager: UndoManager?) {
-        self.undoManager = undoManager
+        wireUndoHooks()
     }
 
     // MARK: - Catalog / server
@@ -98,11 +133,16 @@ final class AppModel {
     func loadLayer(_ index: Int, from url: URL) -> Bool {
         guard index >= 0 && index < layers.count else { return false }
         do {
-            let defaultCondition = layers[index].assignedCondition ?? nextUnassignedCondition()
+            let previousState = layerState(at: index)
             let (data, filename, _) = try ImageUtilities.load(from: url)
-            layers[index].assignedCondition = defaultCondition
-            layers[index].imageData = data
-            layers[index].filename = filename
+            registerLayerRestoreUndo(actionName: "Load Layer", index: index, restore: previousState)
+            undoController.performWithoutRegistration {
+                layers[index].imageData = data
+                layers[index].filename = filename
+                if layers[index].assignedCondition == nil {
+                    layers[index].assignedCondition = nextUnassignedCondition()
+                }
+            }
             lastError = nil
             handleUpstreamChange()
             return true
@@ -127,8 +167,12 @@ final class AppModel {
 
     func removeLayer(_ index: Int) {
         guard index >= 0 && index < layers.count else { return }
-        layers[index].imageData = nil
-        layers[index].filename = nil
+        guard layers[index].hasImage else { return }
+        registerLayerRestoreUndo(actionName: "Remove Layer", index: index, restore: layerState(at: index))
+        undoController.performWithoutRegistration {
+            layers[index].imageData = nil
+            layers[index].filename = nil
+        }
         handleUpstreamChange()
     }
 
@@ -143,117 +187,311 @@ final class AppModel {
 
     // MARK: - Composition settings
 
-    var weights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1)
-    var scorerKind: ScorerKind = .weightedSquaredError
-    var logicalWidth = 200
-    var logicalHeight = 200
-    var pixelsPerCell = 4
-    var rasterMode: RasterMode = .flat
-    var physicalWidthMM = 200.0
-    var physicalHeightMM = 200.0
-    var showsPrintMarks = false
-    var printMarksInsetMM = 3.0
-    var printBleedMM = 0.0
+    var weights: ChannelWeights = ChannelWeights(red: 1, green: 1, blue: 1, lps: 1) {
+        didSet {
+            guard oldValue != weights else { return }
+            noteEdit(kind: "weights", actionName: "Change Weight") { $0.weights = oldValue }
+        }
+    }
+    var scorerKind: ScorerKind = .weightedSquaredError {
+        didSet {
+            guard oldValue != scorerKind else { return }
+            noteEdit(kind: "scorer", actionName: "Change Scorer") { $0.scorerKind = oldValue }
+        }
+    }
+    var logicalWidth = 200 {
+        didSet {
+            guard oldValue != logicalWidth else { return }
+            noteEdit(kind: "resolution", actionName: "Change Resolution") { $0.logicalWidth = oldValue }
+        }
+    }
+    var logicalHeight = 200 {
+        didSet {
+            guard oldValue != logicalHeight else { return }
+            noteEdit(kind: "resolution", actionName: "Change Resolution") { $0.logicalHeight = oldValue }
+        }
+    }
+    var pixelsPerCell = 4 {
+        didSet {
+            guard oldValue != pixelsPerCell else { return }
+            noteEdit(kind: "exportScale", actionName: "Change Export Scale") { $0.pixelsPerCell = oldValue }
+        }
+    }
+    var rasterMode: RasterMode = .flat {
+        didSet {
+            guard oldValue != rasterMode else { return }
+            noteEdit(kind: "rasterMode", actionName: "Change Raster Mode") { $0.rasterMode = oldValue }
+        }
+    }
+    var physicalWidthMM = 200.0 {
+        didSet {
+            guard oldValue != physicalWidthMM else { return }
+            noteEdit(kind: "printSize", actionName: "Change Print Size") { $0.physicalWidthMM = oldValue }
+        }
+    }
+    var physicalHeightMM = 200.0 {
+        didSet {
+            guard oldValue != physicalHeightMM else { return }
+            noteEdit(kind: "printSize", actionName: "Change Print Size") { $0.physicalHeightMM = oldValue }
+        }
+    }
+    var showsPrintMarks = false {
+        didSet {
+            guard oldValue != showsPrintMarks else { return }
+            noteEdit(kind: "printMarks", actionName: "Toggle Print Marks") { $0.showsPrintMarks = oldValue }
+        }
+    }
+    var printMarksInsetMM = 3.0 {
+        didSet {
+            guard oldValue != printMarksInsetMM else { return }
+            noteEdit(kind: "printMarks", actionName: "Change Print Marks") { $0.printMarksInsetMM = oldValue }
+        }
+    }
+    var printBleedMM = 0.0 {
+        didSet {
+            guard oldValue != printBleedMM else { return }
+            noteEdit(kind: "printBleed", actionName: "Change Bleed") { $0.printBleedMM = oldValue }
+        }
+    }
 
     var presetSizes: [(label: String, size: Int)] {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
     }
 
+    // MARK: - Undo support (issue #14)
+
+    /// Registers user composition edits with the window's undo manager so
+    /// ⌘Z / ⇧⌘Z and the Edit menu's Undo/Redo drive them. Only edits noted
+    /// here reach the undo stack — solves and results never do.
+    let undoController = CompositionUndo()
+
+    /// Connects window undo support; called when the window's undo manager
+    /// becomes available and again when a fresh model takes over.
+    func attachUndoManager(_ manager: UndoManager?) {
+        undoController.attach(manager)
+    }
+
+    func setUndoManager(_ manager: UndoManager?) {
+        attachUndoManager(manager)
+    }
+
+    var canUndo: Bool { undoController.undoManager?.canUndo ?? false }
+    var canRedo: Bool { undoController.undoManager?.canRedo ?? false }
+
+    var undoMenuTitle: String {
+        menuTitle(prefix: "Undo", actionName: undoController.undoManager?.undoActionName)
+    }
+
+    var redoMenuTitle: String {
+        menuTitle(prefix: "Redo", actionName: undoController.undoManager?.redoActionName)
+    }
+
+    func undo() {
+        undoController.undoManager?.undo()
+    }
+
+    func redo() {
+        undoController.undoManager?.redo()
+    }
+
     func setWeight(_ keyPath: WritableKeyPath<ChannelWeights, Double>, to newValue: Double) {
-        applyUndoableChange(
-            actionName: "Change Weight",
-            currentValue: { self.weights[keyPath: keyPath] },
-            newValue: newValue,
-            update: { self.weights[keyPath: keyPath] = $0 },
-            afterChange: handleUpstreamChange
-        )
+        var updated = weights
+        guard updated[keyPath: keyPath] != newValue else { return }
+        updated[keyPath: keyPath] = newValue
+        weights = updated
+        handleUpstreamChange()
     }
 
     func setLogicalWidth(_ newValue: Int) {
-        applyUndoableChange(
-            actionName: "Change Resolution",
-            currentValue: { self.logicalWidth },
-            newValue: newValue,
-            update: { self.logicalWidth = $0 },
-            afterChange: handleUpstreamChange
-        )
+        guard logicalWidth != newValue else { return }
+        logicalWidth = newValue
+        handleUpstreamChange()
     }
 
     func setLogicalHeight(_ newValue: Int) {
-        applyUndoableChange(
-            actionName: "Change Resolution",
-            currentValue: { self.logicalHeight },
-            newValue: newValue,
-            update: { self.logicalHeight = $0 },
-            afterChange: handleUpstreamChange
-        )
+        guard logicalHeight != newValue else { return }
+        logicalHeight = newValue
+        handleUpstreamChange()
     }
 
     func setLogicalSize(width: Int, height: Int) {
-        let newSize = CGSize(width: width, height: height)
-        applyUndoableChange(
-            actionName: "Change Resolution",
-            currentValue: { CGSize(width: self.logicalWidth, height: self.logicalHeight) },
-            newValue: newSize,
-            update: { size in
-                self.logicalWidth = Int(size.width)
-                self.logicalHeight = Int(size.height)
-            },
-            afterChange: handleUpstreamChange
-        )
+        guard logicalWidth != width || logicalHeight != height else { return }
+        var restore = compositionEdit()
+        restore.logicalWidth = logicalWidth
+        restore.logicalHeight = logicalHeight
+        undoController.noteUserEdit(kind: "resolution", actionName: "Change Resolution", restore: restore, swap: editSwap)
+        undoController.performWithoutRegistration {
+            logicalWidth = width
+            logicalHeight = height
+        }
+        handleUpstreamChange()
     }
 
     func setPixelsPerCell(_ newValue: Int) {
-        applyUndoableChange(
-            actionName: "Change Export Scaling",
-            currentValue: { self.pixelsPerCell },
-            newValue: newValue,
-            update: { self.pixelsPerCell = $0 }
+        guard pixelsPerCell != newValue else { return }
+        pixelsPerCell = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerAssignedCondition(_ index: Int, to newValue: LightingCondition?) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].assignedCondition != newValue else { return }
+        layers[index].assignedCondition = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerScalingMode(_ index: Int, to newValue: ImageScalingMode) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].scalingMode != newValue else { return }
+        layers[index].scalingMode = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerInverted(_ index: Int, to newValue: Bool) {
+        guard index >= 0 && index < layers.count else { return }
+        guard layers[index].inverted != newValue else { return }
+        layers[index].inverted = newValue
+        handleUpstreamChange()
+    }
+
+    /// Builds the pre-edit snapshot for a settings edit by reverting one
+    /// field of the current snapshot.
+    private func noteEdit(kind: String, actionName: String, revert: (inout CompositionEdit) -> Void) {
+        var restore = compositionEdit()
+        revert(&restore)
+        undoController.noteUserEdit(kind: kind, actionName: actionName, restore: restore, swap: editSwap)
+    }
+
+    /// Builds the pre-edit snapshot for a layer-field edit.
+    private func noteLayerEdit(_ layer: SourceLayer, edit: LayerEdit) {
+        guard let index = layers.firstIndex(where: { $0 === layer }) else { return }
+        var restore = compositionEdit()
+        restore.layers[index] = edit.reverted(restore.layers[index])
+        undoController.noteUserEdit(
+            kind: "layer.\(layer.id.uuidString).\(edit.key)",
+            actionName: edit.actionName,
+            restore: restore,
+            swap: editSwap
         )
     }
 
-    func setLayerAssignedCondition(_ newValue: LightingCondition?, for index: Int) {
-        guard index >= 0 && index < layers.count else { return }
-        applyUndoableChange(
-            actionName: "Change Layer Assignment",
-            currentValue: { self.layers[index].assignedCondition },
-            newValue: newValue,
-            update: { self.layers[index].assignedCondition = $0 },
-            afterChange: handleUpstreamChange
+    /// The current undoable settings, mirrored per layer by identity.
+    private func compositionEdit() -> CompositionEdit {
+        CompositionEdit(
+            weights: weights,
+            scorerKind: scorerKind,
+            logicalWidth: logicalWidth,
+            logicalHeight: logicalHeight,
+            pixelsPerCell: pixelsPerCell,
+            rasterMode: rasterMode,
+            physicalWidthMM: physicalWidthMM,
+            physicalHeightMM: physicalHeightMM,
+            showsPrintMarks: showsPrintMarks,
+            printMarksInsetMM: printMarksInsetMM,
+            printBleedMM: printBleedMM,
+            tilingEnabled: tilingEnabled,
+            tileWidthMM: tileWidthMM,
+            tileHeightMM: tileHeightMM,
+            tileOverlapMM: tileOverlapMM,
+            layers: layers.map {
+                CompositionEdit.Layer(
+                    id: $0.id,
+                    assignedCondition: $0.assignedCondition,
+                    inverted: $0.inverted,
+                    scalingMode: $0.scalingMode,
+                    colorSpace: $0.colorSpace
+                )
+            }
         )
     }
 
-    func setLayerScalingMode(_ newValue: ImageScalingMode, for index: Int) {
-        guard index >= 0 && index < layers.count else { return }
-        applyUndoableChange(
-            actionName: "Change Layer Scaling",
-            currentValue: { self.layers[index].scalingMode },
-            newValue: newValue,
-            update: { self.layers[index].scalingMode = $0 },
-            afterChange: handleUpstreamChange
+    /// Applies `edit` and returns the snapshot it replaced; undo and redo both
+    /// run through here so the inverse is always the displaced state. May
+    /// exceed the size target: it is a flat field-by-field copy.
+    private func swapEdit(_ edit: CompositionEdit) -> CompositionEdit {
+        let previous = compositionEdit()
+        weights = edit.weights
+        scorerKind = edit.scorerKind
+        logicalWidth = edit.logicalWidth
+        logicalHeight = edit.logicalHeight
+        pixelsPerCell = edit.pixelsPerCell
+        rasterMode = edit.rasterMode
+        physicalWidthMM = edit.physicalWidthMM
+        physicalHeightMM = edit.physicalHeightMM
+        showsPrintMarks = edit.showsPrintMarks
+        printMarksInsetMM = edit.printMarksInsetMM
+        printBleedMM = edit.printBleedMM
+        tilingEnabled = edit.tilingEnabled
+        tileWidthMM = edit.tileWidthMM
+        tileHeightMM = edit.tileHeightMM
+        tileOverlapMM = edit.tileOverlapMM
+        for layerEdit in edit.layers {
+            guard let index = layers.firstIndex(where: { $0.id == layerEdit.id }) else { continue }
+            layers[index].assignedCondition = layerEdit.assignedCondition
+            layers[index].inverted = layerEdit.inverted
+            layers[index].scalingMode = layerEdit.scalingMode
+            layers[index].colorSpace = layerEdit.colorSpace
+        }
+        handleUpstreamChange()
+        return previous
+    }
+
+    /// Weak wrapper: undo closures live in the window's undo manager and must
+    /// not keep a replaced model (and its images) alive.
+    private var editSwap: (CompositionEdit) -> CompositionEdit {
+        { [weak self] edit in
+            guard let self else { return edit }
+            return self.swapEdit(edit)
+        }
+    }
+
+    private func wireUndoHooks() {
+        for layer in layers {
+            layer.onUndoableEdit = { [weak self] layer, edit in
+                self?.noteLayerEdit(layer, edit: edit)
+            }
+        }
+    }
+
+    private func layerState(at index: Int) -> LayerState {
+        let layer = layers[index]
+        return LayerState(
+            imageData: layer.imageData,
+            filename: layer.filename,
+            assignedCondition: layer.assignedCondition,
+            inverted: layer.inverted,
+            scalingMode: layer.scalingMode,
+            colorSpace: layer.colorSpace
         )
     }
 
-    func setLayerColorSpace(_ newValue: BrightnessColorSpace, for index: Int) {
-        guard index >= 0 && index < layers.count else { return }
-        applyUndoableChange(
-            actionName: "Change Layer Color Space",
-            currentValue: { self.layers[index].colorSpace },
-            newValue: newValue,
-            update: { self.layers[index].colorSpace = $0 },
-            afterChange: handleUpstreamChange
-        )
+    private func registerLayerRestoreUndo(actionName: String, index: Int, restore: LayerState) {
+        guard let undoManager = undoController.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            target.restoreLayer(at: index, to: restore, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
     }
 
-    func setLayerInverted(_ newValue: Bool, for index: Int) {
+    private func restoreLayer(at index: Int, to state: LayerState, actionName: String) {
         guard index >= 0 && index < layers.count else { return }
-        applyUndoableChange(
-            actionName: "Invert Layer",
-            currentValue: { self.layers[index].inverted },
-            newValue: newValue,
-            update: { self.layers[index].inverted = $0 },
-            afterChange: handleUpstreamChange
-        )
+        let inverse = layerState(at: index)
+        registerLayerRestoreUndo(actionName: actionName, index: index, restore: inverse)
+        undoController.performWithoutRegistration {
+            let layer = layers[index]
+            layer.imageData = state.imageData
+            layer.filename = state.filename
+            layer.assignedCondition = state.assignedCondition
+            layer.inverted = state.inverted
+            layer.scalingMode = state.scalingMode
+            layer.colorSpace = state.colorSpace
+        }
+        handleUpstreamChange()
+    }
+
+    private func menuTitle(prefix: String, actionName: String?) -> String {
+        guard let actionName, !actionName.isEmpty else { return prefix }
+        return "\(prefix) \(actionName)"
     }
 
     private struct CompositePreviewKey: Equatable {
@@ -268,50 +506,6 @@ final class AppModel {
         let pixelsPerCell: Int
         let profile: SoftProofProfile
     }
-
-    private func applyUndoableChange<Value: Equatable>(
-        actionName: String,
-        currentValue: @escaping () -> Value,
-        newValue: Value,
-        update: @escaping (Value) -> Void,
-        afterChange: @escaping () -> Void = {}
-    ) {
-        let oldValue = currentValue()
-        guard oldValue != newValue else { return }
-        registerUndo(
-            actionName: actionName,
-            currentValue: currentValue,
-            restoreValue: oldValue,
-            update: update,
-            afterChange: afterChange
-        )
-        update(newValue)
-        afterChange()
-    }
-
-    private func registerUndo<Value: Equatable>(
-        actionName: String,
-        currentValue: @escaping () -> Value,
-        restoreValue: Value,
-        update: @escaping (Value) -> Void,
-        afterChange: @escaping () -> Void
-    ) {
-        guard let undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
-            let redoValue = currentValue()
-            target.registerUndo(
-                actionName: actionName,
-                currentValue: currentValue,
-                restoreValue: redoValue,
-                update: update,
-                afterChange: afterChange
-            )
-            update(restoreValue)
-            afterChange()
-        }
-        undoManager.setActionName(actionName)
-    }
-
 
     // MARK: - Auto-regenerate
 
@@ -496,45 +690,30 @@ final class AppModel {
             lastError = "The selected profile has no colors to generate with."
             return
         }
-        guard let grids = sourceGrids(for: active) else {
-            result = nil
-            errorStatistics = nil
-            solvedGamut = nil
-            return
-        }
+        let layerSnapshots = sourceLayerSnapshots()
 
-        let candidateColors = catalog.colors
-        let weights = self.weights
-        let solver = CompositionSolver(scorer: scorerKind.makeScorer())
         isSolving = true
         lastError = nil
-
-        let solved: Result<CompositionResult, Error>
-        do {
-            let r = try solver.solve(palette: candidateColors, sourceGrids: grids, weights: weights)
-            guard !Task.isCancelled else {
-                isSolving = false
-                return
-            }
-            solved = .success(r)
-        } catch {
-            solved = .failure(error)
-        }
+        let outcome = await Self.solveComposition(
+            palette: catalog.colors,
+            activeConditions: active,
+            layerSnapshots: layerSnapshots,
+            logicalWidth: logicalWidth,
+            logicalHeight: logicalHeight,
+            weights: weights,
+            scorerKind: scorerKind
+        )
 
         guard !Task.isCancelled else {
             isSolving = false
             return
         }
         isSolving = false
-        switch solved {
-        case .success(let r):
-            result = r
-            errorStatistics = ErrorStatistics(result: r)
-            solvedGamut = ResponseGamutAnalyzer().analyze(
-                palette: candidateColors,
-                sourceGrids: grids,
-                weights: weights
-            )
+        switch outcome {
+        case .success(let solved):
+            result = solved.result
+            errorStatistics = solved.statistics
+            solvedGamut = solved.gamut
             invalidatePreviewCaches()
         case .failure(let error):
             clearGeneratedOutput()
@@ -542,19 +721,99 @@ final class AppModel {
         }
     }
 
-    /// One brightness grid per active condition, or `nil` (having set
-    /// `lastError`) when an active channel has no assigned source image.
-    private func sourceGrids(for active: [LightingCondition]) -> [LightingCondition: BrightnessGrid]? {
+    private struct SolvedComposition {
+        let result: CompositionResult
+        let statistics: ErrorStatistics
+        let gamut: ResponseGamut
+    }
+
+    private enum SolveOutcome {
+        case success(SolvedComposition)
+        case failure(Error)
+    }
+
+    /// Runs the solve and the analyses derived from it off the main actor.
+    /// `AppModel` is main-actor isolated to host undo registration (issue
+    /// #14), so the heavy work is funneled through this nonisolated helper.
+    private nonisolated static func solveComposition(
+        palette: [PaletteColor],
+        activeConditions: [LightingCondition],
+        layerSnapshots: [SourceLayerSnapshot],
+        logicalWidth: Int,
+        logicalHeight: Int,
+        weights: ChannelWeights,
+        scorerKind: ScorerKind
+    ) async -> SolveOutcome {
+        do {
+            let sourceGrids = try sourceGrids(
+                for: activeConditions,
+                from: layerSnapshots,
+                logicalWidth: logicalWidth,
+                logicalHeight: logicalHeight
+            )
+            let solver = CompositionSolver(scorer: scorerKind.makeScorer())
+            let solved = try solver.solve(palette: palette, sourceGrids: sourceGrids, weights: weights)
+            return .success(SolvedComposition(
+                result: solved,
+                statistics: ErrorStatistics(result: solved),
+                gamut: ResponseGamutAnalyzer().analyze(palette: palette, sourceGrids: sourceGrids, weights: weights)
+            ))
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    /// Captures the current layer settings and cached images on the main actor
+    /// so resampling can run off-actor in `solveComposition` without re-decoding.
+    private func sourceLayerSnapshots() -> [SourceLayerSnapshot] {
+        layers.map {
+            SourceLayerSnapshot(
+                assignedCondition: $0.assignedCondition,
+                cgImage: $0.cgImage.map(SendableCGImage.init),
+                scalingMode: $0.scalingMode,
+                inverted: $0.inverted,
+                colorSpace: $0.colorSpace
+            )
+        }
+    }
+
+    /// One brightness grid per active condition, or throws when an active
+    /// channel has no assigned source image or its cached image is unavailable.
+    private nonisolated static func sourceGrids(
+        for active: [LightingCondition],
+        from layers: [SourceLayerSnapshot],
+        logicalWidth: Int,
+        logicalHeight: Int
+    ) throws -> [LightingCondition: BrightnessGrid] {
         var grids: [LightingCondition: BrightnessGrid] = [:]
         for condition in active {
-            guard let layer = layers.first(where: { $0.hasImage && $0.assignedCondition == condition }),
-                  let grid = layer.brightnessGrid(width: logicalWidth, height: logicalHeight) else {
-                lastError = "No source image is assigned to the active “\(condition.displayName)” channel."
-                return nil
+            guard let layer = layers.first(where: { $0.cgImage != nil && $0.assignedCondition == condition }) else {
+                throw SourceGridBuildError.missingSourceImage(condition)
+            }
+            guard let grid = brightnessGrid(for: layer, logicalWidth: logicalWidth, logicalHeight: logicalHeight) else {
+                throw layer.cgImage == nil
+                    ? SourceGridBuildError.missingSourceImage(condition)
+                    : SourceGridBuildError.unreadableSourceImage(condition)
             }
             grids[condition] = grid
         }
         return grids
+    }
+
+    private nonisolated static func brightnessGrid(
+        for layer: SourceLayerSnapshot,
+        logicalWidth: Int,
+        logicalHeight: Int
+    ) -> BrightnessGrid? {
+        guard let cgImage = layer.cgImage?.image else { return nil }
+        return BrightnessGridSampler.sample(
+            cgImage: cgImage,
+            targetWidth: logicalWidth,
+            targetHeight: logicalHeight,
+            scalingMode: layer.scalingMode,
+            invert: layer.inverted,
+            colorSpace: layer.colorSpace
+        )
     }
 
     private func hasAssignedSource(for condition: LightingCondition) -> Bool {
@@ -744,10 +1003,30 @@ final class AppModel {
     /// When enabled, `exportTiles`/`printTiles` split the export raster into
     /// page-sized tiles instead of producing one oversized file/job — for
     /// artwork larger than the printer's paper (issue #11).
-    var tilingEnabled = false
-    var tileWidthMM = 200.0
-    var tileHeightMM = 200.0
-    var tileOverlapMM = 10.0
+    var tilingEnabled = false {
+        didSet {
+            guard oldValue != tilingEnabled else { return }
+            noteEdit(kind: "tilingEnabled", actionName: "Tiling") { $0.tilingEnabled = oldValue }
+        }
+    }
+    var tileWidthMM = 200.0 {
+        didSet {
+            guard oldValue != tileWidthMM else { return }
+            noteEdit(kind: "tileSize", actionName: "Tile Size") { $0.tileWidthMM = oldValue }
+        }
+    }
+    var tileHeightMM = 200.0 {
+        didSet {
+            guard oldValue != tileHeightMM else { return }
+            noteEdit(kind: "tileSize", actionName: "Tile Size") { $0.tileHeightMM = oldValue }
+        }
+    }
+    var tileOverlapMM = 10.0 {
+        didSet {
+            guard oldValue != tileOverlapMM else { return }
+            noteEdit(kind: "tileOverlap", actionName: "Tile Overlap") { $0.tileOverlapMM = oldValue }
+        }
+    }
 
     /// The planned tile layout for the current export raster, in image pixel
     /// coordinates. `nil` when tiling is disabled or there is no result yet.
@@ -799,7 +1078,7 @@ final class AppModel {
                 tileImage,
                 physicalSizeMM: size,
                 overlay: tilePrintOverlayOptions,
-                title: "Color Composer – Tile \(tile.row + 1)×\(tile.column + 1)"
+                title: "ColorMatching – Tile \(tile.row + 1)×\(tile.column + 1)"
             )
         }
     }
@@ -863,9 +1142,16 @@ final class AppModel {
     }
 
     private func applySnapshot(_ s: ProjectDocument) {
+        // Loading a project replaces state wholesale: it is not a user edit,
+        // and stale pre-load undo actions would restore a half-replaced model.
         isRestoringProject = true
         defer { isRestoringProject = false }
-        undoManager?.removeAllActions()
+        undoController.performWithoutRegistration { applySnapshotContents(s) }
+        wireUndoHooks()
+        undoController.reset()
+    }
+
+    private func applySnapshotContents(_ s: ProjectDocument) {
         clearCompositionState()
         serverBaseURL = s.serverBaseURL
         serverToken = s.apiToken

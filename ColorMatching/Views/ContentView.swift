@@ -78,6 +78,20 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear { connectUndo() }
+        .onChange(of: ObjectIdentifier(model)) { connectUndo() }
+        .onChange(of: undoManager) { connectUndo() }
+    }
+
+    /// Registers edits with the window's undo manager so the standard Edit
+    /// menu's Undo/Redo (⌘Z / ⇧⌘Z) drive them (issue #14). Re-attaching after
+    /// the model is replaced (New Project) clears stale registrations.
+    ///
+    /// `undoManager` can still be `nil` on the first `onAppear` and only
+    /// become available once the view attaches to its window, so this also
+    /// re-runs whenever the environment's `undoManager` itself changes.
+    private func connectUndo() {
+        model.attachUndoManager(undoManager)
     }
 }
 
@@ -96,8 +110,6 @@ struct SidebarView: View {
                 TilingSettingsSection()
             }
             .padding()
-            .padding(.leading, 48)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
