@@ -769,6 +769,7 @@ final class AppModel {
         // Keep the current document running unless the replacement snapshot is
         // structurally valid; a failed open should not cancel its pending work.
         cancelPendingWork()
+        undoManager?.removeAllActions()
         applySnapshot(snapshot)
         projectURL = url
     }

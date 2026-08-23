@@ -64,4 +64,32 @@ final class AppModelUndoTests: XCTestCase {
         model.undo()
         XCTAssertNil(model.layers[0].assignedCondition)
     }
+
+    func testLoadProjectClearsUndoHistoryBeforeReplacingDocument() throws {
+        let model = AppModel()
+        let undoManager = UndoManager()
+        let replacement = AppModel()
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("json")
+
+        model.setUndoManager(undoManager)
+        model.setWeight(\.red, to: 2.5)
+        replacement.setLogicalSize(width: 320, height: 180)
+        try replacement.saveProject(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        try model.loadProject(from: url)
+
+        XCTAssertEqual(model.logicalWidth, 320)
+        XCTAssertEqual(model.logicalHeight, 180)
+        XCTAssertFalse(model.canUndo)
+
+        model.undo()
+
+        XCTAssertEqual(model.logicalWidth, 320)
+        XCTAssertEqual(model.logicalHeight, 180)
+        XCTAssertEqual(model.weights.red, 1)
+        XCTAssertFalse(model.canRedo)
+    }
 }
