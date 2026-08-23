@@ -115,13 +115,17 @@ final class AppModel {
 
     @discardableResult
     func loadLayer(_ index: Int, from url: URL) -> Bool {
-        guard index >= 0 && index < layers.count else { return false }
+        guard let layer = layer(at: index) else { return false }
         do {
-            let defaultCondition = layers[index].assignedCondition ?? nextUnassignedCondition()
+            let previousState = layerState(at: index)
+            let defaultCondition = layer.assignedCondition ?? nextUnassignedCondition()
             let (data, filename, _) = try ImageUtilities.load(from: url)
-            layers[index].assignedCondition = defaultCondition
-            layers[index].imageData = data
-            layers[index].filename = filename
+            registerUndo(actionName: "Load Layer") { target in
+                target.restoreLayer(at: index, to: previousState, actionName: "Load Layer")
+            }
+            layer.assignedCondition = defaultCondition
+            layer.imageData = data
+            layer.filename = filename
             lastError = nil
             handleUpstreamChange()
             return true
@@ -145,9 +149,13 @@ final class AppModel {
     }
 
     func removeLayer(_ index: Int) {
-        guard index >= 0 && index < layers.count else { return }
-        layers[index].imageData = nil
-        layers[index].filename = nil
+        guard let layer = layer(at: index), layer.hasImage else { return }
+        let previousState = layerState(at: index)
+        registerUndo(actionName: "Remove Layer") { target in
+            target.restoreLayer(at: index, to: previousState, actionName: "Remove Layer")
+        }
+        layer.imageData = nil
+        layer.filename = nil
         handleUpstreamChange()
     }
 
@@ -256,6 +264,15 @@ final class AppModel {
         let mode: RasterMode
         let pixelsPerCell: Int
         let profile: SoftProofProfile
+    }
+
+    private struct LayerState {
+        let imageData: Data?
+        let filename: String?
+        let assignedCondition: LightingCondition?
+        let inverted: Bool
+        let scalingMode: ImageScalingMode
+        let colorSpace: BrightnessColorSpace
     }
 
 
@@ -925,6 +942,33 @@ final class AppModel {
     ) {
         undoManager?.registerUndo(withTarget: self, handler: handler)
         undoManager?.setActionName(actionName)
+    }
+
+    private func layerState(at index: Int) -> LayerState {
+        let layer = layers[index]
+        return LayerState(
+            imageData: layer.imageData,
+            filename: layer.filename,
+            assignedCondition: layer.assignedCondition,
+            inverted: layer.inverted,
+            scalingMode: layer.scalingMode,
+            colorSpace: layer.colorSpace
+        )
+    }
+
+    private func restoreLayer(at index: Int, to state: LayerState, actionName: String) {
+        guard let layer = layer(at: index) else { return }
+        let currentState = layerState(at: index)
+        registerUndo(actionName: actionName) { target in
+            target.restoreLayer(at: index, to: currentState, actionName: actionName)
+        }
+        layer.imageData = state.imageData
+        layer.filename = state.filename
+        layer.assignedCondition = state.assignedCondition
+        layer.inverted = state.inverted
+        layer.scalingMode = state.scalingMode
+        layer.colorSpace = state.colorSpace
+        handleUpstreamChange()
     }
 
     private func layer(at index: Int) -> SourceLayer? {
