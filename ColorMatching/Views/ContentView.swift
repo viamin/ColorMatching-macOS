@@ -23,6 +23,9 @@ struct ContentView: View {
         .onChange(of: model.documentStateID) {
             previewMode = .composite
         }
+        .onAppear {
+            model.attachUndoManager(undoManager)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
