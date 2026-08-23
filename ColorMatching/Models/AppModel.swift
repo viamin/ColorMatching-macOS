@@ -30,6 +30,9 @@ final class AppModel {
     @ObservationIgnored
     private var configuredToken = ""
 
+    @ObservationIgnored
+    private weak var undoManager: UndoManager?
+
     init() {
         // No deinit-time cleanup is needed: these catalog callbacks capture self
         // weakly and no-op after deallocation, and in-flight catalog requests are
@@ -55,6 +58,29 @@ final class AppModel {
         }
         catalog.configure(baseURL: URL(string: serverBaseURL), token: serverToken)
         configuredToken = serverToken
+    }
+
+    func setUndoManager(_ undoManager: UndoManager?) {
+        self.undoManager = undoManager
+    }
+
+    var canUndo: Bool { undoManager?.canUndo ?? false }
+    var canRedo: Bool { undoManager?.canRedo ?? false }
+
+    var undoMenuTitle: String {
+        menuTitle(prefix: "Undo", actionName: undoManager?.undoActionName)
+    }
+
+    var redoMenuTitle: String {
+        menuTitle(prefix: "Redo", actionName: undoManager?.redoActionName)
+    }
+
+    func undo() {
+        undoManager?.undo()
+    }
+
+    func redo() {
+        undoManager?.redo()
     }
 
     // MARK: - Catalog / server
@@ -89,13 +115,17 @@ final class AppModel {
 
     @discardableResult
     func loadLayer(_ index: Int, from url: URL) -> Bool {
-        guard index >= 0 && index < layers.count else { return false }
+        guard let layer = layer(at: index) else { return false }
         do {
-            let defaultCondition = layers[index].assignedCondition ?? nextUnassignedCondition()
+            let previousState = layerState(at: index)
+            let defaultCondition = layer.assignedCondition ?? nextUnassignedCondition()
             let (data, filename, _) = try ImageUtilities.load(from: url)
-            layers[index].assignedCondition = defaultCondition
-            layers[index].imageData = data
-            layers[index].filename = filename
+            registerUndo(actionName: "Load Layer") { target in
+                target.restoreLayer(at: index, to: previousState, actionName: "Load Layer")
+            }
+            layer.assignedCondition = defaultCondition
+            layer.imageData = data
+            layer.filename = filename
             lastError = nil
             handleUpstreamChange()
             return true
@@ -119,9 +149,13 @@ final class AppModel {
     }
 
     func removeLayer(_ index: Int) {
-        guard index >= 0 && index < layers.count else { return }
-        layers[index].imageData = nil
-        layers[index].filename = nil
+        guard let layer = layer(at: index), layer.hasImage else { return }
+        let previousState = layerState(at: index)
+        registerUndo(actionName: "Remove Layer") { target in
+            target.restoreLayer(at: index, to: previousState, actionName: "Remove Layer")
+        }
+        layer.imageData = nil
+        layer.filename = nil
         handleUpstreamChange()
     }
 
@@ -152,6 +186,73 @@ final class AppModel {
         [("100 × 100", 100), ("200 × 200", 200), ("500 × 500", 500)]
     }
 
+    func setWeight(_ keyPath: WritableKeyPath<ChannelWeights, Double>, to newValue: Double) {
+        let currentValue = weights[keyPath: keyPath]
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Weight") { target in
+            target.setWeight(keyPath, to: currentValue)
+        }
+        weights[keyPath: keyPath] = newValue
+        handleUpstreamChange()
+    }
+
+    func setLogicalWidth(_ newValue: Int) {
+        setCompositionValue(\.logicalWidth, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLogicalHeight(_ newValue: Int) {
+        setCompositionValue(\.logicalHeight, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLogicalSize(width: Int, height: Int) {
+        guard logicalWidth != width || logicalHeight != height else { return }
+        let oldWidth = logicalWidth
+        let oldHeight = logicalHeight
+        registerUndo(actionName: "Change Resolution") { target in
+            target.setLogicalSize(width: oldWidth, height: oldHeight)
+        }
+        logicalWidth = width
+        logicalHeight = height
+        handleUpstreamChange()
+    }
+
+    func setPixelsPerCell(_ newValue: Int) {
+        setCompositionValue(\.pixelsPerCell, to: newValue, actionName: "Change Resolution")
+    }
+
+    func setLayerAssignedCondition(_ index: Int, to newValue: LightingCondition?) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.assignedCondition
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Layer Assignment") { target in
+            target.setLayerAssignedCondition(index, to: currentValue)
+        }
+        layer.assignedCondition = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerScalingMode(_ index: Int, to newValue: ImageScalingMode) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.scalingMode
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Change Layer Scaling") { target in
+            target.setLayerScalingMode(index, to: currentValue)
+        }
+        layer.scalingMode = newValue
+        handleUpstreamChange()
+    }
+
+    func setLayerInverted(_ index: Int, to newValue: Bool) {
+        guard let layer = layer(at: index) else { return }
+        let currentValue = layer.inverted
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: "Invert Layer") { target in
+            target.setLayerInverted(index, to: currentValue)
+        }
+        layer.inverted = newValue
+        handleUpstreamChange()
+    }
+
     private struct CompositePreviewKey: Equatable {
         let revision: Int
         let mode: RasterMode
@@ -163,6 +264,15 @@ final class AppModel {
         let mode: RasterMode
         let pixelsPerCell: Int
         let profile: SoftProofProfile
+    }
+
+    private struct LayerState {
+        let imageData: Data?
+        let filename: String?
+        let assignedCondition: LightingCondition?
+        let inverted: Bool
+        let scalingMode: ImageScalingMode
+        let colorSpace: BrightnessColorSpace
     }
 
 
@@ -676,6 +786,7 @@ final class AppModel {
         // Keep the current document running unless the replacement snapshot is
         // structurally valid; a failed open should not cancel its pending work.
         cancelPendingWork()
+        undoManager?.removeAllActions()
         applySnapshot(snapshot)
         projectURL = url
     }
@@ -804,5 +915,64 @@ final class AppModel {
         previewRevision += 1
         cachedCompositePreview = nil
         cachedSoftProofPreview = nil
+    }
+
+    private func menuTitle(prefix: String, actionName: String?) -> String {
+        guard let actionName, !actionName.isEmpty else { return prefix }
+        return "\(prefix) \(actionName)"
+    }
+
+    private func setCompositionValue<Value: Equatable>(
+        _ keyPath: ReferenceWritableKeyPath<AppModel, Value>,
+        to newValue: Value,
+        actionName: String
+    ) {
+        let currentValue = self[keyPath: keyPath]
+        guard currentValue != newValue else { return }
+        registerUndo(actionName: actionName) { target in
+            target.setCompositionValue(keyPath, to: currentValue, actionName: actionName)
+        }
+        self[keyPath: keyPath] = newValue
+        handleUpstreamChange()
+    }
+
+    private func registerUndo(
+        actionName: String,
+        handler: @escaping (AppModel) -> Void
+    ) {
+        undoManager?.registerUndo(withTarget: self, handler: handler)
+        undoManager?.setActionName(actionName)
+    }
+
+    private func layerState(at index: Int) -> LayerState {
+        let layer = layers[index]
+        return LayerState(
+            imageData: layer.imageData,
+            filename: layer.filename,
+            assignedCondition: layer.assignedCondition,
+            inverted: layer.inverted,
+            scalingMode: layer.scalingMode,
+            colorSpace: layer.colorSpace
+        )
+    }
+
+    private func restoreLayer(at index: Int, to state: LayerState, actionName: String) {
+        guard let layer = layer(at: index) else { return }
+        let currentState = layerState(at: index)
+        registerUndo(actionName: actionName) { target in
+            target.restoreLayer(at: index, to: currentState, actionName: actionName)
+        }
+        layer.imageData = state.imageData
+        layer.filename = state.filename
+        layer.assignedCondition = state.assignedCondition
+        layer.inverted = state.inverted
+        layer.scalingMode = state.scalingMode
+        layer.colorSpace = state.colorSpace
+        handleUpstreamChange()
+    }
+
+    private func layer(at index: Int) -> SourceLayer? {
+        guard index >= 0 && index < layers.count else { return nil }
+        return layers[index]
     }
 }
