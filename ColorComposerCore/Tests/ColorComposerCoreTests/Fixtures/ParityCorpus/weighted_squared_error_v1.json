@@ -1,0 +1,158 @@
+{
+  "corpus_version": 1,
+  "source": "WeightedSquaredError parity corpus (viamin/color_matching#111)",
+  "algorithm": "weighted_squared_error",
+  "selection_policy": "min_score_earliest_index_wins",
+  "notes": "Expected selections and scores are produced by the Elixir ColorMatching.WeightedSquaredError solver. Selection = lowest weighted squared error over channels with weight > 0; ties resolve to the earliest palette index. A candidate (or target) missing a measurement for any required (weight > 0) channel is excluded, never treated as zero brightness. Channels with weight 0 neither require a measurement nor contribute to the score. See docs/solver-parity-corpus.md for the schema and refresh procedure.",
+  "cases": [
+    {
+      "id": "doctest_reference",
+      "description": "The Elixir WeightedSquaredError doctest example: candidate (white 0.5, red 0.1, green 0.4, blue 0.0, lps 0.3) against target (white 0.8, red 0.2, green 0.7, blue 0.1, lps 0.5) with weights (0.5, 1, 1, 0, 1.5) scores 0.205. Blue has weight 0 so its difference is ignored. The candidate matching three channels exactly but missing the required lps measurement is excluded rather than winning.",
+      "tags": ["reference", "exclusion"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 210, "name": "Bright Cadmium", "hex": "#E8C547", "responses": { "white": 1.0, "red": 1.0, "green": 1.0, "blue": 1.0, "lps": 1.0 } },
+        { "id": 101, "name": "Reference Mid", "hex": "#8A6F4D", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 211, "name": "Deep Shadow", "hex": "#1A1714", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 } },
+        { "id": 212, "name": "Unmeasured LPS", "hex": "#C0B283", "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1 } }
+      ],
+      "expected": { "selected_index": 1, "selected_id": 101, "score": 0.205, "excluded_indices": [3] }
+    },
+    {
+      "id": "exact_match_scores_zero",
+      "description": "A candidate whose measured responses equal the target vector scores exactly 0 and wins over a near miss.",
+      "tags": ["zero_error"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.3, "green": 0.6 },
+      "palette": [
+        { "id": 1, "name": "Exact Match", "hex": "#4D7A33", "responses": { "red": 0.3, "green": 0.6 } },
+        { "id": 2, "name": "Off By A Tenth", "hex": "#5C8A3C", "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 1, "score": 0.0, "excluded_indices": [] }
+    },
+    {
+      "id": "tie_earliest_palette_index_wins",
+      "description": "Candidates at red 0.4 and red 0.6 are equidistant from target red 0.5 (score 0.01 each, bit-identical in IEEE 754). The earliest palette index must win, matching the Elixir best_match policy.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 501, "name": "Below Target", "hex": "#7A3B2E", "responses": { "red": 0.4 } },
+        { "id": 502, "name": "Above Target", "hex": "#8C4A38", "responses": { "red": 0.6 } },
+        { "id": 503, "name": "Far Off", "hex": "#D9803F", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 501, "score": 0.01, "excluded_indices": [], "tied_indices": [0, 1] }
+    },
+    {
+      "id": "tie_is_order_dependent_reversed",
+      "description": "The same tied pair as tie_earliest_palette_index_wins with the palette order reversed: the winner flips to the new first candidate. This documents that selection under ties is deterministic in palette order, not in color identity.",
+      "tags": ["tie", "order_dependence"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 502, "name": "Above Target", "hex": "#8C4A38", "responses": { "red": 0.6 } },
+        { "id": 501, "name": "Below Target", "hex": "#7A3B2E", "responses": { "red": 0.4 } },
+        { "id": 503, "name": "Far Off", "hex": "#D9803F", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 502, "score": 0.01, "excluded_indices": [], "tied_indices": [0, 1] }
+    },
+    {
+      "id": "unmeasured_is_not_zero_brightness",
+      "description": "A candidate measured at red 0.0 participates (error 0.01); a candidate with no red measurement at all is excluded. Missing must never be confused with measured-zero brightness.",
+      "tags": ["exclusion", "missing_measurement"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.1 },
+      "palette": [
+        { "id": 601, "name": "Measured Zero", "hex": "#14110F", "responses": { "red": 0.0 } },
+        { "id": 602, "name": "Unmeasured Red", "hex": "#3D5A80", "responses": { "green": 0.7 } },
+        { "id": 603, "name": "Hot Red", "hex": "#C1121F", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 601, "score": 0.01, "excluded_indices": [1] }
+    },
+    {
+      "id": "zero_weight_channel_neither_requires_nor_contributes",
+      "description": "Red has weight 0. A candidate without any red measurement still wins on white alone: zero-weight channels must not require measurements and must not contribute to the score.",
+      "tags": ["zero_weight"],
+      "weights": { "white": 1.0, "red": 0.0 },
+      "target": { "white": 0.5 },
+      "palette": [
+        { "id": 701, "name": "White Exact Red Unmeasured", "hex": "#B8B2A5", "responses": { "white": 0.5 } },
+        { "id": 702, "name": "White Off", "hex": "#C5BFB2", "responses": { "white": 0.6, "red": 0.9 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 701, "score": 0.0, "excluded_indices": [] }
+    },
+    {
+      "id": "equal_weights_prefer_lowest_total_error",
+      "description": "With equal weights the candidate whose total squared error is lower (0.16 vs 0.25) wins.",
+      "tags": ["weights"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 801, "name": "Red Biased", "hex": "#A6301F", "responses": { "red": 0.9, "green": 0.5 } },
+        { "id": 802, "name": "Green Biased", "hex": "#2F6B3A", "responses": { "red": 0.5, "green": 0.0 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 801, "score": 0.16, "excluded_indices": [] }
+    },
+    {
+      "id": "heavy_weight_flips_selection",
+      "description": "Same palette and target as equal_weights_prefer_lowest_total_error, but red is weighted 10:1. The per-channel weight now dominates, flipping the winner to the green-biased candidate (0.25 vs 1.6).",
+      "tags": ["weights", "weight_flip"],
+      "weights": { "red": 10.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 801, "name": "Red Biased", "hex": "#A6301F", "responses": { "red": 0.9, "green": 0.5 } },
+        { "id": 802, "name": "Green Biased", "hex": "#2F6B3A", "responses": { "red": 0.5, "green": 0.0 } }
+      ],
+      "expected": { "selected_index": 1, "selected_id": 802, "score": 0.25, "excluded_indices": [] }
+    },
+    {
+      "id": "multi_channel_weighted_sum",
+      "description": "Three active channels with distinct weights (red 1, green 2, blue 3) and non-trivial decimal responses: the score is the sum of per-channel weighted squared errors (0.0009 + 0.0098 + 0.0027 = 0.0134).",
+      "tags": ["weights", "precision"],
+      "weights": { "red": 1.0, "green": 2.0, "blue": 3.0 },
+      "target": { "red": 0.87, "green": 0.52, "blue": 0.13 },
+      "palette": [
+        { "id": 901, "name": "Warmer Mix", "hex": "#9C4A3C", "responses": { "red": 0.80, "green": 0.60, "blue": 0.20 } },
+        { "id": 902, "name": "Closer Mix", "hex": "#8F5347", "responses": { "red": 0.90, "green": 0.45, "blue": 0.10 } }
+      ],
+      "expected": { "selected_index": 1, "selected_id": 902, "score": 0.0134, "excluded_indices": [] }
+    },
+    {
+      "id": "single_candidate_selected_despite_large_error",
+      "description": "The only eligible candidate is selected even with the maximum possible error. The target carries lps 0.0 as a present-with-zero value (present-with-zero is required and rankable, unlike a missing measurement).",
+      "tags": ["single_candidate"],
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.0 },
+      "palette": [
+        { "id": 1001, "name": "Only LPS", "hex": "#F2C14E", "responses": { "lps": 1.0 } }
+      ],
+      "expected": { "selected_index": 0, "selected_id": 1001, "score": 1.0, "excluded_indices": [] }
+    },
+    {
+      "id": "all_candidates_excluded_no_selection",
+      "description": "Every candidate lacks a measurement for at least one required channel, so none is rankable: no selection is made (expected selected_id is null) rather than falling back to a zero-brightness match.",
+      "tags": ["exclusion", "no_selection"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 1101, "name": "No Green", "hex": "#6A2C22", "responses": { "red": 0.5 } },
+        { "id": 1102, "name": "No Red", "hex": "#274A2D", "responses": { "green": 0.5 } },
+        { "id": 1103, "name": "White Only", "hex": "#D8D4CB", "responses": { "white": 1.0 } }
+      ],
+      "expected": { "selected_index": null, "selected_id": null, "score": null, "excluded_indices": [0, 1, 2] }
+    },
+    {
+      "id": "target_missing_required_channel_excludes_everything",
+      "description": "The target itself lacks a measurement for a required channel (green is absent from the target vector). Every candidate is excluded, so no selection is made; the scorer must not substitute zero for the missing target brightness.",
+      "tags": ["exclusion", "missing_target", "no_selection"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 1201, "name": "Full Pair", "hex": "#59323C", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 1202, "name": "Shifted Pair", "hex": "#5F3A42", "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "expected": { "selected_index": null, "selected_id": null, "score": null, "excluded_indices": [] }
+    }
+  ]
+}
