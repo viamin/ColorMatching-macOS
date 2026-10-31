@@ -37,6 +37,42 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - Wire contract pins (must survive the generated-client migration, issue #39)
+
+    func testFetchPrinterProfilesPinsAPIV1RequestTarget() async throws {
+        let lock = NSLock()
+        var targets: [String] = []
+        let client = makeClient { request in
+            lock.lock()
+            targets.append(request.url?.absoluteString ?? "<nil>")
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(targets, ["http://example.com/api/v1/printer_profiles"])
+    }
+
+    func testFetchColorsPinsAPIV1QueryAndEnvelopeMapping() async throws {
+        let lock = NSLock()
+        var requests: [(url: String, accept: String?)] = []
+        let client = makeClient { request in
+            lock.lock()
+            requests.append((request.url?.absoluteString ?? "<nil>", request.value(forHTTPHeaderField: "Accept")))
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(requests.map(\.url), ["http://example.com/api/v1/colors?printer_profile_id=7"])
+        XCTAssertEqual(requests.first?.accept, "application/json")
+        XCTAssertEqual(fetched.colors.map(\.id), [9])
+        XCTAssertEqual(fetched.colors.first?.responses["red"]?.brightness, 0.5)
+        XCTAssertEqual(fetched.profile?.id, 7)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +92,30 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 7,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 9,
+              "name": "Red 12",
+              "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "responses": {
+                "red": {"brightness": 0.5, "source": "measurement"}
+              }
             }
           ]
         }
