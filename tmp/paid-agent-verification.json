@@ -1,0 +1,68 @@
+{
+  "status": "passed",
+  "summary": "Test-writing phase for issue #39 (generated OpenAPI client adoption + solver parity corpus) completed on branch paid/39-adopt-generated-openapi-client-and-enforce-solver-04d92b. Committed: solver parity corpus test target (seed corpus hand-derived from the Elixir WeightedSquaredError doctest + documented best_match/4 semantics, all 8 cases cross-verified against an exact offline simulation of the Swift scorer semantics), wire-contract pinning tests for PaletteAPIClient, and a red structural conformance test for the OpenAPI generated-client adoption. No Swift toolchain exists in this container, so swift test could not be executed; corpus consistency was verified by simulating scorer semantics (canonical channel order, earliest-wins ties, exclusions) in Python against the committed fixture — all cases consistent. Red-phase failures are expected and permitted for OpenAPIClientAdoptionTests (they demonstrate the missing generated-client adoption).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "swift-openapi-generator + swift-openapi-runtime added to ColorComposerCore; typed client generated from the OpenAPI document; PaletteAPIClient migrated/wrapped",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift", "result": "red_expected_missing_behavior" }
+        ],
+        "notes": "Structural conformance test fails until Package.swift declares swift-openapi-runtime + swift-openapi-generator, the OpenAPI document (viamin/color_matching#110) is committed, and generated OpenAPI.swift sources exist. Upstream spec not fetchable from this container (GitHub proxy is scoped to this repo only). Implementation lands in the follow-up implementation run."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Existing behavior preserved: per-server/profile color caching, offline-stale badges, cached profile fallback, /api/v1 wire contract",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientWireContractTests.swift", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "pre-existing_permanent" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/APIDecodingTests.swift", "result": "pre-existing_permanent" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "pre-existing_permanent_69_tests_disk_cache_offline_stale_fallback" }
+        ],
+        "notes": "Skipped reason: no Swift toolchain in this container (swift: command not found), tests could not be executed locally. The migration gate is in place: wire-contract tests pin URL paths, printer_profile_id query name, Accept/Bearer headers with token trimming, 401/500/malformed error mapping, and envelope decoding."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver_parity_corpus.json", "result": "committed_cross_verified_offline" }
+        ],
+        "notes": "Skipped reason: no Swift toolchain in this container. Corpus runs through the real CompositionSolver (1x1 grids) asserting selected id, winning score (1e-9), earliest-wins ties, excluded_ids, and excludedCandidateCount; target-missing-required-channel cases asserted at scorer level. Fixture is a seed corpus (Elixir doctest 0.205 case, 2 tie cases, 1 exclusion case, 1 null-selection case, weight-flip cases); upstream corpus from viamin/color_matching#111 is not fetchable from this container and replaces the seed via the documented refresh procedure (docs/solver-parity-corpus.md)."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Corpus consumption documented in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "committed" }
+        ],
+        "notes": "Skipped reason: test-writing phase restricts commits to test paths and LID docs (docs/, AGENTS.md, ...); README.md is outside the allowlist. Full corpus documentation (location, schema, loader resolution order, refresh procedure, README linkage note) committed under docs/ for the implementation run to link from the README."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "notes": "PR is published by Paid after this run; description content is drafted in docs/solver-parity-corpus.md (parity scope) — migration notes and any /api/v1 shape findings belong to the implementation run once the upstream OpenAPI spec (viamin/color_matching#110) is consumable."
+      }
+    }
+  ]
+}
