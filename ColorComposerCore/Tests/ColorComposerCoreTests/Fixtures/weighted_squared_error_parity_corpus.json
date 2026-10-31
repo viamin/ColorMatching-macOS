@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "source": "WeightedSquaredError solver parity corpus — vendored from viamin/color_matching (#111). Refresh by copying the upstream file over this one (see docs/solver-parity-corpus.md).",
+  "cases": [
+    {
+      "id": "elixir-doctest-single-candidate",
+      "description": "Mirrors the Elixir WeightedSquaredError doctest: weighted sum 0.205. The blue response is measured but blue has weight 0, so blue is neither required nor scored.",
+      "palette": [
+        { "id": 101, "name": "Doctest Ink", "hex": "#808080", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } }
+      ],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "expected": { "selection_index": 0, "score": 0.205, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "exact-match-scores-zero",
+      "description": "A candidate whose measured vector equals the target scores 0 and wins over an off-target rival.",
+      "palette": [
+        { "id": 1, "name": "Exact", "hex": "#1a2b3c", "responses": { "white": 0.25, "red": 0.75 } },
+        { "id": 2, "name": "Off", "hex": "#2b1a3c", "responses": { "white": 0.5, "red": 0.25 } }
+      ],
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.25, "red": 0.75 },
+      "expected": { "selection_index": 0, "score": 0.0, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "nearest-of-four-blue-lps",
+      "description": "Four candidates under asymmetric blue/lps weights; the nearest response vector wins with a non-zero score.",
+      "palette": [
+        { "id": 11, "hex": "#000000", "responses": { "blue": 0.0, "lps": 0.0 } },
+        { "id": 12, "hex": "#331100", "responses": { "blue": 0.6, "lps": 0.5 } },
+        { "id": 13, "hex": "#003322", "responses": { "blue": 0.4, "lps": 0.6 } },
+        { "id": 14, "hex": "#00224b", "responses": { "blue": 0.1, "lps": 0.9 } }
+      ],
+      "weights": { "blue": 2.0, "lps": 0.5 },
+      "target": { "blue": 0.45, "lps": 0.55 },
+      "expected": { "selection_index": 2, "score": 0.00625, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "missing-measurement-excluded-not-zero",
+      "description": "The numerically closest candidate lacks a green measurement; a missing measurement excludes the candidate rather than counting as zero brightness, so the fully-measured color wins.",
+      "palette": [
+        { "id": 21, "name": "Red only", "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 22, "name": "Fully measured", "hex": "#888888", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "expected": { "selection_index": 1, "score": 0.0, "tie": false, "excluded_candidates": 1 }
+    },
+    {
+      "id": "zero-weight-channel-not-required",
+      "description": "A color without a red measurement stays eligible because red has weight 0; only weighted channels are required.",
+      "palette": [
+        { "id": 31, "hex": "#404040", "responses": { "white": 0.5 } },
+        { "id": 32, "hex": "#505050", "responses": { "white": 0.4, "red": 0.9 } }
+      ],
+      "weights": { "white": 1.0, "red": 0.0 },
+      "target": { "white": 0.5 },
+      "expected": { "selection_index": 0, "score": 0.0, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "tie-identical-responses-earliest-wins",
+      "description": "Two candidates with identical measured responses tie exactly; the earlier palette entry wins.",
+      "palette": [
+        { "id": 41, "hex": "#0a0a0a", "responses": { "red": 0.5 } },
+        { "id": 42, "hex": "#0b0b0b", "responses": { "red": 0.5 } },
+        { "id": 43, "hex": "#0c0c0c", "responses": { "red": 0.9 } }
+      ],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "expected": { "selection_index": 0, "score": 0.0, "tie": true, "excluded_candidates": 0 }
+    },
+    {
+      "id": "tie-within-pair-beats-outlier",
+      "description": "The tying pair sits later in palette order; the outlier loses and the earlier member of the pair wins.",
+      "palette": [
+        { "id": 51, "hex": "#100000", "responses": { "red": 0.2 } },
+        { "id": 52, "hex": "#200000", "responses": { "red": 0.5 } },
+        { "id": 53, "hex": "#300000", "responses": { "red": 0.5 } }
+      ],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "expected": { "selection_index": 1, "score": 0.0, "tie": true, "excluded_candidates": 0 }
+    },
+    {
+      "id": "symmetric-cross-tie-earliest-wins",
+      "description": "Two candidates mirrored around the target tie at 0.5; the earliest wins.",
+      "palette": [
+        { "id": 61, "hex": "#001111", "responses": { "white": 0.0, "red": 1.0 } },
+        { "id": 62, "hex": "#111100", "responses": { "white": 1.0, "red": 0.0 } }
+      ],
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "expected": { "selection_index": 0, "score": 0.5, "tie": true, "excluded_candidates": 0 }
+    },
+    {
+      "id": "weight-flip-white-heavy",
+      "description": "Equal weights favor the candidate that is closer on white (exact match) despite its larger red error.",
+      "palette": [
+        { "id": 71, "hex": "#101010", "responses": { "white": 0.5, "red": 0.9 } },
+        { "id": 72, "hex": "#202020", "responses": { "white": 0.0, "red": 0.5 } }
+      ],
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "expected": { "selection_index": 0, "score": 0.16, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "weight-flip-red-heavy",
+      "description": "The same palette and target as weight-flip-white-heavy, but with white weight 0.1 the selection flips to the red-exact candidate — weights change the winner.",
+      "palette": [
+        { "id": 71, "hex": "#101010", "responses": { "white": 0.5, "red": 0.9 } },
+        { "id": 72, "hex": "#202020", "responses": { "white": 0.0, "red": 0.5 } }
+      ],
+      "weights": { "white": 0.1, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "expected": { "selection_index": 1, "score": 0.025, "tie": false, "excluded_candidates": 0 }
+    },
+    {
+      "id": "all-candidates-excluded-unmatched",
+      "description": "Every candidate is missing the required green measurement, so nothing is selectable and the cell stays unmatched.",
+      "palette": [
+        { "id": 81, "hex": "#400000", "responses": { "red": 0.5 } },
+        { "id": 82, "hex": "#500000", "responses": { "red": 0.4 } }
+      ],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "expected": { "selection_index": null, "tie": false, "excluded_candidates": 2 }
+    }
+  ]
+}
