@@ -1,0 +1,286 @@
+{
+  "schema": 1,
+  "generator": "color_matching WeightedSquaredError solver parity corpus",
+  "upstream": "viamin/color_matching#111",
+  "notes": "Each case gives per-condition weights, a target response vector, candidate palette colors in solver (palette) order, and the expected selection under the Elixir WeightedSquaredError solver. Selection is the eligible candidate with the lowest score = sum over active conditions of weight * (candidate - target)^2; active conditions (weight > 0) are required on both candidate and target, otherwise the candidate is excluded; ties resolve to the earliest candidate in palette order. selected_candidate_id is null when every candidate is excluded. Tied cases use dyadic brightness values so tied scores are exactly equal in IEEE-754 doubles.",
+  "cases": [
+    {
+      "id": "elixir_doctest_reference",
+      "description": "Mirrors the Elixir WeightedSquaredError doctest: expected score 0.205 with blue zero-weighted and therefore inactive.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        {
+          "id": 101,
+          "name": "Violet 12",
+          "hex": "#6B3FA0",
+          "responses": {
+            "white": { "brightness": 0.5 },
+            "red": { "brightness": 0.1 },
+            "green": { "brightness": 0.4 },
+            "blue": { "brightness": 0.0 },
+            "lps": { "brightness": 0.3 }
+          }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 101,
+        "score": 0.205,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": []
+      }
+    },
+    {
+      "id": "exact_match_scores_zero",
+      "description": "A candidate matching every active channel exactly beats a near miss with score 0.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.25, "green": 0.75 },
+      "candidates": [
+        {
+          "id": 201,
+          "name": "Exact Swatch",
+          "hex": "#C64A35",
+          "responses": { "red": { "brightness": 0.25 }, "green": { "brightness": 0.75 } }
+        },
+        {
+          "id": 202,
+          "name": "Near Miss",
+          "hex": "#D97757",
+          "responses": { "red": { "brightness": 0.375 }, "green": { "brightness": 0.75 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 201,
+        "score": 0.0,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": []
+      }
+    },
+    {
+      "id": "symmetric_tie_earliest_candidate_wins",
+      "description": "Candidates 301 and 303 sit symmetrically around the target with identical scores; the earlier one in palette order must win.",
+      "weights": { "white": 1, "red": 0, "green": 0, "blue": 0, "lps": 0 },
+      "target": { "white": 0.5 },
+      "candidates": [
+        {
+          "id": 301,
+          "name": "Half Dark",
+          "hex": "#3B82F6",
+          "responses": { "white": { "brightness": 0.25 } }
+        },
+        {
+          "id": 302,
+          "name": "Full Dark",
+          "hex": "#111827",
+          "responses": { "white": { "brightness": 0.0 } }
+        },
+        {
+          "id": 303,
+          "name": "Half Light",
+          "hex": "#93C5FD",
+          "responses": { "white": { "brightness": 0.75 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 301,
+        "score": 0.0625,
+        "tie": true,
+        "tied_candidate_ids": [301, 303],
+        "excluded_candidate_ids": []
+      }
+    },
+    {
+      "id": "tie_with_excluded_perfect_channel_candidate",
+      "description": "401 matches red perfectly but lacks the required green measurement, so it is excluded despite the untied pair 402/403; the tie between 402 and 403 resolves to the earlier one.",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        {
+          "id": 401,
+          "name": "Red Only",
+          "hex": "#F59E0B",
+          "responses": { "red": { "brightness": 0.5 } }
+        },
+        {
+          "id": 402,
+          "name": "Swapped A",
+          "hex": "#10B981",
+          "responses": { "red": { "brightness": 0.25 }, "green": { "brightness": 0.75 } }
+        },
+        {
+          "id": 403,
+          "name": "Swapped B",
+          "hex": "#EF4444",
+          "responses": { "red": { "brightness": 0.75 }, "green": { "brightness": 0.25 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 402,
+        "score": 0.125,
+        "tie": true,
+        "tied_candidate_ids": [402, 403],
+        "excluded_candidate_ids": [401]
+      }
+    },
+    {
+      "id": "target_missing_active_condition_excludes_all",
+      "description": "The target vector itself lacks the required LPS measurement, so every candidate is excluded and no selection is made.",
+      "weights": { "lps": 1, "red": 1 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        {
+          "id": 501,
+          "name": "Full Vector",
+          "hex": "#8B5CF6",
+          "responses": { "red": { "brightness": 0.5 }, "lps": { "brightness": 1.0 } }
+        },
+        {
+          "id": 502,
+          "name": "Other Vector",
+          "hex": "#065F46",
+          "responses": { "red": { "brightness": 0.25 }, "lps": { "brightness": 0.75 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": null,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": [501, 502]
+      }
+    },
+    {
+      "id": "zero_weight_channel_missing_measurement_is_ignored",
+      "description": "Red is explicitly zero-weighted, so 601's missing red measurement must not exclude it; only white counts.",
+      "weights": { "white": 1, "red": 0 },
+      "target": { "white": 0.6 },
+      "candidates": [
+        {
+          "id": 601,
+          "name": "White Only",
+          "hex": "#E5E7EB",
+          "responses": { "white": { "brightness": 0.5 } }
+        },
+        {
+          "id": 602,
+          "name": "Both Measured",
+          "hex": "#9CA3AF",
+          "responses": { "white": { "brightness": 0.8 }, "red": { "brightness": 0.9 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 601,
+        "score": 0.01,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": []
+      }
+    },
+    {
+      "id": "small_weight_on_large_error_beats_heavy_weight_on_small_error",
+      "description": "Weighting dominates raw distance: 701's large red error (weight 0.25) still beats 702's small green error (weight 3).",
+      "weights": { "red": 0.25, "green": 3 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        {
+          "id": 701,
+          "name": "Red Off",
+          "hex": "#F97316",
+          "responses": { "red": { "brightness": 0.0 }, "green": { "brightness": 0.5 } }
+        },
+        {
+          "id": 702,
+          "name": "Green Off",
+          "hex": "#0EA5E9",
+          "responses": { "red": { "brightness": 0.5 }, "green": { "brightness": 0.75 } }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 701,
+        "score": 0.0625,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": []
+      }
+    },
+    {
+      "id": "measured_zero_is_not_missing",
+      "description": "801 has green measured as exactly 0.0 — it participates and wins; 802's absent green measurement excludes it rather than counting as zero.",
+      "weights": { "green": 2 },
+      "target": { "green": 0.5 },
+      "candidates": [
+        {
+          "id": 801,
+          "name": "Measured Black",
+          "hex": "#000000",
+          "responses": { "green": { "brightness": 0.0 } }
+        },
+        {
+          "id": 802,
+          "name": "Unmeasured",
+          "hex": "#FFFFFF",
+          "responses": {}
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 801,
+        "score": 0.5,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": [802]
+      }
+    },
+    {
+      "id": "all_five_conditions_weighted",
+      "description": "Full five-channel vectors with distinct weights; the smallest weighted error (903, green off by 0.125 under weight 3) wins.",
+      "weights": { "white": 1, "red": 2, "green": 3, "blue": 4, "lps": 5 },
+      "target": { "white": 1.0, "red": 1.0, "green": 1.0, "blue": 1.0, "lps": 1.0 },
+      "candidates": [
+        {
+          "id": 901,
+          "name": "White Off",
+          "hex": "#7F1D1D",
+          "responses": {
+            "white": { "brightness": 0.5 },
+            "red": { "brightness": 1.0 },
+            "green": { "brightness": 1.0 },
+            "blue": { "brightness": 1.0 },
+            "lps": { "brightness": 1.0 }
+          }
+        },
+        {
+          "id": 902,
+          "name": "Red Off",
+          "hex": "#7C2D12",
+          "responses": {
+            "white": { "brightness": 1.0 },
+            "red": { "brightness": 0.75 },
+            "green": { "brightness": 1.0 },
+            "blue": { "brightness": 1.0 },
+            "lps": { "brightness": 1.0 }
+          }
+        },
+        {
+          "id": 903,
+          "name": "Green Off",
+          "hex": "#14532D",
+          "responses": {
+            "white": { "brightness": 1.0 },
+            "red": { "brightness": 1.0 },
+            "green": { "brightness": 0.875 },
+            "blue": { "brightness": 1.0 },
+            "lps": { "brightness": 1.0 }
+          }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 903,
+        "score": 0.046875,
+        "tie": false,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": []
+      }
+    }
+  ]
+}
