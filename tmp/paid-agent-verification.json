@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-only phase: added the committed v1 solver parity corpus, its fixture-driven permanent unit test, and corpus refresh documentation. Swift is not installed in this container, so the required test command could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API-client contract tests retained; generated-client migration test is deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing per-server/profile disk-cache coverage retained; Swift test execution is unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "Added permanent fixture-driven parity coverage for exact scores, selections, ties, exclusions, and weights; not executed because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Resources/SolverParity/v1/corpus.json",
+            "result": "Byte-identical to viamin/color_matching priv/parity/v1/corpus.json (SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Documents corpus ownership, location, coverage, and refresh procedure. README update is deferred because this test-writing phase permits only tests and LID docs."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "PR description is deferred until the implementation and PR-publishing phase."
+          }
+        ]
+      }
+    }
+  ]
+}
