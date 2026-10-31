@@ -37,14 +37,156 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - /api/v1 wire contract
+    //
+    // These pin the on-the-wire behavior the migration to the generated
+    // OpenAPI client (swift-openapi-generator, viamin/color_matching#113)
+    // must preserve exactly. See docs/openapi-client-migration.md.
+
+    func testFetchPrinterProfilesRequestsCanonicalEndpoint() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.httpMethod, "GET")
+            XCTAssertEqual(request.url?.absoluteString, "http://example.com/api/v1/printer_profiles")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        let profiles = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(profiles.count, 1)
+        XCTAssertEqual(profiles.first?.id, 1)
+        XCTAssertEqual(profiles.first?.printerMakeModel, "Example Printer")
+        XCTAssertEqual(profiles.first?.paperType, "Matte")
+        XCTAssertEqual(profiles.first?.inkType, "Pigment")
+    }
+
+    func testFetchColorsRequestsCanonicalEndpointAndQuery() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.httpMethod, "GET")
+            XCTAssertEqual(request.url?.absoluteString, "http://example.com/api/v1/colors?printer_profile_id=7")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(fetched.colors.count, 1)
+        XCTAssertEqual(fetched.profile?.id, 7)
+        let color = try XCTUnwrap(fetched.colors.first)
+        XCTAssertEqual(color.id, 123)
+        XCTAssertEqual(color.name, "Red 12")
+        XCTAssertEqual(color.hex, "#C64A35")
+        XCTAssertEqual(color.rgb?.r, 198)
+        XCTAssertEqual(color.rgb?.g, 74)
+        XCTAssertEqual(color.rgb?.b, 53)
+        XCTAssertEqual(color.paletteId, 5)
+        XCTAssertEqual(color.sortOrder, 12)
+        XCTAssertEqual(color.responses["red"]?.brightness, 0.87)
+        XCTAssertEqual(color.responses["lps"]?.apparentBrightness, 5)
+        XCTAssertNil(color.responses["green"])
+    }
+
+    func testFetchColorsMapsUnauthorizedToUnauthorizedError() async {
+        let client = makeClient { request in
+            (.init(statusCode: 401, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 7)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
+        }
+    }
+
+    func testFetchColorsMapsNon2xxToBadStatus() async {
+        let client = makeClient { request in
+            (.init(statusCode: 500, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 7)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(500))
+        }
+    }
+
+    func testFetchColorsMapsUndecodableBodyToMalformedResponse() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("not json".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 7)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testFetchPrinterProfilesMapsUndecodableBodyToMalformedResponse() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("{".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchPrinterProfiles()) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testAbsentOrBlankTokenSendsNoAuthorizationHeader() async throws {
+        for token in [nil, "", "   \t"] {
+            let lock = NSLock()
+            var authorizationHeaders: [String?] = []
+            let client = makeClient(token: token) { request in
+                lock.lock()
+                authorizationHeaders.append(request.value(forHTTPHeaderField: "Authorization"))
+                lock.unlock()
+                return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+            }
+
+            _ = try await client.fetchPrinterProfiles()
+
+            XCTAssertEqual(authorizationHeaders, [nil], "token \(token ?? "nil") must not authorize")
+        }
+    }
+
+    func testTestConnectionSucceedsOn2xxAndMaps401() async {
+        let rejected = makeClient { request in
+            (.init(statusCode: 401, url: request.url!), Data())
+        }
+        await XCTAssertThrowsErrorAsync(try await rejected.testConnection()) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
+        }
+
+        // MockURLProtocol.handler is shared static state; only install the
+        // next client's handler after the previous request has completed.
+        let ok = makeClient { request in
+            (.init(statusCode: 204, url: request.url!), Data())
+        }
+        do {
+            try await ok.testConnection()
+        } catch {
+            XCTFail("2xx testConnection should succeed, got \(error)")
+        }
+    }
+
+    /// The published OpenAPI spec marks `printer_profile` as required in the
+    /// colors envelope; the current hand-rolled DTO still decodes tolerantly
+    /// when it is absent. Both directions are pinned so the generated-client
+    /// migration makes a deliberate choice, not an accidental one.
+    func testFetchColorsToleratesEnvelopeWithoutPrinterProfile() async throws {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data(#"{"colors":[{"id":9,"hex":"#000000","responses":{}}]}"#.utf8))
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 1)
+
+        XCTAssertEqual(fetched.colors.map(\.id), [9])
+        XCTAssertNil(fetched.profile)
+    }
+
     private func makeClient(
+        token: String? = "  stale-token  ",
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
         MockURLProtocol.handler = handler
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
+        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: token, session: session)
     }
 
     private func printerProfilesResponse() -> Data {
@@ -56,6 +198,29 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    /// Shape-matched to the `ColorsResponse` schema published at
+    /// viamin/color_matching#113 (`printer_profile`, `colors` required).
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 7, "printer_make_model": "Epson", "paper_type": "Glossy", "ink_type": "Dye"
+          },
+          "colors": [
+            {
+              "id": 123, "name": "Red 12", "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "palette_id": 5, "palette_name": "Default", "sort_order": 12,
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement", "raw_value": null, "raw_unit": null, "apparent_brightness": null, "measured_at": null, "test_run_id": null},
+                "lps": {"brightness": 0.52, "source": "response", "apparent_brightness": 5, "raw_value": null, "raw_unit": null, "measured_at": null, "test_run_id": null}
+              }
             }
           ]
         }
