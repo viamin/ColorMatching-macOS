@@ -1,0 +1,93 @@
+{
+  "status": "not_run",
+  "summary": "Added a permanent corpus-driven solver parity test and its committed fixture. The Swift toolchain is unavailable in this container, and the declared upstream PR endpoints return HTTP 404, so the corpus cannot yet be verified against the source of record.",
+  "verification_plan": [
+    {
+      "criterion": "Generated OpenAPI client migration preserves PaletteAPIClient cache and offline fallback behavior",
+      "verification": "Focused unit/service tests around PaletteAPIClient and ProfileColorCache using URLProtocol stubs for per-server/profile cache, stale data, and cached profile fallback."
+    },
+    {
+      "criterion": "WeightedSquaredErrorScorer selections match the parity corpus, including ties, exclusions, and weights",
+      "verification": "Permanent unit/service test that decodes the committed corpus and asserts the solver's selected palette ID for every case."
+    },
+    {
+      "criterion": "Corpus consumption is documented in the README",
+      "verification": "Human inspection of README instructions and a fixture path/reference check during review."
+    },
+    {
+      "criterion": "PR description captures migration and parity findings",
+      "verification": "Human/external inspection of the published PR description."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "not run: swift executable is unavailable in the container"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not run: swift executable is unavailable in the container"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:5",
+            "result": "not run: swift executable is unavailable in the container"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "fixture committed; source viamin/color_matching#111 is inaccessible from this environment (HTTP 404)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "consumption and refresh instructions added in permitted documentation; README editing is prohibited during the tests-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "GitHub PR description",
+            "result": "not created: this run is restricted to tests and permitted documentation, and changes must not be pushed"
+          }
+        ]
+      }
+    }
+  ]
+}
