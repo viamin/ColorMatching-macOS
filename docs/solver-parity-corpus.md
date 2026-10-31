@@ -13,7 +13,7 @@ divergence — tie-breaking, missing-measurement exclusion, or channel weighting
 | Committed fixture (consumed by tests) | `ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity-v1-corpus.json` |
 | Upstream source of truth | `priv/parity/v1/corpus.json` in `viamin/color_matching` |
 | Upstream generator | `lib/color_matching/parity/corpus.ex` + `mix parity.generate` |
-| Provenance of the committed copy | `viamin/color_matching@main` (corpus landed with the parity-corpus PR series, issue #111; commit `a82aec5441d2`), byte-identical — sha256 `7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604` |
+| Provenance of the committed copy | `viamin/color_matching@main` (landed as PR #112, closes #111; commit `a82aec5441d2`), byte-identical — sha256 `7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604` (verified against `https://raw.githubusercontent.com/viamin/color_matching/main/priv/parity/v1/corpus.json`) |
 
 The fixture filename is versioned (`parity-v{algorithm_version}-corpus.json`); the corpus's
 `algorithm_version` field is bumped upstream whenever scoring semantics change, and the
@@ -86,3 +86,9 @@ inside the existing `ColorComposerCoreTests` target because splitting out a dedi
 SwiftPM test target requires editing `Package.swift` (an implementation-path change).
 The implementation run may split it into `SolverParityTests` verbatim; the fixture loader
 resolves the file either by test-bundle resource or by `#filePath`, so the move is mechanical.
+
+Related `Package.swift` follow-through for the implementation run: `swift build` only
+*warns* about the undeclared `Tests/ColorComposerCoreTests/Fixtures/` resource files, and
+the loader's `#filePath` fallback means the suite passes regardless — but declaring
+`resources: [.copy("Fixtures")]` on the test target silences the warning and makes the
+bundle-resource lookup path the one that runs.
