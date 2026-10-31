@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "generator": "seed-corpus (hand-derived from ColorMatching.WeightedSquaredError semantics: sum of weight*(candidate-target)^2 over channels with weight > 0; candidates or targets missing a required measurement are excluded; lowest score wins with earliest-candidate tie-breaking). Replace this file with the generated corpus from viamin/color_matching#111 when it lands.",
+  "case_count": 10,
+  "cases": [
+    {
+      "id": "elixir-doctest",
+      "description": "The Elixir WeightedSquaredError doctest vector: candidate (white 0.5, red 0.1, green 0.4, lps 0.3) against target (white 0.8, red 0.2, green 0.7, lps 0.5) with weights (0.5, 1, 1, 0, 1.5) scores 0.205. Blue has weight 0 and is absent everywhere without excluding.",
+      "tags": ["doctest"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "candidates": [
+        { "id": 1, "hex": "#808080", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } }
+      ],
+      "expected_selection": 1,
+      "expected_score": 0.205,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "single-channel-nearest",
+      "description": "Only red is active; the nearest brightness wins. Scores: id 10 -> 0.01, id 11 -> 0.09, id 12 -> 0.0004.",
+      "tags": ["nearest"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.6 },
+      "candidates": [
+        { "id": 10, "hex": "#100000", "responses": { "red": 0.5 } },
+        { "id": 11, "hex": "#220000", "responses": { "red": 0.9 } },
+        { "id": 12, "hex": "#180000", "responses": { "red": 0.62 } }
+      ],
+      "expected_selection": 12,
+      "expected_score": 0.0004,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "exact-tie-earliest-wins",
+      "description": "Two candidates sit symmetrically around the target (0.25 and 0.75 vs 0.5), producing a bitwise-equal score of 0.0625. The earlier candidate (id 20) must win; id 22 scores 0.140625. All values are exact binary fractions so the tie is exact in IEEE 754 double arithmetic.",
+      "tags": ["tie"],
+      "weights": { "green": 1.0 },
+      "target": { "green": 0.5 },
+      "candidates": [
+        { "id": 20, "hex": "#001010", "responses": { "green": 0.25 } },
+        { "id": 21, "hex": "#003030", "responses": { "green": 0.75 } },
+        { "id": 22, "hex": "#003838", "responses": { "green": 0.875 } }
+      ],
+      "expected_selection": 20,
+      "expected_score": 0.0625,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "zero-error-tie-earliest-wins",
+      "description": "Duplicate palette entries (ids 30 and 31) both match the target exactly, scoring 0.0. The first duplicate must win. id 32 misses lps by 0.125 and scores 2.0 * 0.015625 = 0.03125.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0, "lps": 2.0 },
+      "target": { "red": 0.5, "lps": 0.25 },
+      "candidates": [
+        { "id": 30, "hex": "#3a3a3a", "responses": { "red": 0.5, "lps": 0.25 } },
+        { "id": 31, "hex": "#3a3a3b", "responses": { "red": 0.5, "lps": 0.25 } },
+        { "id": 32, "hex": "#3a3a3c", "responses": { "red": 0.5, "lps": 0.375 } }
+      ],
+      "expected_selection": 30,
+      "expected_score": 0.0,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "multi-channel-tie-earliest-wins",
+      "description": "Two candidates mirror each other across the target on red and green (0.375/0.625 vs 0.625/0.375 against 0.5/0.5), each scoring 0.03125 exactly. The earlier candidate (id 90) must win; id 92 matches red exactly but misses green badly (0.25).",
+      "tags": ["tie"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 90, "hex": "#0a3a3a", "responses": { "red": 0.375, "green": 0.625 } },
+        { "id": 91, "hex": "#3a0a3a", "responses": { "red": 0.625, "green": 0.375 } },
+        { "id": 92, "hex": "#003a00", "responses": { "red": 0.5, "green": 1.0 } }
+      ],
+      "expected_selection": 90,
+      "expected_score": 0.03125,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "missing-required-measurement-excludes-best-candidate",
+      "description": "id 40 lacks a green measurement while green has weight 1.0, so it is excluded even though its red channel matches exactly (it would otherwise dominate). Selection falls to id 41 (0.02) over id 42 (0.18). Missing is never treated as zero brightness.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 40, "hex": "#0a0000", "responses": { "red": 0.5 } },
+        { "id": 41, "hex": "#0a0a3a", "responses": { "red": 0.6, "green": 0.4 } },
+        { "id": 42, "hex": "#3a3a3a", "responses": { "red": 0.8, "green": 0.8 } }
+      ],
+      "expected_selection": 41,
+      "expected_score": 0.02,
+      "expected_excluded_ids": [40]
+    },
+    {
+      "id": "zero-weight-missing-measurement-does-not-exclude",
+      "description": "blue has weight 0.0, so id 50's missing blue measurement must NOT exclude it: it matches white exactly (0.0) and beats id 51 (0.0025). A weight-0 channel is inactive for both scoring and exclusion.",
+      "tags": ["exclusion", "weight-handling"],
+      "weights": { "white": 1.0, "blue": 0.0 },
+      "target": { "white": 0.7 },
+      "candidates": [
+        { "id": 50, "hex": "#b3b3b3", "responses": { "white": 0.7 } },
+        { "id": 51, "hex": "#bfbfbf", "responses": { "white": 0.75, "blue": 1.0 } }
+      ],
+      "expected_selection": 50,
+      "expected_score": 0.0,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "target-missing-required-channel-excludes-all",
+      "description": "The target itself lacks green while green has weight 1.0, so every candidate is excluded and no selection exists. The corpus encodes this as a null expected_selection.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 60, "hex": "#0a3a3a", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_selection": null,
+      "expected_excluded_ids": [60]
+    },
+    {
+      "id": "channel-weight-flips-selection",
+      "description": "With equal weights id 70 would win (0.065 vs 0.2029), but red carries weight 8.0: id 70 scores 0.0025 + 8*0.0625 = 0.5025 while id 71 scores 0.2025 + 8*0.0004 = 0.2057, so the heavy red weight flips selection to id 71.",
+      "tags": ["weight-handling"],
+      "weights": { "white": 1.0, "red": 8.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "candidates": [
+        { "id": 70, "hex": "#73bf3a", "responses": { "white": 0.45, "red": 0.75 } },
+        { "id": 71, "hex": "#f2850a", "responses": { "white": 0.95, "red": 0.52 } }
+      ],
+      "expected_selection": 71,
+      "expected_score": 0.2057,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "realistic-palette-with-lps-exclusion",
+      "description": "Five-channel case mirroring server data. id 83 is closest to the target on every measured channel (would score 0.000275) but has no lps measurement while lps carries weight 1.5, so it is excluded; id 82 wins with 0.007475 over id 81 (0.6299) and id 80 (1.15665).",
+      "tags": ["exclusion", "weight-handling"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.25, "lps": 1.5 },
+      "target": { "white": 0.3, "red": 0.2, "green": 0.6, "blue": 0.1, "lps": 0.4 },
+      "candidates": [
+        { "id": 80, "hex": "#e6e6e6", "responses": { "white": 0.9, "red": 0.85, "green": 0.88, "blue": 0.86, "lps": 0.87 } },
+        { "id": 81, "hex": "#050505", "responses": { "white": 0.02, "red": 0.01, "green": 0.02, "blue": 0.02, "lps": 0.02 } },
+        { "id": 82, "hex": "#598fef", "responses": { "white": 0.35, "red": 0.25, "green": 0.55, "blue": 0.15, "lps": 0.38 } },
+        { "id": 83, "hex": "#4f3096", "responses": { "white": 0.31, "red": 0.19, "green": 0.59, "blue": 0.11 } }
+      ],
+      "expected_selection": 82,
+      "expected_score": 0.007475,
+      "expected_excluded_ids": [83]
+    }
+  ]
+}
