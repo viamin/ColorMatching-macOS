@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "source": {
+    "upstream_repo": "viamin/color_matching",
+    "upstream_corpus_pr": 111,
+    "upstream_openapi_pr": 110,
+    "server_solver": "ColorMatching.WeightedSquaredError",
+    "client_scorer": "ColorComposerCore.WeightedSquaredErrorScorer",
+    "notes": "Golden cases pinning client/server solver parity. Selections are exact, including ties (earliest palette entry wins) and exclusions (a candidate missing a measurement for any weight>0 condition is excluded; measured-zero is NOT missing). Until the upstream corpus artifact from viamin/color_matching#111 is published, this file carries the seed corpus in the same schema; refresh instructions live in docs/solver-parity-corpus.md."
+  },
+  "cases": [
+    {
+      "id": "exact-match-zero-error",
+      "description": "Target equal to one palette response vector selects that color with score 0.",
+      "weights": { "red": 1, "green": 1 },
+      "palette": [
+        { "id": 101, "hex": "#c0392b", "responses": { "red": 0.2, "green": 0.8 } },
+        { "id": 102, "hex": "#2471a3", "responses": { "red": 0.9, "green": 0.1 } },
+        { "id": 103, "hex": "#7d3c98", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.2, "green": 0.8 }
+      ],
+      "expected_selections": [101],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "weights-scale-channel-contributions",
+      "description": "A 4x heavier red weight changes the winner between two off-by-symmetric candidates.",
+      "weights": { "red": 4, "green": 1 },
+      "palette": [
+        { "id": 201, "hex": "#0a0a0a", "responses": { "red": 0.0, "green": 0.5 } },
+        { "id": 202, "hex": "#f5f5f5", "responses": { "red": 1.0, "green": 0.5 } },
+        { "id": 203, "hex": "#808080", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.4, "green": 0.5 },
+        { "red": 0.9, "green": 0.5 }
+      ],
+      "expected_selections": [203, 202],
+      "expected_scores": [0.04, 0.04],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "fractional-weights-elixir-doctest",
+      "description": "The Elixir WeightedSquaredError doctest case: score 0.205 with weights white=0.5 red=1 green=1 blue=0 lps=1.5. Blue carries zero weight, so the candidates' missing blue measurement must not exclude them.",
+      "weights": { "white": 0.5, "red": 1, "green": 1, "blue": 0, "lps": 1.5 },
+      "palette": [
+        { "id": 301, "hex": "#1e8449", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 303, "hex": "#9b59b6", "responses": { "white": 0.9, "red": 0.9, "green": 0.9, "lps": 0.9 } },
+        { "id": 304, "hex": "#17202a", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "lps": 0.0 } }
+      ],
+      "targets": [
+        { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 }
+      ],
+      "expected_selections": [301],
+      "expected_scores": [0.205],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "tie-identical-vectors-earliest-wins",
+      "description": "Two colors with identical response vectors tie at score 0; the earlier palette entry (id 401) must win.",
+      "weights": { "red": 1, "green": 1 },
+      "palette": [
+        { "id": 401, "hex": "#aaaaaa", "responses": { "red": 0.3, "green": 0.7 } },
+        { "id": 402, "hex": "#bbbbbb", "responses": { "red": 0.3, "green": 0.7 } },
+        { "id": 403, "hex": "#cccccc", "responses": { "red": 0.9, "green": 0.1 } }
+      ],
+      "targets": [
+        { "red": 0.3, "green": 0.7 }
+      ],
+      "expected_selections": [401],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "tie-at-nonzero-score-earliest-wins",
+      "description": "Two distinct colors symmetric around the target tie at score 0.08; the earlier palette entry (id 501) must win even though the tie is not at zero.",
+      "weights": { "red": 1, "green": 1 },
+      "palette": [
+        { "id": 501, "hex": "#1abc9c", "responses": { "red": 0.5, "green": 0.9 } },
+        { "id": 502, "hex": "#e67e22", "responses": { "red": 0.9, "green": 0.5 } },
+        { "id": 503, "hex": "#2c3e50", "responses": { "red": 0.1, "green": 0.1 } }
+      ],
+      "targets": [
+        { "red": 0.7, "green": 0.7 }
+      ],
+      "expected_selections": [501],
+      "expected_scores": [0.08],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "missing-measurement-excluded-not-zero",
+      "description": "Id 601 matches red exactly but lacks a green measurement: it is excluded (never treated as zero). Id 603 has a measured-zero green: it participates with score 0.25. The exact match id 602 wins.",
+      "weights": { "red": 1, "green": 1 },
+      "palette": [
+        { "id": 601, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 602, "hex": "#00ff00", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 603, "hex": "#0000ff", "responses": { "red": 0.5, "green": 0.0 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected_selections": [602],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 1
+    },
+    {
+      "id": "zero-weight-channel-does-not-exclude",
+      "description": "Green carries zero weight, so a color with no green measurement (id 701) is NOT excluded and beats the fully-measured id 702 on the only active channel.",
+      "weights": { "red": 1, "green": 0 },
+      "palette": [
+        { "id": 701, "hex": "#145a32", "responses": { "red": 0.2 } },
+        { "id": 702, "hex": "#d4ac0d", "responses": { "red": 0.9, "green": 0.9 } }
+      ],
+      "targets": [
+        { "red": 0.2, "green": 0.9 }
+      ],
+      "expected_selections": [701],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "all-candidates-excluded-leaves-cell-unmatched",
+      "description": "Every candidate lacks a required measurement, so the cell stays unmatched: selection and score are null and the error is infinite.",
+      "weights": { "red": 1, "green": 1 },
+      "palette": [
+        { "id": 801, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 802, "hex": "#00ff00", "responses": { "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected_selections": [null],
+      "expected_scores": [null],
+      "expected_excluded_count": 2
+    },
+    {
+      "id": "multi-cell-grid-with-lps-weight",
+      "description": "A four-target grid with lps weighted 2x: exact matches for 901/902, a zero-score tie between 903/904 resolved to 903, and a 0.03 non-zero tie also resolved to 903.",
+      "weights": { "red": 1, "lps": 2 },
+      "palette": [
+        { "id": 901, "hex": "#7b241c", "responses": { "red": 0.1, "lps": 0.9 } },
+        { "id": 902, "hex": "#1a5276", "responses": { "red": 0.9, "lps": 0.1 } },
+        { "id": 903, "hex": "#4d5656", "responses": { "red": 0.5, "lps": 0.5 } },
+        { "id": 904, "hex": "#5d6d7e", "responses": { "red": 0.5, "lps": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.1, "lps": 0.9 },
+        { "red": 0.9, "lps": 0.1 },
+        { "red": 0.5, "lps": 0.5 },
+        { "red": 0.6, "lps": 0.4 }
+      ],
+      "expected_selections": [901, 902, 903, 903],
+      "expected_scores": [0.0, 0.0, 0.0, 0.03],
+      "expected_excluded_count": 0
+    }
+  ]
+}
