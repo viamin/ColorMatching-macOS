@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "summary": "Test-writing phase for issue #39. Added SolverParityCorpusTests, which replays the committed viamin/color_matching solver parity corpus (12 scenarios, including 3 tie scenarios) against WeightedSquaredErrorScorer and asserts exact score/selection/tie-break agreement; all 211 ColorComposerCore tests pass (verified with a locally installed Swift 6.0.3 toolchain, since no toolchain is preinstalled in this container). The OpenAPI-client migration and README documentation deliverables are implementation-phase work out of scope for this test-only run and are recorded as not_run below.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-solver-parity-corpus-test",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:30", "result": "passed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:41", "result": "passed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:53", "result": "passed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-corpus.v1.json", "result": "passed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-tie-cases-covered",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:53", "result": "passed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-existing-cache-and-offline-behavior-preserved",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "passed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "passed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-generated-openapi-client-migration",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "reason": "Implementation deliverable, out of scope for this test-writing-only run (TDD boundary restricts changes to test paths and the LID doc allowlist). Deferred to the implementation run that follows paid-tests-approved."
+      }
+    },
+    {
+      "id": "AC-5-readme-documents-corpus-consumption",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "reason": "README.md is outside this run's allowed paths (spec/test/tests/.ephemeral-tests or docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md). Deferred to the implementation run."
+      }
+    },
+    {
+      "id": "AC-6-pr-description-records-parity-findings",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "reason": "Applies to the final implementation PR, not this tests-only draft."
+      }
+    }
+  ]
+}
