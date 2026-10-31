@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "source": "Seed parity contract; replace with the published viamin/color_matching#111 corpus",
+  "cases": [
+    {
+      "name": "weighted selection favors the lower total error",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.75, "green": 0.25 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.75, "green": 0.60 } },
+        { "id": 102, "responses": { "red": 0.55, "green": 0.25 } }
+      ],
+      "expected_selected_id": 102,
+      "expected_error": 0.04
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.50 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.40 } },
+        { "id": 202, "responses": { "red": 0.60 } }
+      ],
+      "expected_selected_id": 201,
+      "expected_error": 0.01
+    },
+    {
+      "name": "missing active response excludes the otherwise closest candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.50, "green": 0.50 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.50 } },
+        { "id": 302, "responses": { "red": 0.55, "green": 0.55 } }
+      ],
+      "expected_selected_id": 302,
+      "expected_error": 0.005
+    },
+    {
+      "name": "zero weight does not require or score a response",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.10, "green": 0.90 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.10 } },
+        { "id": 402, "responses": { "red": 0.20, "green": 0.90 } }
+      ],
+      "expected_selected_id": 401,
+      "expected_error": 0.0
+    },
+    {
+      "name": "all excluded candidates leave the target unmatched",
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.50 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.50 } }
+      ],
+      "expected_selected_id": null,
+      "expected_error": null
+    }
+  ]
+}
