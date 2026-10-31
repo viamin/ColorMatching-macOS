@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "source": "placeholder",
+  "source_note": "Hand-authored from the documented mirror semantics of ColorMatching.WeightedSquaredError (including its Elixir doctest value 0.205). This is a STAND-IN corpus: replace it with the generated corpus from viamin/color_matching#111 once that PR lands - see docs/solver-parity-corpus.md.",
+  "server_ref": "viamin/color_matching#111 (pending as of 2026-10-31)",
+  "cases": [
+    {
+      "id": "exact-match-scores-zero",
+      "kind": "exact",
+      "description": "A candidate whose response vector equals the target scores exactly 0 and wins.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5, "green": 0.25 },
+      "palette": [
+        { "id": 10, "hex": "#102030", "responses": { "red": 0.5, "green": 0.25 } },
+        { "id": 11, "hex": "#304050", "responses": { "red": 0.6, "green": 0.25 } }
+      ],
+      "expected": {
+        "selected_id": 10,
+        "selected_score": 0.0,
+        "candidate_scores": { "10": 0.0, "11": 0.01 },
+        "excluded_ids": []
+      }
+    },
+    {
+      "id": "weights-scale-channel-contributions",
+      "kind": "weights",
+      "description": "Per-channel weights multiply the squared difference: green (weight 4) dominates red (weight 1).",
+      "weights": { "white": 0, "red": 1, "green": 4, "blue": 0, "lps": 0 },
+      "target": { "red": 1.0, "green": 0.0 },
+      "palette": [
+        { "id": 20, "hex": "#200100", "responses": { "red": 0.0, "green": 1.0 } },
+        { "id": 21, "hex": "#210100", "responses": { "red": 1.0, "green": 0.5 } }
+      ],
+      "expected": {
+        "selected_id": 21,
+        "selected_score": 1.0,
+        "candidate_scores": { "20": 5.0, "21": 1.0 },
+        "excluded_ids": []
+      }
+    },
+    {
+      "id": "tie-breaks-to-earliest-palette-entry",
+      "kind": "tie",
+      "description": "Four candidates; three tie at 0.01. The winner is the earliest palette entry (id 31 at index 0), proving tie-breaking follows palette order, not color id and not the last equal score.",
+      "weights": { "white": 0, "red": 1, "green": 0, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 31, "hex": "#310101", "responses": { "red": 0.6 } },
+        { "id": 30, "hex": "#300101", "responses": { "red": 0.4 } },
+        { "id": 32, "hex": "#320101", "responses": { "red": 0.9 } },
+        { "id": 33, "hex": "#330101", "responses": { "red": 0.6 } }
+      ],
+      "expected": {
+        "selected_id": 31,
+        "selected_score": 0.01,
+        "candidate_scores": { "31": 0.01, "30": 0.01, "32": 0.16, "33": 0.01 },
+        "excluded_ids": []
+      }
+    },
+    {
+      "id": "missing-required-response-excludes-candidate",
+      "kind": "exclusion",
+      "description": "id 40 is missing the required green response and must be excluded - even though treating the missing value as brightness 0 would make it the unique exact winner (score 0.0). Missing is never zero.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5, "green": 0.0 },
+      "palette": [
+        { "id": 40, "hex": "#400101", "responses": { "red": 0.5 } },
+        { "id": 41, "hex": "#410101", "responses": { "red": 0.6, "green": 0.2 } },
+        { "id": 42, "hex": "#420101", "responses": { "red": 1.0, "green": 0.0 } }
+      ],
+      "expected": {
+        "selected_id": 41,
+        "selected_score": 0.05,
+        "candidate_scores": { "41": 0.05, "42": 0.25 },
+        "excluded_ids": [40]
+      }
+    },
+    {
+      "id": "zero-weight-channel-is-not-required",
+      "kind": "zero-weight",
+      "description": "A channel with weight 0 (green) is ignored: id 50 lacks a green measurement but is still eligible and wins. The target also omits green without excluding everything.",
+      "weights": { "white": 0, "red": 2, "green": 0, "blue": 0, "lps": 0 },
+      "target": { "red": 0.4 },
+      "palette": [
+        { "id": 50, "hex": "#500101", "responses": { "red": 0.4 } },
+        { "id": 51, "hex": "#510101", "responses": { "red": 0.5, "green": 0.9 } }
+      ],
+      "expected": {
+        "selected_id": 50,
+        "selected_score": 0.0,
+        "candidate_scores": { "50": 0.0, "51": 0.02 },
+        "excluded_ids": []
+      }
+    },
+    {
+      "id": "target-missing-required-channel-excludes-all",
+      "kind": "all-excluded",
+      "description": "The target itself lacks a required channel (green). Every candidate is excluded, so nothing is selectable - the solver would leave the cell unmatched.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 60, "hex": "#600101", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 61, "hex": "#610101", "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "expected": {
+        "selected_id": null,
+        "selected_score": null,
+        "candidate_scores": {},
+        "excluded_ids": [60, 61]
+      }
+    },
+    {
+      "id": "elixir-weighted-squared-error-doctest",
+      "kind": "doctest",
+      "description": "The worked example from the Elixir WeightedSquaredError doctest: expected total 0.205. Blue has weight 0 and is ignored even though both vectors carry values for it.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 70, "hex": "#700101", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } }
+      ],
+      "expected": {
+        "selected_id": 70,
+        "selected_score": 0.205,
+        "candidate_scores": { "70": 0.205 },
+        "excluded_ids": []
+      }
+    }
+  ]
+}
