@@ -370,7 +370,7 @@ final class SolverParityCorpusTests: XCTestCase {
         XCTAssertTrue(unknownWeight.weights.keys.contains("ultraviolet"))
         XCTAssertEqual(
             Set(unknownWeight.weights.keys).subtracting(baseline.weights.keys),
-            ["ultraviolet"],
+            Set(["ultraviolet"]),
             "the unknown-weight scenario must differ from its baseline by exactly the unknown key"
         )
 
