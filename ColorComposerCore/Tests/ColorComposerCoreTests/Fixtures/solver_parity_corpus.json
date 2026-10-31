@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "source": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "module": "ColorMatching.WeightedSquaredError",
+    "provenance": "Expected outputs for this initial corpus were hand-derived from the published WeightedSquaredError semantics (the Elixir doctest and the selection policy documented in both repositories). Replace this file with the generated corpus from viamin/color_matching#111 when it lands - see docs/solver-parity-corpus.md for the refresh procedure."
+  },
+  "selection_policy": "score = sum over channels with weight > 0 of weight * (candidate_brightness - target_brightness)^2; the lowest score wins; ties are broken by earliest palette position; a candidate or target missing a measurement for any weight > 0 channel is excluded, never treated as zero brightness; channels with weight 0 are ignored entirely and are not required",
+  "cases": [
+    {
+      "id": "doctest_weighted_squared_error",
+      "description": "Mirrors the Elixir WeightedSquaredError doctest: weighted sum of squared per-channel differences; the zero-weight blue channel is ignored even though both sides carry values.",
+      "weights": {"white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5},
+      "palette": [
+        {"id": 1, "name": "Paper White", "hex": "#f0ece4", "responses": {"white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3}}
+      ],
+      "target": {"white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5},
+      "expected": {"selected_id": 1, "score": 0.205, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "exact_match_scores_zero",
+      "description": "A candidate whose measured vector equals the target under every active channel wins with score zero.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "palette": [
+        {"id": 5, "name": "Target Ink", "hex": "#40bf80", "responses": {"red": 0.25, "green": 0.75}},
+        {"id": 6, "name": "Mid Ink", "hex": "#808080", "responses": {"red": 0.5, "green": 0.5}}
+      ],
+      "target": {"red": 0.25, "green": 0.75},
+      "expected": {"selected_id": 5, "score": 0.0, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "measured_zero_is_not_missing",
+      "description": "A brightness of 0.0 is a real measurement: the measured-zero color participates and beats a brighter color for a dark target. Missing is the only excluded state.",
+      "weights": {"red": 1.0},
+      "palette": [
+        {"id": 10, "name": "Ink Black", "hex": "#0b0b0b", "responses": {"red": 0.0}},
+        {"id": 11, "name": "Ink Bright", "hex": "#efefef", "responses": {"red": 0.9375}}
+      ],
+      "target": {"red": 0.125},
+      "expected": {"selected_id": 10, "score": 0.015625, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "missing_candidate_measurement_excluded",
+      "description": "The best-scoring geometry is unreachable: the candidate missing a required green measurement is excluded, so the best fully-measured candidate wins.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "palette": [
+        {"id": 20, "name": "Half Measured", "hex": "#aa1111", "responses": {"red": 0.5}},
+        {"id": 21, "name": "Dark Pair", "hex": "#404040", "responses": {"red": 0.25, "green": 0.25}},
+        {"id": 22, "name": "Bright Pair", "hex": "#c0a060", "responses": {"red": 0.75, "green": 0.625}}
+      ],
+      "target": {"red": 0.5, "green": 0.5},
+      "expected": {"selected_id": 22, "score": 0.078125, "excluded_ids": [20], "tied_ids": []}
+    },
+    {
+      "id": "zero_weight_channel_not_required",
+      "description": "A channel with weight 0 is neither scored nor required: a candidate with no green measurement still wins when only red is active, and the target's green value is ignored.",
+      "weights": {"red": 1.0, "green": 0.0},
+      "palette": [
+        {"id": 30, "name": "Red Only", "hex": "#c02020", "responses": {"red": 0.5}},
+        {"id": 31, "name": "Both", "hex": "#208040", "responses": {"red": 0.875, "green": 0.5}}
+      ],
+      "target": {"red": 0.5, "green": 0.5},
+      "expected": {"selected_id": 30, "score": 0.0, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "tie_two_way_earliest_wins",
+      "description": "Two candidates symmetric around the target score identically; the earlier palette position must win.",
+      "weights": {"red": 1.0},
+      "palette": [
+        {"id": 40, "name": "Gray Low", "hex": "#404040", "responses": {"red": 0.25}},
+        {"id": 41, "name": "Gray High", "hex": "#bfbfbf", "responses": {"red": 0.75}}
+      ],
+      "target": {"red": 0.5},
+      "expected": {"selected_id": 40, "score": 0.0625, "excluded_ids": [], "tied_ids": [40, 41]}
+    },
+    {
+      "id": "tie_three_way_earliest_wins",
+      "description": "Three candidates tie at the minimum; the earliest palette position must win, and a strictly worse fourth candidate confirms the tie set is complete.",
+      "weights": {"red": 1.0, "lps": 1.0},
+      "palette": [
+        {"id": 50, "name": "A", "hex": "#101010", "responses": {"red": 0.25, "lps": 0.5}},
+        {"id": 51, "name": "B", "hex": "#303030", "responses": {"red": 0.5, "lps": 0.25}},
+        {"id": 52, "name": "C", "hex": "#505050", "responses": {"red": 0.5, "lps": 0.75}},
+        {"id": 53, "name": "D", "hex": "#707070", "responses": {"red": 0.0, "lps": 0.0}}
+      ],
+      "target": {"red": 0.5, "lps": 0.5},
+      "expected": {"selected_id": 50, "score": 0.0625, "excluded_ids": [], "tied_ids": [50, 51, 52]}
+    },
+    {
+      "id": "equal_weights_prefer_closer_heavy_channel",
+      "description": "With equal weights the candidate closer on the widely-missing white channel but nearer on red wins overall.",
+      "weights": {"white": 1.0, "red": 1.0},
+      "palette": [
+        {"id": 60, "name": "Red Lean", "hex": "#802020", "responses": {"white": 0.0, "red": 0.625}},
+        {"id": 61, "name": "White Lean", "hex": "#c0b090", "responses": {"white": 0.75, "red": 0.0}}
+      ],
+      "target": {"white": 0.5, "red": 0.5},
+      "expected": {"selected_id": 60, "score": 0.265625, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "heavy_weight_flips_winner",
+      "description": "Same palette and target as equal_weights_prefer_closer_heavy_channel, but weighting white 4x flips the selection: weights scale squared error, not just ranking distance.",
+      "weights": {"white": 4.0, "red": 1.0},
+      "palette": [
+        {"id": 60, "name": "Red Lean", "hex": "#802020", "responses": {"white": 0.0, "red": 0.625}},
+        {"id": 61, "name": "White Lean", "hex": "#c0b090", "responses": {"white": 0.75, "red": 0.0}}
+      ],
+      "target": {"white": 0.5, "red": 0.5},
+      "expected": {"selected_id": 61, "score": 0.5, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "all_candidates_excluded",
+      "description": "Every candidate lacks a required measurement, so nothing is selectable and every candidate is reported excluded.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "palette": [
+        {"id": 70, "name": "Red Half", "hex": "#901010", "responses": {"red": 0.5}},
+        {"id": 71, "name": "Green Half", "hex": "#109010", "responses": {"green": 0.5}}
+      ],
+      "target": {"red": 0.5, "green": 0.5},
+      "expected": {"selected_id": null, "score": null, "excluded_ids": [70, 71], "tied_ids": []}
+    },
+    {
+      "id": "target_missing_required_channel",
+      "description": "A target lacking a required channel excludes every candidate; scorer-level edge case (the solver always builds full targets from source grids), so the solver cross-check is skipped.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "palette": [
+        {"id": 80, "name": "Full", "hex": "#606060", "responses": {"red": 0.25, "green": 0.75}}
+      ],
+      "target": {"red": 0.25},
+      "expected": {"selected_id": null, "score": null, "excluded_ids": [80], "tied_ids": []},
+      "solver_check": false
+    },
+    {
+      "id": "multi_channel_nearest",
+      "description": "A realistic three-channel palette: the nearest full-vector candidate wins under equal red/green/lps weights.",
+      "weights": {"red": 1.0, "green": 1.0, "lps": 1.0},
+      "palette": [
+        {"id": 90, "name": "Ink A", "hex": "#7f7f3f", "responses": {"red": 0.5, "green": 0.5, "lps": 0.25}},
+        {"id": 91, "name": "Ink B", "hex": "#60a040", "responses": {"red": 0.375, "green": 0.625, "lps": 0.5}},
+        {"id": 92, "name": "Ink C", "hex": "#40c080", "responses": {"red": 0.25, "green": 0.75, "lps": 0.0}},
+        {"id": 93, "name": "Ink D", "hex": "#a05060", "responses": {"red": 0.625, "green": 0.375, "lps": 0.25}}
+      ],
+      "target": {"red": 0.375, "green": 0.625, "lps": 0.25},
+      "expected": {"selected_id": 90, "score": 0.03125, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "fractional_weights_scale_channels",
+      "description": "Fractional weights (as the app's sliders produce) scale each channel's squared error independently; the winner differs from the equal-weight ranking.",
+      "weights": {"red": 0.25, "lps": 1.75},
+      "palette": [
+        {"id": 100, "name": "Near Red", "hex": "#b04030", "responses": {"red": 0.5, "lps": 0.0}},
+        {"id": 101, "name": "Near LPS", "hex": "#d0c060", "responses": {"red": 0.875, "lps": 0.375}}
+      ],
+      "target": {"red": 0.375, "lps": 0.375},
+      "expected": {"selected_id": 101, "score": 0.0625, "excluded_ids": [], "tied_ids": []}
+    }
+  ]
+}
