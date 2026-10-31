@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "summary": "Test-writing run for issue #39 (tests + LID docs only). Committed: (1) the solver parity corpus fixture with 13 hand-verified cases (doctest, exact match, measured-zero-vs-missing, exclusions, zero-weight channels, 2- and 3-way ties, weight-flip pair, fractional weights, all-excluded, target-missing edge) plus SolverParityCorpusTests enforcing scorer best-match parity and CompositionSolver fast-path agreement; (2) PaletteAPIContractTests characterizing the /api/v1 wire contract and error taxonomy as the generated-client migration safety net; (3) OpenAPIClientIntegrationTests, red until the manifest declares swift-openapi-generator/-runtime and the OpenAPI document covers both consumed endpoints; (4) docs for corpus consumption/refresh, migration plan, and the criterion map. Every corpus case's expected selection/score/exclusions/ties was independently recomputed against the documented algorithm before commit (all 13 PASS). Environment limitation: Linux container with no Swift toolchain; the package targets macOS + Core Graphics, so swift test cannot execute here - tests must be run with `cd ColorComposerCore && swift test` on macOS/Xcode 16 in the implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore and generate a typed client from the OpenAPI document; migrate PaletteAPIClient (implementation deliverable)",
+      "status": "not_run",
+      "reason": "Tests-only phase: implementation cannot land here. Structural gate tests are committed and are expected red until the implementation run lands the artifacts; no Swift toolchain in this Linux container to execute them.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientIntegrationTests.swift", "result": "committed_red_expected_not_executed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "reason": "Migration-preservation tests committed (wire contract, request shapes, bearer handling, error taxonomy that gates offline fallback; cache namespacing already covered by the permanent ProfileColorCacheTests suite). Cannot execute: no Swift toolchain in this container.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIContractTests.swift", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "pre-existing_permanent_suite_must_stay_green" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target loads the committed corpus and asserts WeightedSquaredErrorScorer selections match exactly, including tie cases",
+      "status": "not_run",
+      "reason": "Corpus fixture + parity tests committed (scorer best-match harness: selection, score, exclusions, tie sets, earliest-wins; plus CompositionSolver fast-path cross-check and a corpus-shape guard). Every case's expected values were independently recomputed against the documented algorithm before commit (13/13 pass), but swift test cannot run in this Linux container; must be executed on macOS in the implementation run.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver_parity_corpus.json", "result": "committed_independently_verified_13_of_13_cases" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "committed_not_executed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "passed",
+      "reason": "Corpus location, schema, provenance, and refresh procedure are documented inspectably under docs/ (this phase's doc allowlist); README.md itself is outside the test-phase allowlist and is linked by the implementation run.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "committed" },
+          { "locator": "docs/generated-openapi-client.md", "result": "committed" },
+          { "locator": "docs/issue-39-verification-plan.md", "result": "committed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "skipped",
+      "reason": "No PR is opened in this tests-only run (no push). The PR-description checklist and migration notes are captured in docs/generated-openapi-client.md and docs/issue-39-verification-plan.md for the implementation run to lift into the PR; final parity findings require macOS execution.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/generated-openapi-client.md", "result": "committed_pr_checklist_captured" }
+        ]
+      }
+    }
+  ]
+}
