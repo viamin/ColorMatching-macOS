@@ -1,0 +1,99 @@
+{
+  "status": "failed",
+  "summary": "Tests-only red-phase run for issue #39. Committed: (1) solver parity corpus fixture + SolverParityCorpusTests (scorer-level and solver-level exact selection parity incl. ties, exclusions, weight handling); (2) OpenAPIClientContractTests — red structural tests that fail until swift-openapi-generator/runtime artifacts exist; (3) wire-contract pinning additions to PaletteAPIClientTests (query, envelopes, error mapping, token header absence); (4) docs/solver-parity-corpus.md + docs/issue-39-verification-plan.md (AC map, PR notes template). Top-level is 'failed' because AC-1 is intentionally red (missing behavior demonstrated by failing tests) and swift test could not be executed in this container (no Swift toolchain; bin/lint detects and skips). Corpus arithmetic independently verified with a Python mirror of WeightedSquaredError: 9 cases / 13 targets all match. Implementation lands in the follow-up run after paid-tests-approved.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientContractTests.swift:42",
+            "result": "failed (expected red: no OpenAPI document committed under Sources/ColorComposerCore/OpenAPI/)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientContractTests.swift:68",
+            "result": "failed (expected red: Package.swift contains neither swift-openapi-generator, swift-openapi-runtime, nor OpenAPIGenerator — verified by reading ColorComposerCore/Package.swift)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientContractTests.swift:93",
+            "result": "failed (expected red: no openapi-generator.yaml at package root or next to the document)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "behavioral pinning in place (endpoints/query/headers/envelopes/errors); suite not executed in this container (no Swift toolchain)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "wire-contract pinning tests added (5 new); must stay green through the generated-client migration"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "existing 69-test permanent suite pins per-server/profile disk cache, staleness markers, fallback eligibility, offline-miss semantics"
+          }
+        ],
+        "reason": "'Verified unchanged' is only settleable after the migration lands (post paid-tests-approved run); the regression net is committed here but could not be executed in this container (no Swift toolchain)"
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:129",
+            "result": "committed; not executed (no Swift toolchain in container)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:136",
+            "result": "committed; not executed (no Swift toolchain in container)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver_parity_corpus.json",
+            "result": "fixture arithmetic independently verified with a Python mirror of WeightedSquaredError (earliest-wins ties, exclusions, zero-weight, fractional weights): 9 cases / 13 targets all match expectations"
+          }
+        ],
+        "reason": "swift test unavailable in this container; execution deferred to macOS/Linux host (bin/lint or CI)"
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "corpus location, schema v1, consumption, and refresh instructions documented"
+          }
+        ],
+        "reason": "README.md is outside this tests-only run's write allowlist; the full corpus documentation is committed in docs/ and the README link is deferred to the implementation run"
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR-description notes template committed (migration notes, /api/v1 shape findings, parity results)"
+          }
+        ],
+        "reason": "PR body is written when the PR opens; no PR exists at this tests-only head"
+      }
+    }
+  ]
+}
