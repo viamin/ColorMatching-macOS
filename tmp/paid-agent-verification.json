@@ -1,0 +1,67 @@
+{
+  "status": "failed",
+  "summary": "Tests-only red-phase PR for issue #39. Solver parity corpus test + fixture committed under ColorComposerCore/Tests; PaletteAPIClient wire-contract tests pin the /api/v1 behavior the generated-client migration must preserve; PR-only ephemeral spec verifies the swift-openapi adoption artifacts and fails red as expected (implementation lands in the follow-up run). swift test could not be executed in this container (no Swift toolchain; bin/lint skips accordingly) — corpus expectations were instead cross-verified against an independent Python re-implementation of the mirrored WeightedSquaredError semantics (9/9 cases OK, links below). Run `cd ColorComposerCore && swift test` on a Swift host to confirm.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "swift-openapi-generator + runtime in ColorComposerCore; PaletteAPIClient migrated to the generated client",
+      "status": "failed",
+      "verification": {
+        "kind": "ephemeral_system_test",
+        "references": [
+          { "locator": ".ephemeral-tests/openapi_generated_client_spec.rb", "result": "failed", "detail": "executed in this run: 3 FAIL checks (Package.swift lacks swift-openapi-generator, lacks swift-openapi-runtime, no OpenAPI document committed); swift build check skipped — no toolchain on host. Red failure demonstrates the missing behavior and is expected in this phase; remove the spec before merge once implementation lands." }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback (disk cache unchanged)",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40", "result": "not_run", "detail": "new wire-contract tests pin GET /api/v1/printer_profiles, GET /api/v1/colors?printer_profile_id=N, bearer normalization, 401/badStatus/malformedResponse taxonomy, 2xx testConnection" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "not_run", "detail": "pre-existing permanent suite covering per-server/profile disk cache, offline-stale entries, cached-profile fallback, clear/repave" }
+        ],
+        "reason": "No Swift toolchain in this environment; bin/lint skips swift test. Tests compile against the current public API and must stay green through the migration; execute on macOS/CI."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test loads the committed corpus and asserts WeightedSquaredErrorScorer selections match exactly, including ties",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "not_run", "detail": "6 permanent tests: fixture location, corpus hygiene/coverage, exact selection+score parity, earliest-wins tie parity, exclusion parity, CompositionSolver 1x1 agreement" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_corpus.json", "result": "passed", "detail": "9 cases independently cross-verified with a Python re-implementation of the mirrored scorer semantics (selections, scores within 1e-9, exclusions, FP-exact dyadic ties): 9/9 OK" }
+        ],
+        "reason": "XCTest execution requires a Swift host (none in this container); corpus expectations verified via the independent Python cross-check shown in the run log."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where it lives, how to refresh)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "passed", "detail": "canonical corpus-consumption text (location, schema, SOLVER_PARITY_CORPUS_PATH refresh flow) written in the LID allowlist" }
+        ],
+        "reason": "README.md is outside the test-writing phase allowlist; fold docs/solver-parity-corpus.md into README during the implementation run."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md#findings-so-far", "result": "passed", "detail": "findings captured for the PR body: no /api/v1 shape changes found (pinned by wire-contract tests); parity semantics notes (ties earliest-wins, exclusions, zero weights)" }
+        ],
+        "reason": "PR body is written at publish time by Paid; source notes staged in docs/solver-parity-corpus.md."
+      }
+    }
+  ]
+}
