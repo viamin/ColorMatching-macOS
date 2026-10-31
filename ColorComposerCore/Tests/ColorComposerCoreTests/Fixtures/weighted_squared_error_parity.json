@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted_multi_channel_selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "hex": "#111111", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "hex": "#eeeeee", "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.9, "lps": 0.5 } }
+      ],
+      "expected_palette_id": 102
+    },
+    {
+      "name": "earliest_candidate_wins_exact_tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "hex": "#111111", "responses": { "red": 0.5 } },
+        { "id": 202, "hex": "#eeeeee", "responses": { "red": 0.5 } }
+      ],
+      "expected_palette_id": 201
+    },
+    {
+      "name": "missing_active_measurement_is_excluded",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.25 },
+      "candidates": [
+        { "id": 301, "hex": "#111111", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#eeeeee", "responses": { "red": 0.5, "green": 0.25 } }
+      ],
+      "expected_palette_id": 302
+    },
+    {
+      "name": "zero_weight_missing_measurement_is_ignored",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.7, "blue": 1.0 },
+      "candidates": [
+        { "id": 401, "hex": "#111111", "responses": { "red": 0.7 } },
+        { "id": 402, "hex": "#eeeeee", "responses": { "red": 0.6, "blue": 1.0 } }
+      ],
+      "expected_palette_id": 401
+    }
+  ]
+}
