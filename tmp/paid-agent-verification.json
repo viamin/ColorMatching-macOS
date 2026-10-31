@@ -1,0 +1,116 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing phase for issue #39 complete at commit 381219b: solver parity corpus (10 hand-derived cases) + SolverParityCorpusTests, PaletteAPIClientContractTests (wire-contract guard for the generated-client migration), OpenAPIClientMigrationTests (red-phase structural conformance), and docs/solver-parity-corpus.md are committed. All 10 corpus expectations were cross-validated against an independent Python mirror of the Elixir WeightedSquaredError semantics (selections, scores within 1e-9, bitwise-exact ties, exclusion sets). No Swift toolchain exists in this container ('swift: command not found'), so swift test could not be executed here — the repo's own bin/lint skips the Swift build in that case; the suite must run on a macOS host. Implementation criteria (generated client in place, README link, PR-description notes) are deferred to the implementation run per the test-writing phase rules; the committed tests are the settling verification for them.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore; generate typed client from the OpenAPI document; migrate PaletteAPIClient to it (or wrap it)",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:23",
+            "result": "red_by_design — fails until Package.swift declares swift-openapi-generator/-runtime and applies the OpenAPIGenerator plugin (implementation prohibited in this test-writing phase)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:41",
+            "result": "red_by_design — fails until an OpenAPI document (viamin/color_matching#110) is committed under ColorComposerCore/"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:31",
+            "result": "committed — pins /api/v1 endpoints, headers, bearer-token handling, 500->badStatus, undecodable->malformedResponse so the migration preserves behavior; not executed (no Swift toolchain in container)"
+          }
+        ],
+        "reason": "Implementation files are outside the test-writing phase allowlist; structural tests are committed red and settle this criterion in the implementation run"
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "pre-existing permanent suite covering per-server/profile separation, stale-entry reads, symbol-link/corrupt-file misses, removeAll; not executed in container (no Swift toolchain)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:14",
+            "result": "committed migration guard for the fetch layer; not executed in container"
+          }
+        ],
+        "reason": "No Swift toolchain in this Linux container, so swift test cannot run; no implementation files changed at this head (git show --stat 381219b: 4 test files + 1 docs file), so current behavior is untouched by this commit"
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target in ColorComposerCore tests that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/Fixtures/solver_parity_corpus.json:1",
+            "result": "committed — 10 cases (doctest 0.205 anchor, 3 bitwise-exact tie cases, 3 exclusion cases incl. target-side all-excluded, 3 weight-handling cases incl. weight-flip); every expectation cross-validated by an independent Python mirror of the Elixir semantics: 'OK: all 10 corpus cases validated (selection, score, ties, exclusions)'"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:195",
+            "result": "committed — testSelectionsMatchExpectedOutputsExactly asserts winner id, winning score (1e-9), and exclusion set per case; testTieCasesSelectTheEarliestBitwiseEqualCandidate asserts bitwise-equal scores and earliest-wins; not executed in Swift (no toolchain in container)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:182",
+            "result": "corpus integrity: version/scorer pinned, case_count cross-checked, fixture presence enforced"
+          }
+        ],
+        "reason": "Corpus math settled by Python cross-validation (IEEE-754 doubles, identical operation order); swift test --filter SolverParityCorpus must run on a macOS host. Seed corpus stands in until viamin/color_matching#111 publishes its generator"
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "committed — corpus location, JSON schema, Elixir semantics encoded, refresh steps from viamin/color_matching#111, and note that expectations must come from the Elixir solver (never from this Swift implementation)"
+          }
+        ],
+        "reason": "README.md is outside this run's LID allowlist; docs/ carries the content and the implementation run must link it from README.md"
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "source material committed (parity semantics: ties, exclusions, weight handling; migration guard description)"
+          }
+        ],
+        "reason": "PR description is authored when Paid publishes the tests-only draft and completed in the implementation run; parity findings so far are recorded in the committed docs and corpus case descriptions"
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with the parity corpus test and generated client in place; disk cache + offline fallback verified unchanged",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests",
+            "result": "suite present; 'swift: command not found' in this container — bin/lint reports 'Swift toolchain not available; skipping build and tests' and exits 0; must be executed on a macOS host (Xcode 16+)"
+          }
+        ],
+        "reason": "Blocked by environment (no Swift toolchain) and by phase rules (implementation prohibited); to be satisfied in the implementation run"
+      }
+    }
+  ]
+}
