@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "solver": "WeightedSquaredError",
+  "tie_break": "earliest_candidate",
+  "source": "viamin/color_matching solver parity corpus (issue #111). This v1 copy is derived from the documented Elixir WeightedSquaredError semantics and anchored on the WeightedSquaredError doctest case (expected error 0.205) until the canonical corpus lands upstream.",
+  "notes": "score = sum over conditions with weight > 0 of weight * (candidate - target)^2. A candidate (or target) missing a measurement for any weight > 0 condition is excluded, never treated as zero brightness. Among equal scores the earliest palette candidate wins. See docs/solver-parity-corpus.md for the schema and the refresh procedure.",
+  "cases": [
+    {
+      "name": "elixir_doctest_anchor",
+      "description": "The Elixir WeightedSquaredError doctest vector: expected error 0.205 with weights white=0.5 red=1.0 green=1.0 blue=0.0 lps=1.5. Blue is weighted 0 so its values are ignored even though both sides have them; candidate 103 is excluded for lacking green.",
+      "tags": ["anchor"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 101, "hex": "#63504A", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "hex": "#141414", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "blue": 0.1, "lps": 0.0 } },
+        { "id": 103, "hex": "#5A3A2E", "responses": { "white": 0.5, "red": 0.1, "lps": 0.3 } }
+      ],
+      "expected": { "selected_id": 101, "error": 0.205, "excluded_ids": [103] }
+    },
+    {
+      "name": "exact_match_scores_zero",
+      "description": "Candidates 201 and 203 both score exactly 0.0 (203 carries extra white/blue measurements that are not active); the earliest candidate wins the tie. Extra non-active measurements never change the score.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.25, "green": 0.75 },
+      "palette": [
+        { "id": 201, "hex": "#D04040", "responses": { "red": 0.25, "green": 0.75 } },
+        { "id": 202, "hex": "#B03030", "responses": { "red": 0.3, "green": 0.8 } },
+        { "id": 203, "hex": "#E05050", "responses": { "red": 0.25, "green": 0.75, "white": 0.9, "blue": 0.1 } }
+      ],
+      "expected": { "selected_id": 201, "error": 0.0, "excluded_ids": [] }
+    },
+    {
+      "name": "two_way_tie_earliest_candidate_wins",
+      "description": "Candidates 301 (red 0.4) and 302 (red 0.6) are equidistant from the target red 0.5; both score 0.01 and the earlier palette entry is selected.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 301, "hex": "#C06060", "responses": { "red": 0.4 } },
+        { "id": 302, "hex": "#C06061", "responses": { "red": 0.6 } },
+        { "id": 303, "hex": "#991919", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_id": 301, "error": 0.01, "excluded_ids": [] }
+    },
+    {
+      "name": "three_way_tie_earliest_candidate_wins",
+      "description": "Candidates 401-403 each miss the target by 0.1 on both weighted channels (white weight 2.0, red weight 1.0) and tie at 0.03; the earliest candidate is selected. 404 misses by 0.4 on both channels (0.48).",
+      "tags": ["tie"],
+      "weights": { "white": 2.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "palette": [
+        { "id": 401, "hex": "#9A9A9A", "responses": { "white": 0.6, "red": 0.4 } },
+        { "id": 402, "hex": "#656565", "responses": { "white": 0.4, "red": 0.6 } },
+        { "id": 403, "hex": "#7F7F7F", "responses": { "white": 0.6, "red": 0.6 } },
+        { "id": 404, "hex": "#E5E5E5", "responses": { "white": 0.9, "red": 0.9 } }
+      ],
+      "expected": { "selected_id": 401, "error": 0.03, "excluded_ids": [] }
+    },
+    {
+      "name": "missing_measurement_excludes_never_zero",
+      "description": "Candidate 501 matches red exactly but has no green measurement: it is excluded. If a missing measurement were wrongly treated as brightness 0, 501 would score 0.01 and win, so the expected selection of 502 (0.04) proves the exclusion policy.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.1 },
+      "palette": [
+        { "id": 501, "hex": "#7F4040", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#993333", "responses": { "red": 0.7, "green": 0.1 } },
+        { "id": 503, "hex": "#66443C", "responses": { "red": 0.5, "green": 0.4 } }
+      ],
+      "expected": { "selected_id": 502, "error": 0.04, "excluded_ids": [501] }
+    },
+    {
+      "name": "zero_weight_channel_not_required",
+      "description": "Only white is weighted. Candidate 601 measures nothing but white yet is selected: measurements for zero-weight conditions are neither required nor scored.",
+      "tags": ["zero_weight"],
+      "weights": { "white": 1.0 },
+      "target": { "white": 0.4 },
+      "palette": [
+        { "id": 601, "hex": "#5C5C5C", "responses": { "white": 0.6 } },
+        { "id": 602, "hex": "#E0E0E0", "responses": { "white": 0.9, "red": 0.9, "green": 0.9, "blue": 0.9, "lps": 0.9 } }
+      ],
+      "expected": { "selected_id": 601, "error": 0.04, "excluded_ids": [] }
+    },
+    {
+      "name": "weights_change_winner_white_heavy",
+      "description": "With weights white=0.5 red=1.0, candidate 701 (misses white entirely) scores 0.5 and beats 702 (misses red entirely) at 1.0.",
+      "tags": ["weights"],
+      "weights": { "white": 0.5, "red": 1.0 },
+      "target": { "white": 1.0, "red": 0.0 },
+      "palette": [
+        { "id": 701, "hex": "#191919", "responses": { "white": 0.0, "red": 0.0 } },
+        { "id": 702, "hex": "#E01919", "responses": { "white": 1.0, "red": 1.0 } }
+      ],
+      "expected": { "selected_id": 701, "error": 0.5, "excluded_ids": [] }
+    },
+    {
+      "name": "weights_change_winner_red_heavy",
+      "description": "Same palette and target as weights_change_winner_white_heavy with the weights swapped (white=1.0 red=0.5): the winner flips to 702, proving weights (not candidate order) drive the selection.",
+      "tags": ["weights"],
+      "weights": { "white": 1.0, "red": 0.5 },
+      "target": { "white": 1.0, "red": 0.0 },
+      "palette": [
+        { "id": 701, "hex": "#191919", "responses": { "white": 0.0, "red": 0.0 } },
+        { "id": 702, "hex": "#E01919", "responses": { "white": 1.0, "red": 1.0 } }
+      ],
+      "expected": { "selected_id": 702, "error": 0.5, "excluded_ids": [] }
+    },
+    {
+      "name": "all_candidates_excluded_no_selection",
+      "description": "Blue is the only weighted condition and neither candidate measures it: every candidate is excluded and there is no selection.",
+      "tags": ["no_selection", "exclusion"],
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "palette": [
+        { "id": 901, "hex": "#7F2020", "responses": { "red": 0.5 } },
+        { "id": 902, "hex": "#207F20", "responses": { "green": 0.5 } }
+      ],
+      "expected": { "selected_id": null, "error": null, "excluded_ids": [901, 902] }
+    },
+    {
+      "name": "target_missing_required_channel_excludes_all",
+      "description": "The target itself lacks green (a weight > 0 condition), so every candidate is excluded at the scorer level regardless of its own measurements. No selection exists.",
+      "tags": ["no_selection", "exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 1001, "hex": "#808080", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 1002, "hex": "#707070", "responses": { "red": 0.5, "green": 0.9 } }
+      ],
+      "expected": { "selected_id": null, "error": null, "excluded_ids": [1001, 1002] }
+    },
+    {
+      "name": "five_channel_weighted_mix",
+      "description": "All five conditions weighted (white 1.0, red 0.25, green 0.5, blue 0.75, lps 1.0). Candidate 1102 trades a small white miss for medium misses elsewhere and wins with 0.0275 over 1101 (0.035) and 1103 (0.25).",
+      "tags": ["multi_channel", "weights"],
+      "weights": { "white": 1.0, "red": 0.25, "green": 0.5, "blue": 0.75, "lps": 1.0 },
+      "target": { "white": 0.9, "red": 0.2, "green": 0.6, "blue": 0.3, "lps": 0.4 },
+      "palette": [
+        { "id": 1101, "hex": "#C8B8A8", "responses": { "white": 0.8, "red": 0.3, "green": 0.5, "blue": 0.2, "lps": 0.5 } },
+        { "id": 1102, "hex": "#E6D2C0", "responses": { "white": 0.95, "red": 0.1, "green": 0.7, "blue": 0.4, "lps": 0.3 } },
+        { "id": 1103, "hex": "#C8C8E6", "responses": { "white": 0.9, "red": 0.2, "green": 0.6, "blue": 0.3, "lps": 0.9 } }
+      ],
+      "expected": { "selected_id": 1102, "error": 0.0275, "excluded_ids": [] }
+    }
+  ]
+}
