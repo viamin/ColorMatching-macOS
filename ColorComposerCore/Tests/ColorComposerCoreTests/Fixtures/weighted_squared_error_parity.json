@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "status": "provisional",
+    "revision": "",
+    "note": "Replace this fixture verbatim with the committed corpus from PR #111 before declaring cross-repository parity. The upstream repository was inaccessible to this test-writing run."
+  },
+  "cases": [
+    {
+      "name": "exact match",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 11, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_id": 10, "score": 0.0, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "weighted channels select the lowest weighted sum",
+      "weights": { "red": 2.0, "green": 0.5 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.7, "green": 0.2 } },
+        { "id": 21, "responses": { "red": 0.8, "green": 0.5 } }
+      ],
+      "expected": { "selected_id": 20, "score": 0.020000000000000004, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "zero weight ignores a missing measurement",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.4, "blue": 1.0 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.4 } },
+        { "id": 31, "responses": { "red": 0.5, "blue": 1.0 } }
+      ],
+      "expected": { "selected_id": 30, "score": 0.0, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 40, "responses": { "red": 0.4 } },
+        { "id": 41, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_id": 40, "score": 0.009999999999999995, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "missing active measurement excludes candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.5 } },
+        { "id": 51, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected": { "selected_id": 51, "score": 0.009999999999999995, "excluded_candidate_ids": [50] }
+    },
+    {
+      "name": "all missing active measurements leave the cell unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 60, "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_id": null, "excluded_candidate_ids": [60] }
+    }
+  ]
+}
