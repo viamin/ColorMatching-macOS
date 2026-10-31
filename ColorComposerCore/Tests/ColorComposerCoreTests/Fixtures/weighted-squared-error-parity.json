@@ -1,0 +1,55 @@
+{
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "format_version": 1,
+  "cases": [
+    {
+      "name": "nearest candidate under one active channel",
+      "weights": { "red": 1 },
+      "target": { "red": 0.9 },
+      "palette": [
+        { "id": 1, "hex": "#111111", "responses": { "red": 0.1 } },
+        { "id": 2, "hex": "#eeeeee", "responses": { "red": 0.8 } }
+      ],
+      "expected": { "selected_palette_id": 2, "error": 0.009999999999999995, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "channel weights alter the selected candidate",
+      "weights": { "red": 3, "green": 1 },
+      "target": { "red": 0.7, "green": 0.7 },
+      "palette": [
+        { "id": 11, "hex": "#cc0000", "responses": { "red": 0.2, "green": 0.9 } },
+        { "id": 12, "hex": "#00cc00", "responses": { "red": 0.8, "green": 0.2 } }
+      ],
+      "expected": { "selected_palette_id": 12, "error": 0.2800000000000001, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "equal scores retain the earliest palette candidate",
+      "weights": { "red": 1 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 21, "hex": "#aaaaaa", "responses": { "red": 0.4 } },
+        { "id": 22, "hex": "#bbbbbb", "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_palette_id": 21, "error": 0.009999999999999995, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "candidate missing an active response is excluded",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 31, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 32, "hex": "#888888", "responses": { "red": 0.5, "green": 0.6 } }
+      ],
+      "expected": { "selected_palette_id": 32, "error": 0.009999999999999995, "excluded_candidate_count": 1 }
+    },
+    {
+      "name": "no eligible candidate leaves the cell unmatched",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 41, "hex": "#ff0000", "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_palette_id": null, "error": null, "excluded_candidate_count": 1 }
+    }
+  ]
+}
