@@ -1,0 +1,82 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing phase for issue #39: committed the solver-parity corpus harness (SolverParityCorpusTests + Fixtures/parity corpus, expectations independently re-verified via a Python re-implementation of the documented scorer semantics) and expanded PaletteAPIClientTests into a full behavior-preservation contract for the generated-OpenAPI-client migration, plus docs/solver-parity-corpus.md. Could NOT execute swift test: no Swift toolchain exists in this container (bin/lint itself detects and skips it). The upstream parity corpus (viamin/color_matching#111) and OpenAPI spec (#110) are unpublished (GitHub API returns 404 as of 2026-10-31), so a placeholder corpus hand-derived from the documented mirror semantics (incl. the Elixir doctest value 0.205) is committed and the real-corpus refresh is documented as blocked. Implementation (Package.swift deps, generated client, README section) is out of scope for this tests-only run by phase rule.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore and migrate PaletteAPIClient to the generated client",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:1", "result": "committed; not executed (no Swift toolchain)" },
+          { "locator": "docs/solver-parity-corpus.md", "result": "migration notes recorded" }
+        ],
+        "reason": "Implementation files (Package.swift, generated sources) are outside test paths and rejected in this phase; upstream OpenAPI spec (viamin/color_matching#110) is unpublished (HTTP 404). The wire contract the migrated client must satisfy is fully pinned by PaletteAPIClientTests (endpoints, Accept header, bearer handling, 401/badStatus/malformedResponse mapping, snake_case envelopes, absent-not-zero responses)."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "pre-existing 69 tests, unmodified; not executed here (no Swift toolchain)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:26", "result": "added contract tests; not executed here" }
+        ],
+        "reason": "Migration has not happened yet (implementation phase); the regression suites that will verify 'unchanged' are in place: 69 ProfileColorCacheTests (disk cache, per-server isolation, corrupt-miss, cached-profile fallback) plus the expanded client contract tests."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including ties",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:14", "result": "committed; not executed (no Swift toolchain)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/solver_parity_corpus.json", "result": "committed; all 7 cases' expectations independently verified against a Python re-implementation of the documented scorer semantics (ALL CASES OK)" }
+        ],
+        "reason": "Harness committed (corpus load, per-candidate scores/exclusions ±1e-9, earliest-wins tie selection, CompositionSolver 1x1 cross-check, hygiene coverage of tie/exclusion/zero-weight/all-excluded kinds). Not runnable in this container: Swift toolchain absent. Real upstream corpus pending viamin/color_matching#111 (404); committed corpus is a hand-derived placeholder including the Elixir doctest case 0.205."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "corpus location, schema, parity semantics, refresh procedure documented" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/README.md", "result": "fixture-local copy of location + refresh instructions" }
+        ],
+        "reason": "README.md is outside the test-path/LID-doc allowlist for this phase; documentation committed under docs/ and beside the fixture. README section itself lands with the implementation phase."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "migration notes, /api/v1 shape observations (no shape changes needed), and parity findings (ties earliest-wins, missing-never-zero exclusions, zero-weight not required, doctest 0.205) recorded for reuse in the PR description" }
+        ],
+        "reason": "PR is published by Paid after this run; the required content is prepared in the doc referenced above."
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with parity corpus test and generated client in place",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "bin/lint", "result": "bin/lint --staged exit 0 ('Swift toolchain not available; skipping build and tests')" }
+        ],
+        "reason": "No Swift toolchain in this container, so swift test cannot run at all (neither the new tests nor the pre-existing suite). Code was verified by inspection against existing APIs plus the independent Python check of corpus expectations; must be executed on a macOS/Swift host in the implementation phase."
+      }
+    }
+  ]
+}
