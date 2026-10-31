@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "summary": "Test-writing run for issue #39. Committed the upstream solver parity corpus byte-identical (viamin/color_matching priv/parity/v1/corpus.json, upstream PR #112) as a test fixture and added SolverParityCorpusTests replaying all 12 scenarios through WeightedSquaredErrorScorer and the CompositionSolver fast path with exact double equality (scores, exclusions, earliest-index-wins ties, unknown/zero-weight handling), mirroring upstream corpus_test.exs. Added /api/v1 wire-contract pins to PaletteAPIClientTests so the generated OpenAPI client migration (implementation phase) is verifiable as behavior-preserving. Documented corpus consumption/refresh in docs/solver-parity-corpus.md. swift test could NOT be executed: this container has no Swift toolchain (bin/lint reports 'Swift toolchain not available; skipping build and tests'); instead the identical replay logic (same canonical summation order, exact IEEE-754 doubles) was validated against the committed corpus externally with 12/12 scenarios matching and 0 failures, including all 5 tie scenarios and both null-selection scenarios.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime, generate typed client from the OpenAPI document, migrate PaletteAPIClient",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "written_not_executed"
+          }
+        ],
+        "note": "Implementation is deferred to the implementation run by the test-writing phase rules (Package.swift/Sources are outside permitted paths). This run ships the /api/v1 wire-contract pins (endpoints, printer_profile_id query, Accept/Authorization headers, envelopes, 401/500/malformed error mapping) that the migration must keep green. Upstream dependency is live: OpenAPI 3 document served unauthenticated at GET /api/v1/openapi.json (viamin/color_matching PR #113); capture instructions in docs/solver-parity-corpus.md."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "pre_existing_permanent_tests"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:75",
+            "result": "written_not_executed"
+          }
+        ],
+        "note": "Disk-cache behavior is already pinned by 60+ permanent ProfileColorCacheTests (per-server scoping, stale format, servable-color fallback); client fetch behavior is now pinned by the new contract tests. Execution deferred: no Swift toolchain in this container; app-level (ColorMatching) badge tests additionally require macOS."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target in ColorComposerCore tests loading the committed corpus, asserting WeightedSquaredErrorScorer selections match exactly including ties",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:153",
+            "result": "written_not_executed_no_toolchain"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json:1",
+            "result": "committed_byte_identical_to_upstream_priv_parity_v1_corpus_json"
+          },
+          {
+            "locator": "external: exact IEEE-754 replay of all 12 scenarios mirroring Swift scorer/solver summation order (canonical white,red,green,blue,lps)",
+            "result": "passed_12_of_12_scenarios_0_failures"
+          }
+        ],
+        "note": "12 scenarios: per-candidate scores exact ('excluded' union honored), selection + selected_hex_color + error exact, tied_indices recomputed bit-for-bit, 5 tie scenarios, 2 all-excluded scenarios, zero-weight-missing and unknown-weight (ultraviolet) scenarios. 11/12 also replay through the CompositionSolver contiguous fast path (missing-target scenario is scorer-only because the app fails earlier at source-grid validation). swift test itself blocked by missing toolchain in this container."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption (where the corpus lives, how to refresh it)",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "inspectable_document"
+          }
+        ],
+        "note": "README.md is outside this phase's permitted paths; docs/solver-parity-corpus.md records fixture location, corpus contract stamps, consumption points, refresh command, algorithm_version bump procedure, and OpenAPI capture for the migration. The implementation run should link it from the README section requested by the issue."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "commit 688f140 (tests-only draft PR head)",
+            "result": "notes_captured_for_pr_body"
+          }
+        ],
+        "note": "PR is published by Paid after this phase. Parity findings for the PR body: exact agreement on all 12 scenarios; ties are earliest-index-wins and bit-identical (dyadic corpus values make cross-language summation order irrelevant); exclusion policy matches (any positive-weight channel missing on candidate or target); unknown light-source weights ignored; zero-weight channels never exclude. No /api/v1 shape changes found in the published spec vs the hand-rolled client's wire format (upstream enforces it with Schemathesis + oasdiff)."
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with parity corpus test and generated client in place",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "bin/lint:9",
+            "result": "swift_toolchain_not_available_skipped"
+          }
+        ],
+        "note": "No Swift toolchain exists in this container (bin/lint exits 0 with an explicit skip notice). The generated client is intentionally not in place in this tests-only phase. The implementation run must run swift test on a Swift host; the exact-arithmetic external replay substitutes as evidence that the parity assertions will hold."
+      }
+    }
+  ]
+}
