@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "source": "SEED corpus — hand-derived from the Elixir ColorMatching.WeightedSquaredError doctest (score 0.205 case) and the documented IlluminantMatching.best_match/4 semantics (earliest-wins ties, missing-measurement exclusion). Replace with the canonical generated corpus from viamin/color_matching#111 when it lands; the schema below is the contract the Swift parity test consumes.",
+  "schema": {
+    "weights": "Per-channel weights keyed by light_source (white|red|green|blue|lps); a missing key means weight 0 (channel inactive, never excludes).",
+    "palette.responses": "Normalized 0..1 brightness keyed by light_source; a missing key means UNMEASURED (never zero).",
+    "targets": "One entry per target vector, keyed by light_source; a missing key means the target has no value for that condition.",
+    "expected": "One entry per target, in the same order. selected_id is the palette color id that must be selected (null when every candidate must be excluded). score is the winning weighted squared error (tolerance 1e-9). tie=true asserts the winning score is achieved by more than one candidate and the earliest palette entry wins. excluded_ids lists palette color ids that must be excluded (missing a measurement for a weight>0 channel)."
+  },
+  "cases": [
+    {
+      "name": "elixir_doctest_candidate_wins",
+      "description": "Weights and target from the Elixir WeightedSquaredError doctest; candidate 101 reproduces the documented score 0.205 exactly and beats three others.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "palette": [
+        { "id": 101, "hex": "#0d0806", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 102, "hex": "#000000", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "lps": 0.0 } },
+        { "id": 103, "hex": "#17171a", "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.9 } },
+        { "id": 104, "hex": "#12100c", "responses": { "white": 0.6, "red": 0.4, "green": 0.5, "lps": 0.2 } }
+      ],
+      "targets": [
+        { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 }
+      ],
+      "expected": [
+        { "selected_id": 101, "score": 0.205, "tie": false }
+      ]
+    },
+    {
+      "name": "exact_match_scores_zero_and_wins",
+      "description": "A candidate whose response vector equals the target scores 0 and wins over near-misses.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "palette": [
+        { "id": 111, "hex": "#0d0806", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 112, "hex": "#000000", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "lps": 0.0 } },
+        { "id": 113, "hex": "#160a07", "responses": { "white": 0.5, "red": 0.2, "green": 0.4, "lps": 0.3 } }
+      ],
+      "targets": [
+        { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 }
+      ],
+      "expected": [
+        { "selected_id": 111, "score": 0.0, "tie": false }
+      ]
+    },
+    {
+      "name": "tie_resolves_to_earliest_palette_entry",
+      "description": "Candidates 201 and 202 achieve the same winning score 0.02 via mirrored deviations; the earliest palette entry (201) must be selected, matching IlluminantMatching.best_match/4.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 201, "hex": "#1a0d0d", "responses": { "red": 0.4, "green": 0.6 } },
+        { "id": 202, "hex": "#0d1a0d", "responses": { "red": 0.6, "green": 0.4 } },
+        { "id": 203, "hex": "#000000", "responses": { "red": 0.0, "green": 0.0 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected": [
+        { "selected_id": 201, "score": 0.02, "tie": true }
+      ]
+    },
+    {
+      "name": "candidate_missing_required_channel_is_excluded",
+      "description": "Candidate 301 matches red exactly but is missing green (weight>0), so it must be EXCLUDED — missing is never zero brightness — leaving 302 as the winner.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 301, "hex": "#0d0000", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#1a0d0d", "responses": { "red": 0.6, "green": 0.4 } },
+        { "id": 303, "hex": "#0d0d0d", "responses": { "red": 0.3, "green": 0.3 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected": [
+        { "selected_id": 302, "score": 0.02, "tie": false, "excluded_ids": [301] }
+      ]
+    },
+    {
+      "name": "zero_weight_channel_does_not_exclude",
+      "description": "Red has weight 0, so candidate 401 missing red is NOT excluded and its exact white match wins; candidate 402 has both channels but loses on white.",
+      "weights": { "white": 1.0, "red": 0.0 },
+      "palette": [
+        { "id": 401, "hex": "#0d0d0d", "responses": { "white": 0.5 } },
+        { "id": 402, "hex": "#0d0d17", "responses": { "white": 0.6, "red": 0.9 } }
+      ],
+      "targets": [
+        { "white": 0.5 }
+      ],
+      "expected": [
+        { "selected_id": 401, "score": 0.0, "tie": false }
+      ]
+    },
+    {
+      "name": "target_missing_required_channel_excludes_every_candidate",
+      "description": "The target has no red value while red is required, so every candidate is excluded and no selection exists (selected_id null).",
+      "weights": { "red": 1.0 },
+      "palette": [
+        { "id": 501, "hex": "#0d0000", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#0d0d00", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "green": 0.5 }
+      ],
+      "expected": [
+        { "selected_id": null }
+      ]
+    },
+    {
+      "name": "channel_weights_flip_the_winner_equal_weights_tie",
+      "description": "With equal weights the two candidates tie at 1.0 and the earliest (601) wins.",
+      "weights": { "white": 1.0, "red": 1.0 },
+      "palette": [
+        { "id": 601, "hex": "#00000d", "responses": { "white": 0.0, "red": 1.0 } },
+        { "id": 602, "hex": "#0d0000", "responses": { "white": 1.0, "red": 0.0 } }
+      ],
+      "targets": [
+        { "white": 1.0, "red": 1.0 }
+      ],
+      "expected": [
+        { "selected_id": 601, "score": 1.0, "tie": true }
+      ]
+    },
+    {
+      "name": "channel_weights_flip_the_winner_white_heavy",
+      "description": "Same palette and target, but white weighted 4: candidate 602 now wins outright at 1.0.",
+      "weights": { "white": 4.0, "red": 1.0 },
+      "palette": [
+        { "id": 601, "hex": "#00000d", "responses": { "white": 0.0, "red": 1.0 } },
+        { "id": 602, "hex": "#0d0000", "responses": { "white": 1.0, "red": 0.0 } }
+      ],
+      "targets": [
+        { "white": 1.0, "red": 1.0 }
+      ],
+      "expected": [
+        { "selected_id": 602, "score": 1.0, "tie": false }
+      ]
+    }
+  ]
+}
