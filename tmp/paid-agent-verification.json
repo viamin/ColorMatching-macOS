@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "summary": "Test-writing phase for issue #39: added a committed solver parity corpus fixture (verbatim copy of color_matching's priv/parity/v1/corpus.json, 12 scenarios) and SolverParityCorpusTests.swift asserting WeightedSquaredErrorScorer scores, exclusions, and earliest-wins selection/tie-breaking (including via the real CompositionSolver) match the corpus exactly. Documented corpus consumption under docs/ (README update deferred to the implementation phase per TDD test-only boundary). No Swift toolchain is installed in this sandbox, so `swift test` could not be executed here; the corpus's expected scores/selections/ties were independently re-derived in Python from the same weighted-squared-error algorithm and all 12 scenarios matched exactly, but that is not a substitute for an actual `swift test` run. The OpenAPI client migration itself (swift-openapi-generator/runtime, PaletteAPIClient rewrite) is implementation work out of scope for this test-only run and is not attempted.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-migration",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "run-scope: test-writing phase only (TDD boundary restricts changes to test paths and docs/, AGENTS.md, CLAUDE.md)", "result": "not_attempted" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-preserve-existing-cache-offline-behavior",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "not_run" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-solver-parity-corpus-test",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testCorpusFixtureDecodes", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testEveryScenarioScoreMatchesWeightedSquaredErrorScorer", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testEveryScenarioSelectionMatchesEarliestWinsPolicy", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testApplicableScenariosMatchCompositionSolver", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver_parity_corpus.json", "result": "present, 12 scenarios, independently cross-checked in Python against the weighted-squared-error algorithm with no mismatches" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-document-corpus-consumption",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "present" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-pr-description-records-parity-findings",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "no PR opened in this test-writing run", "result": "not_applicable_yet" }
+        ]
+      }
+    }
+  ]
+}
