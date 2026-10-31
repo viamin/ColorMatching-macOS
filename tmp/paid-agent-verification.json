@@ -1,0 +1,71 @@
+{
+  "status": "partial",
+  "summary": "Test-writing run for issue #39 (red phase). Added: (1) the committed solver-parity corpus fixture byte-identical to viamin/color_matching#111 (sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604) plus SolverParityCorpusTests replaying all 12 scenarios through WeightedSquaredErrorScorer with exact (no-epsilon) agreement on scores, earliest-wins tie-breaking, exclusions, and weight handling; (2) PaletteAPIClientContractTests pinning the /api/v1 wire contract the generated OpenAPI-client migration must preserve (endpoints, bearer handling, snake_case envelopes, error mapping) so disk-cache/offline-stale behavior survives; (3) OpenAPIDocumentTests asserting the OpenAPI document (viamin/color_matching#110) is committed and covers /api/v1/printer_profiles, /api/v1/colors, and bearerAuth — intentionally red until the implementation run commits it; (4) docs/parity-corpus.md documenting corpus location/refresh and the criterion map. Swift toolchain is NOT installed in this container, so `swift test` could not be executed; parity arithmetic was instead verified 1:1 in IEEE-754 doubles (Python replay: 12/12 scenarios exact agreement, mirroring the Swift scorer's exclusion/weight/tie semantics), and Swift files were hand-checked against the package's existing XCTest idioms.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-parity-corpus-suite",
+      "description": "Solver parity test target in ColorComposerCore tests loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "written_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "committed_byte_identical_to_upstream" },
+          { "locator": "docs/parity-corpus.md#solver-parity-corpus", "result": "documented" }
+        ],
+        "reason": "swift toolchain unavailable in this container (`swift: command not found`); instructed test command is `echo \"No test command configured\"`. Pre-verified arithmetic: IEEE-754 Python replay of all 12 scenarios matches expected scores/selections/ties/exclusions exactly (script preserved at /tmp/opencode/verify_parity.py). Run `cd ColorComposerCore && swift test --filter SolverParityCorpus` where a toolchain exists."
+      }
+    },
+    {
+      "id": "AC-2-generated-client-migration-preserves-behavior",
+      "description": "PaletteAPIClient migrated to generated OpenAPI client while preserving per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift", "result": "written_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteColorCacheTests.swift", "result": "pre_existing_suite_untouched_69_tests_guards_disk_cache_and_offline_fallback" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "pre_existing_suite_untouched" }
+        ],
+        "reason": "Same toolchain constraint. The contract tests pin endpoints (/api/v1/printer_profiles, /api/v1/colors?printer_profile_id=N), bearer trimming/omission, 401->unauthorized, badStatus/malformedResponse mapping, and upstream envelope shapes; ProfileColorCacheTests already pins the snake_case on-disk format that makes cached entries survive the migration."
+      }
+    },
+    {
+      "id": "AC-3-openapi-document-committed",
+      "description": "Generated client builds from an OpenAPI document committed to this repo (swift-openapi-generator + swift-openapi-runtime)",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIDocumentTests.swift", "result": "red_as_designed_no_document_committed_yet" }
+        ],
+        "reason": "Expected red-phase assertion failure demonstrating the missing deliverable: no OpenAPI document exists yet at any accepted location (openapi/color-matching.{json,yaml}, ColorComposerCore/openapi/..., ColorComposerCore/Sources/ColorComposerCore/Resources/openapi.yaml). Package.swift dependency additions are implementation-phase work outside this run's permitted paths."
+      }
+    },
+    {
+      "id": "AC-4-corpus-consumption-documented",
+      "description": "Document corpus consumption (where the corpus lives, how to refresh it)",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/parity-corpus.md", "result": "committed_document_with_location_provenance_refresh_commands_and_criterion_map" }
+        ],
+        "reason": "README.md is outside this run's permitted paths (test paths + docs/ allowlist); docs/parity-corpus.md is the canonical reference and the implementation run should link it from README 'Palette data'/'Development'."
+      }
+    },
+    {
+      "id": "AC-5-pr-description-findings",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/parity-corpus.md#generated-openapi-client", "result": "migration_notes_and_no-shape-change-finding_recorded" },
+          { "locator": "docs/parity-corpus.md#acceptance-criteria--verification-mapping", "result": "criterion_table_committed" }
+        ],
+        "reason": "Findings staged for the PR body: no /api/v1 shape changes found while pinning the contract (envelopes, nullables, response detail keys match ColorPaletteController on upstream main); parity result 12/12 scenarios exact agreement."
+      }
+    }
+  ]
+}
