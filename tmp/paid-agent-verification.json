@@ -1,0 +1,73 @@
+{
+  "status": "skipped",
+  "summary": "Tests-only phase for issue #39. Committed: (1) the upstream solver parity corpus (viamin/color_matching#112, algorithm_version 1, byte-identical copy) as a test fixture, (2) WeightedSquaredErrorParityTests replaying all 12 scenarios through WeightedSquaredErrorScorer with earliest-wins selection and asserting exact agreement (score tables, exclusions, selection, error, tie evidence), and (3) PaletteAPIWireContractTests pinning the /api/v1 wire contract the swift-openapi-generator migration must preserve. Swift is NOT installed in this container (bin/lint skips build/tests by design), so swift test could not be executed here; the replay logic was independently verified against the committed corpus with an equivalent script: 12/12 scenarios reproduce scores, selections, errors, tie_broke and tied_indices exactly (including 5 tie and 2 no-selection scenarios).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "swift-openapi-generator + swift-openapi-runtime added to ColorComposerCore; typed client generated from the OpenAPI document; PaletteAPIClient migrated (or wrapped) with disk-cache/offline behavior intact",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIWireContractTests.swift", "result": "not_run", "note": "pins /api/v1 paths, printer_profile_id query, Accept/bearer headers, 401-vs-5xx-vs-malformed error mapping, and spec-shaped envelope decoding that the migration must keep green" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "not_run", "note": "pre-existing permanent coverage of per-server/profile disk caching and offline-stale reads; must stay green through the transport swap" },
+          { "locator": "docs/openapi-client-migration.md", "result": "attached", "note": "spec source (GET /api/v1/openapi.json, viamin/color_matching#113), migration plan, and PR-description findings" }
+        ],
+        "reason": "Implementation-phase deliverable: Package.swift/dependencies/generated sources are outside the test-path allowlist of this tests-only run and are rejected at commit time."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIWireContractTests.swift", "result": "not_run" }
+        ],
+        "reason": "No Swift toolchain in this container; bin/lint reports 'Swift toolchain not available; skipping build and tests'. Behavior-pinning tests are committed and must be run on a Swift host during the implementation run."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target in ColorComposerCore tests loading the committed corpus and asserting WeightedSquaredErrorScorer selections match exactly, including tie cases",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift", "result": "not_run", "note": "replays every scenario: exact per-candidate score tables ('excluded' entries, bit-for-bit numeric equality), selected_index/selected_hex_color, winning error, tie_broke, tied_indices" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/ParityCorpus/corpus.json", "result": "attached", "note": "byte-identical copy (23995 bytes) of upstream priv/parity/v1/corpus.json, algorithm_version 1, 12 scenarios" },
+          { "locator": "docs/solver-parity-corpus.md", "result": "attached", "note": "corpus location, refresh procedure, algorithm_version bump procedure" },
+          { "locator": "session: python3 replay equivalent (not committed)", "result": "passed", "note": "independent replay of the committed corpus through the same rules (canonical-order weighted squared error, exclusion on any positive-weight missing channel, earliest-wins selection) reproduced all 12 scenarios' scores/selections/errors/tie indices exactly: FAILURES: 0" }
+        ],
+        "reason": "Test committed but swift test could not execute in this container (no Swift toolchain). Independent equivalent-replay verification: 12/12 exact including 5 tie scenarios (two-way, three-way, duplicate vectors, symmetric, zero-weight-channel) and 2 all-excluded scenarios."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "attached", "note": "full corpus-consumption doc: upstream fixture location, committed local copy path, curl refresh command, swift test filter, algorithm_version bump procedure" }
+        ],
+        "reason": "README.md is outside the test-path/LID allowlist of this tests-only run; the equivalent documentation is committed in docs/ for the implementation run to fold into the README."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records: generated-client migration notes, any /api/v1 shape changes found, parity test results",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-migration.md", "result": "attached", "note": "records the shape findings (spec now marks color name/palette_id/sort_order and profile printer_make_model/paper_type/ink_type as required; palette_name explicitly nullable; envelopes unchanged) and a PR-description checklist including parity results" }
+        ],
+        "reason": "The PR itself is assembled after the implementation run; findings are captured in docs/ now so the PR description can quote them."
+      }
+    }
+  ]
+}
