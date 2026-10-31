@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Added the committed upstream v1 parity fixture and replay test. Swift is unavailable in this container, and the generated OpenAPI client contract is intentionally red until the implementation run adds it.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientGenerationTests.swift:5",
+            "result": "not run: swift executable is unavailable; this test is expected to fail before implementation because package dependencies, plugin, and OpenAPI document are absent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:46",
+            "result": "existing disk-cache coverage exists, but generated-client migration has not been implemented or verified"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "committed corpus replay test added; not run because swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "byte-for-byte fixture copied from viamin/color_matching priv/parity/v1/corpus.json; SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:17",
+            "result": "README change is deferred by the test-writing file allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:18",
+            "result": "PR description cannot be inspected until a PR is created in a later run"
+          }
+        ]
+      }
+    }
+  ]
+}
