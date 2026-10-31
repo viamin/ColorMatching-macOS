@@ -1,0 +1,167 @@
+{
+  "meta": {
+    "format": "color_matching.solver_parity_corpus/1",
+    "upstream": "viamin/color_matching#111",
+    "origin": "Seed corpus. Expected values are hand-derived from the Elixir WeightedSquaredError semantics this client mirrors (README 'How it works', the WeightedSquaredError doctest, and IlluminantMatching.best_match earliest-wins tie policy). Replace this file with the canonical corpus exported by color_matching#111, keeping the same format.",
+    "notes": "Each case fixes a palette (ordered candidates), a target response vector, and channel weights, then asserts the selected candidate index. score = sum over channels with weight > 0 of weight * (candidate - target)^2 accumulated in canonical channel order (white, red, green, blue, lps). A candidate (or the target) missing a measurement for any channel with weight > 0 excludes that candidate entirely: missing is never treated as zero brightness. Ties select the earliest candidate. expected_selection null means every candidate is excluded and the cell stays unmatched."
+  },
+  "cases": [
+    {
+      "id": "exact_match_zero_error",
+      "description": "A candidate matching the target on every active channel scores exactly zero and wins.",
+      "weights": { "white": 1.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.3, "red": 0.7 },
+      "candidates": [
+        { "name": "Exact Match", "hex": "#4db387", "responses": { "white": 0.3, "red": 0.7 } },
+        { "name": "Slightly Off", "hex": "#669999", "responses": { "white": 0.4, "red": 0.6 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Exact Match",
+      "expected_score": 0.0,
+      "expected_excluded": []
+    },
+    {
+      "id": "elixir_doctest_0_205",
+      "description": "The Elixir WeightedSquaredError doctest vector: candidate scores 0.205 against its target under weights white 0.5, red 1, green 1, blue 0, lps 1.5. Blue has weight zero, so its presence on the target and candidates is ignored.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "name": "Doctest Candidate", "hex": "#0d1a2b", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "name": "Far Off", "hex": "#1f3d5c", "responses": { "white": 0.1, "red": 0.8, "green": 0.2, "blue": 0.0, "lps": 0.9 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Doctest Candidate",
+      "expected_score": 0.205,
+      "expected_excluded": []
+    },
+    {
+      "id": "tie_identical_vectors_earliest_wins",
+      "description": "Two candidates with identical response vectors tie exactly; the palette-earlier candidate must be selected.",
+      "tie": true,
+      "weights": { "white": 0.0, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "name": "Twin A", "hex": "#808080", "responses": { "red": 0.5, "green": 0.5 } },
+        { "name": "Twin B", "hex": "#7f7f7f", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Twin A",
+      "expected_score": 0.0,
+      "expected_excluded": []
+    },
+    {
+      "id": "tie_zero_weight_channel_cannot_break_tie",
+      "description": "Candidates differing only on a zero-weight channel (blue) tie; a zero-weight channel may neither break the tie nor exclude, and the earliest candidate wins.",
+      "tie": true,
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "name": "Quiet Twin", "hex": "#33194d", "responses": { "red": 0.5, "blue": 0.9 } },
+        { "name": "Loud Twin", "hex": "#4d1919", "responses": { "red": 0.5, "blue": 0.1 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Quiet Twin",
+      "expected_score": 0.0,
+      "expected_excluded": []
+    },
+    {
+      "id": "missing_measurement_excluded_not_zero",
+      "description": "The closest candidate overall lacks the required lps measurement (lps weight 2), so it is excluded rather than scored as zero brightness; the best fully-measured candidate wins.",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 2.0 },
+      "target": { "red": 0.4, "lps": 0.6 },
+      "candidates": [
+        { "name": "Incomplete Best", "hex": "#66cc00", "responses": { "red": 0.4 } },
+        { "name": "Complete", "hex": "#7fbf7f", "responses": { "red": 0.5, "lps": 0.5 } },
+        { "name": "Worse Complete", "hex": "#e6b8b8", "responses": { "red": 0.8, "lps": 0.9 } }
+      ],
+      "expected_selection": 1,
+      "expected_selected_name": "Complete",
+      "expected_score": 0.03,
+      "expected_excluded": [0]
+    },
+    {
+      "id": "measured_zero_beats_missing_measurement",
+      "description": "A measured brightness of exactly 0.0 participates in scoring; an unmeasured channel is excluded. Measured zero matches a dark target perfectly.",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.0 },
+      "candidates": [
+        { "name": "Measured Black", "hex": "#050505", "responses": { "white": 0.0 } },
+        { "name": "Unmeasured", "hex": "#111111", "responses": {} }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Measured Black",
+      "expected_score": 0.0,
+      "expected_excluded": [1]
+    },
+    {
+      "id": "weight_flip_heavy_red",
+      "description": "Weight handling, direction one: with red weighted 4 and green 1, the candidate faithful on red wins despite a large green error (0.49 vs 1.96).",
+      "weights": { "white": 0.0, "red": 4.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "name": "Red True", "hex": "#801515", "responses": { "red": 0.2, "green": 0.1 } },
+        { "name": "Green True", "hex": "#148014", "responses": { "red": 0.9, "green": 0.8 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Red True",
+      "expected_score": 0.49,
+      "expected_excluded": []
+    },
+    {
+      "id": "weight_flip_heavy_green",
+      "description": "Weight handling, direction two: same palette and target as weight_flip_heavy_red with weights swapped (red 1, green 4); the winner flips to the green-faithful candidate (0.49 vs 1.96).",
+      "weights": { "white": 0.0, "red": 1.0, "green": 4.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "name": "Red True", "hex": "#801515", "responses": { "red": 0.2, "green": 0.1 } },
+        { "name": "Green True", "hex": "#148014", "responses": { "red": 0.9, "green": 0.8 } }
+      ],
+      "expected_selection": 1,
+      "expected_selected_name": "Green True",
+      "expected_score": 0.49,
+      "expected_excluded": []
+    },
+    {
+      "id": "all_candidates_excluded_unmatched",
+      "description": "Every candidate is missing a required measurement (red and green both weighted); the selection is null and the cell stays unmatched with infinite error.",
+      "weights": { "white": 0.0, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "name": "Missing Red", "hex": "#00ff00", "responses": { "green": 0.5 } },
+        { "name": "Missing Green", "hex": "#ff0000", "responses": { "red": 0.5 } }
+      ],
+      "expected_selection": null,
+      "expected_selected_name": null,
+      "expected_score": null,
+      "expected_excluded": [0, 1]
+    },
+    {
+      "id": "all_five_channels_weighted",
+      "description": "Fractional weights on every channel at once; uniform +0.1 offset on each channel accumulates 0.01 * (0.25+0.5+0.75+1.0+1.25) = 0.0375 and beats a single large lps error (0.2).",
+      "weights": { "white": 0.25, "red": 0.5, "green": 0.75, "blue": 1.0, "lps": 1.25 },
+      "target": { "white": 0.1, "red": 0.2, "green": 0.3, "blue": 0.4, "lps": 0.5 },
+      "candidates": [
+        { "name": "Uniform Offset", "hex": "#334d66", "responses": { "white": 0.2, "red": 0.3, "green": 0.4, "blue": 0.5, "lps": 0.6 } },
+        { "name": "Lps Skewed", "hex": "#1a2a3a", "responses": { "white": 0.1, "red": 0.2, "green": 0.3, "blue": 0.4, "lps": 0.9 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Uniform Offset",
+      "expected_score": 0.0375,
+      "expected_excluded": []
+    },
+    {
+      "id": "target_extra_zero_weight_channel_ignored",
+      "description": "The target carries a red value while red has weight zero; the extra target channel is ignored for both scoring and exclusion, and a candidate lacking it remains eligible.",
+      "weights": { "white": 0.0, "red": 0.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "green": 0.6, "red": 0.9 },
+      "candidates": [
+        { "name": "Green Match", "hex": "#0d4d0d", "responses": { "green": 0.6 } },
+        { "name": "Green Off", "hex": "#4d4d0d", "responses": { "green": 0.4 } }
+      ],
+      "expected_selection": 0,
+      "expected_selected_name": "Green Match",
+      "expected_score": 0.0,
+      "expected_excluded": []
+    }
+  ]
+}
