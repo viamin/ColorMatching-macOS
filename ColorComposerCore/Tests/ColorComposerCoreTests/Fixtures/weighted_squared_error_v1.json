@@ -1,0 +1,67 @@
+{
+  "algorithm_version": 1,
+  "scorer": "ColorMatching.WeightedSquaredError",
+  "selection": "earliest-index-wins",
+  "missing_policy": "excluded-when-any-positive-weight-channel-missing",
+  "light_sources": ["white", "red", "green", "blue", "lps"],
+  "scenarios": [
+    {
+      "id": "distinct-errors",
+      "weights": {"white": 0.5, "red": 1, "green": 1, "blue": 0.25, "lps": 1.5},
+      "target": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375},
+      "palette": [
+        {"hex": "#A0522D", "channels": {"white": 0.375, "red": 0.5, "green": 0.375, "blue": 0.25, "lps": 0.125}},
+        {"hex": "#556B2F", "channels": {"white": 0.75, "red": 0.125, "green": 0.75, "blue": 0, "lps": 0.5}},
+        {"hex": "#708090", "channels": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.5}},
+        {"hex": "#FFD700", "channels": {"white": 0.125, "red": 0.625, "green": 0.25, "blue": 0.5, "lps": 0.75}}
+      ],
+      "expected": {"scores": [0.23046875, 0.08984375, 0.0234375, 0.59765625], "selected_index": 2, "selected_hex": "#708090", "error": 0.0234375, "tied_indices": [2]}
+    },
+    {
+      "id": "tie-symmetric-around-target",
+      "weights": {"white": 0.5, "red": 1, "green": 1, "blue": 0.25, "lps": 1.5},
+      "target": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375},
+      "palette": [
+        {"hex": "#111111", "channels": {"white": 0.875, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#222222", "channels": {"white": 0.375, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#333333", "channels": {"white": 0.625, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#444444", "channels": {"white": 0.25, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375}}
+      ],
+      "expected": {"scores": [0.0703125, 0.0078125, 0.0078125, 0.03125], "selected_index": 1, "selected_hex": "#222222", "error": 0.0078125, "tied_indices": [1, 2]}
+    },
+    {
+      "id": "missing-candidate-excluded",
+      "weights": {"white": 0.5, "red": 1, "green": 1, "blue": 0.25, "lps": 1.5},
+      "target": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0},
+      "palette": [
+        {"hex": "#DEDEDE", "channels": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125}},
+        {"hex": "#BFAFA0", "channels": {"white": 0.625, "red": 0.375, "green": 0.5, "blue": 0.25, "lps": 0.125}},
+        {"hex": "#AFC0BF", "channels": {"white": 0.75, "red": 0.5, "green": 0.375, "blue": 0, "lps": 0.25}}
+      ],
+      "expected": {"scores": [null, 0.06640625, 0.25390625], "selected_index": 1, "selected_hex": "#BFAFA0", "error": 0.06640625, "tied_indices": [1]}
+    },
+    {
+      "id": "zero-weight-channel-missing",
+      "weights": {"white": 1, "blue": 0},
+      "target": {"white": 0.5, "blue": 0.5},
+      "palette": [
+        {"hex": "#111111", "channels": {"white": 0.75}},
+        {"hex": "#222222", "channels": {"white": 0.75, "blue": 0.9375}},
+        {"hex": "#333333", "channels": {"white": 1, "blue": 0.0625}}
+      ],
+      "expected": {"scores": [0.0625, 0.0625, 0.25], "selected_index": 0, "selected_hex": "#111111", "error": 0.0625, "tied_indices": [0, 1]}
+    },
+    {
+      "id": "all-excluded",
+      "weights": {"white": 0.5, "red": 1, "green": 1, "blue": 0.25, "lps": 1.5},
+      "target": {"white": 0.5, "red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375},
+      "palette": [
+        {"hex": "#111111", "channels": {"red": 0.25, "green": 0.625, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#222222", "channels": {"white": 0.5, "green": 0.625, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#333333", "channels": {"white": 0.5, "red": 0.25, "blue": 0.125, "lps": 0.375}},
+        {"hex": "#444444", "channels": {"white": 0.5, "red": 0.25, "green": 0.625, "lps": 0.375}}
+      ],
+      "expected": {"scores": [null, null, null, null], "selected_index": null, "selected_hex": null, "error": null, "tied_indices": []}
+    }
+  ]
+}
