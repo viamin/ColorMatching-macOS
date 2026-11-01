@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "source": "https://github.com/viamin/color_matching/issues/111",
+  "cases": [
+    {
+      "name": "selects lowest weighted squared error",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.8 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.2 } },
+        { "id": 20, "responses": { "red": 0.7 } }
+      ],
+      "expected_color_id": 20,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "weights change the selected color",
+      "weights": { "red": 3.0, "green": 0.25 },
+      "target": { "red": 0.9, "green": 0.1 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.3, "green": 0.1 } },
+        { "id": 20, "responses": { "red": 0.8, "green": 0.9 } }
+      ],
+      "expected_color_id": 20,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "zero-weight channels do not exclude candidates",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.4, "green": 0.9 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.4 } },
+        { "id": 20, "responses": { "red": 0.8, "green": 0.9 } }
+      ],
+      "expected_color_id": 10,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing positive-weight measurement is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 20, "responses": { "red": 0.6, "green": 0.6 } }
+      ],
+      "expected_color_id": 20,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "ties retain the first palette candidate",
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "blue": 0.4 } },
+        { "id": 20, "responses": { "blue": 0.6 } }
+      ],
+      "expected_color_id": 10,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all candidates excluded leaves target unmatched",
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
