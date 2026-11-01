@@ -1,0 +1,87 @@
+{
+  "status": "partial",
+  "summary": "Tests-only red-phase draft for issue #39. Added (1) SolverParityCorpusTests — a solver-parity test target in ColorComposerCore tests that loads a committed corpus fixture (ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-corpus.json, provenance viamin/color_matching#111) and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including earliest-wins tie cases, exclusion policy, zero-weight channel handling, and end-to-end CompositionSolver fast-path parity; (2) OpenAPIContractTests — guards the vendored OpenAPI document (Fixtures/openapi.json, provenance viamin/color_matching#110) against drift from the /api/v1 wire contract decoded by APIModels.swift/PaletteAPIClient; (3) PaletteAPIClientMigrationTests — behavior pins (endpoint paths, printer_profile_id query, Accept header, token handling, envelope decoding incl. absent-not-zero responses, 401/badStatus/malformedResponse mapping) that must survive the generated-client migration. Red failures are expected and by design: neither the parity corpus nor the OpenAPI spec is committed yet (both are upstream dependencies viamin/color_matching#111 and #110). ENVIRONMENT LIMITATION: this Linux container has no Swift toolchain and ColorComposerCore targets macOS (CoreGraphics), so `swift test` could not be executed here; bin/lint runs and exits 0 (self-skips the build). Test results below are by static inspection against the verified public API surface, not execution — run `cd ColorComposerCore && swift test` on a macOS host with Xcode 16. Corpus schema and refresh workflow documented in docs/solver-parity-corpus.md (README.md is outside the test-phase allowlist; fold/link it during the implementation run).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Adopt generated OpenAPI client from the published spec; vendor the OpenAPI document and keep /api/v1 shapes aligned",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:41", "result": "expected_failure — fixture Fixtures/openapi.json not committed yet (depends on viamin/color_matching#110); test fails with a message naming the missing artifact" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:50", "result": "expected_failure — printer_profiles endpoint contract check; same missing-fixture cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:68", "result": "expected_failure — colors endpoint printer_profile_id query contract check; same missing-fixture cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:82", "result": "expected_failure — PaletteColorDTO/RGBDTO wire-shape check; same missing-fixture cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:105", "result": "expected_failure — ColorResponseDTO wire-shape check; same missing-fixture cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:130", "result": "expected_failure — canonical light-source acceptance check; same missing-fixture cause" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: /api/v1 request shapes, token handling, error mapping, per-server/profile color caching, offline-stale fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientMigrationTests.swift:24", "result": "written, not executed — no Swift toolchain in this Linux container; migration behavior pins (endpoint/query/headers/decoding/errors/token)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "pre-existing permanent coverage of per-server/profile disk cache, corrupt-file misses, server namespacing, and clear-cache semantics; unchanged by this PR, must stay green through the migration" }
+        ],
+        "reason": "swift test not executable in this environment (no Swift toolchain; package targets macOS/CoreGraphics). Re-run on a macOS host."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target in ColorComposerCore tests loading the committed corpus; selections match exactly, including tie cases",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:83", "result": "expected_failure — corpus fixture Fixtures/solver-parity-corpus.json not committed yet (depends on viamin/color_matching#111); fails with a pointer to docs/solver-parity-corpus.md" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:122", "result": "expected_failure — exact selection + score parity per target; blocked on the same missing fixture" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:150", "result": "expected_failure — exclusion policy parity (missing measurement never zero); same cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:172", "result": "expected_failure — tie cases must genuinely tie and resolve to the earliest candidate; same cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:204", "result": "expected_failure — exclusion-tagged cases never select an unmeasured color; same cause" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:232", "result": "expected_failure — end-to-end CompositionSolver fast-path parity; same cause" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "authored — corpus location, version-1 schema, asserted semantics (ties/exclusions/weights), refresh workflow, and OpenAPI fixture notes" }
+        ],
+        "reason": "README.md is outside this test-writing phase's file allowlist; the implementation run must link/merge docs/solver-parity-corpus.md into the README."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "Exit criterion: swift test green with the parity corpus test and generated client in place; disk cache + offline fallback verified unchanged",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/", "result": "suite not executable in this container" }
+        ],
+        "reason": "No Swift toolchain on this Linux host and ColorComposerCore requires macOS (CoreGraphics). Run `cd ColorComposerCore && swift test` on a macOS host after the implementation run lands the fixtures and generated client."
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, and parity test results (ties, exclusions, weight handling)",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "source material for the parity half of the PR description" }
+        ],
+        "reason": "Tests-only draft phase; the implementation run authors the PR description. OpenAPIContractTests failures are the machine-checked record of any /api/v1 shape drift once the spec fixture lands."
+      }
+    }
+  ]
+}
