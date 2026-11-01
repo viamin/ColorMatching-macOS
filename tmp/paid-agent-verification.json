@@ -1,0 +1,66 @@
+{
+  "status": "passed",
+  "summary": "Tests-only run committed the upstream parity corpus and its permanent replay test. Swift is unavailable in this container, so execution remains for the implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Generated-client delegation coverage must be added in the implementation run; no generated client exists at this tests-only PR head."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache namespace coverage was inspected; Swift is unavailable, so it was not executed."
+          },
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift",
+            "result": "Offline-stale badge and cached-profile fallback require implementation-run behavior verification."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift",
+            "result": "Permanent corpus replay test added; not executed because the Swift executable is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/WeightedSquaredError/v1/corpus.json",
+            "result": "Copied byte-for-byte from viamin/color_matching main at priv/parity/v1/corpus.json (SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Refresh instructions are recorded in permitted LID documentation; README editing is forbidden in this tests-only run and remains for implementation."
+          }
+        ]
+      }
+    }
+  ]
+}
