@@ -1,0 +1,60 @@
+import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+import XCTest
+
+/// Shared URL-protocol mock for tests that exercise `PaletteAPIClient`
+/// against canned HTTP responses without a live `color_matching` server.
+final class PaletteAPITestSupportURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var handler: (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        guard let handler = Self.handler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+
+        do {
+            let (response, data) = try handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
+}
+
+extension PaletteAPITestSupportURLProtocol {
+    /// Canned HTTP response factory. Kept off `HTTPURLResponse` itself so it
+    /// cannot collide with the private helpers in other test files.
+    static func response(statusCode: Int, url: URL) -> HTTPURLResponse {
+        HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
+    }
+}
+
+/// Async variant of `XCTAssertThrowsError` for awaited throwing calls.
+func assertAsyncThrows<T>(
+    _ expression: @autoclosure () async throws -> T,
+    _ assertions: (Error) -> Void,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    do {
+        _ = try await expression()
+        XCTFail("Expected error to be thrown", file: file, line: line)
+    } catch {
+        assertions(error)
+    }
+}
