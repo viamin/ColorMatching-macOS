@@ -1,0 +1,66 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added the issue 39 contract tests and verification plan. The Swift toolchain is unavailable in this container, so no Swift test result is claimed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsUsesVersionedEndpointAndDecodesProfileEnvelope",
+            "result": "not_run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:testTwoServersKeepSeparateEntriesForTheSameProfileID",
+            "result": "not_run: swift executable is unavailable"
+          },
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "records the remaining app-level offline badge/profile fallback evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:testV1CorpusMatchesScoresAndSelections",
+            "result": "not_run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "committed v1 parity fixture"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "documents upstream corpus location and refresh command; README update is deferred by test-writing path restrictions"
+          }
+        ]
+      }
+    }
+  ]
+}
