@@ -1,0 +1,65 @@
+{
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "weighted channels select the lowest total squared error",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "responses": { "white": 0.7, "red": 0.2, "green": 0.6, "blue": 1.0, "lps": 0.45 } }
+      ],
+      "expected_winner_id": 102
+    },
+    {
+      "name": "ties choose the earliest palette entry even when ids are unordered",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 42, "responses": { "red": 0.4 } },
+        { "id": 7, "responses": { "red": 0.6 } }
+      ],
+      "expected_winner_id": 42
+    },
+    {
+      "name": "zero weight channels do not affect selection or require measurements",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "blue": 1.0 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 11, "responses": { "red": 0.4, "blue": 1.0 } }
+      ],
+      "expected_winner_id": 10
+    },
+    {
+      "name": "missing active measurements exclude otherwise closer candidates",
+      "weights": { "white": 0.0, "red": 1.0, "green": 2.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_winner_id": 31
+    },
+    {
+      "name": "channel weights change the winning candidate",
+      "weights": { "white": 0.0, "red": 4.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.0, "green": 0.0 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.1, "green": 0.8 } },
+        { "id": 51, "responses": { "red": 0.4, "green": 0.4 } }
+      ],
+      "expected_winner_id": 50
+    },
+    {
+      "name": "all candidates missing an active measurement leaves the cell unmatched",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 1.0 },
+      "target": { "white": 0.5, "lps": 0.5 },
+      "candidates": [
+        { "id": 70, "responses": { "white": 0.5 } },
+        { "id": 71, "responses": { "lps": 0.5 } }
+      ],
+      "expected_winner_id": null
+    }
+  ]
+}
