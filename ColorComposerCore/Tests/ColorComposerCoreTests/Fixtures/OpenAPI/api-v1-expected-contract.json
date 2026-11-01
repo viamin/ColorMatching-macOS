@@ -1,0 +1,134 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "color_matching",
+    "version": "1.0.0",
+    "description": "Expected /api/v1 wire contract as consumed by ColorComposerCore's PaletteAPIClient (APIModels.swift). This snapshot is the shape-change detector baseline for the generated-client migration (issue #39): the OpenAPI document published by viamin/color_matching#110 and committed at ColorComposerCore/openapi.yaml must keep covering every field listed here. Key sets per schema must match exactly."
+  },
+  "servers": [{ "url": "/" }],
+  "paths": {
+    "/api/v1/printer_profiles": {
+      "get": {
+        "operationId": "listPrinterProfiles",
+        "summary": "List printer profiles",
+        "responses": {
+          "200": {
+            "description": "Printer profiles",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PrinterProfilesResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/colors": {
+      "get": {
+        "operationId": "listColors",
+        "summary": "List palette colors with measured illuminant responses for a printer profile",
+        "parameters": [
+          {
+            "name": "printer_profile_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colors with measured responses",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ColorsResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "schemas": {
+      "PrinterProfilesResponse": {
+        "type": "object",
+        "required": ["printer_profiles"],
+        "properties": {
+          "printer_profiles": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PrinterProfile" }
+          }
+        }
+      },
+      "ColorsResponse": {
+        "type": "object",
+        "required": ["colors"],
+        "properties": {
+          "colors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PaletteColor" }
+          },
+          "printer_profile": {
+            "allOf": [{ "$ref": "#/components/schemas/PrinterProfile" }],
+            "nullable": true
+          }
+        }
+      },
+      "PrinterProfile": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "integer" },
+          "printer_make_model": { "type": "string", "nullable": true },
+          "paper_type": { "type": "string", "nullable": true },
+          "ink_type": { "type": "string", "nullable": true }
+        }
+      },
+      "PaletteColor": {
+        "type": "object",
+        "required": ["id", "hex"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "nullable": true },
+          "hex": { "type": "string" },
+          "rgb": {
+            "allOf": [{ "$ref": "#/components/schemas/RGB" }],
+            "nullable": true
+          },
+          "palette_id": { "type": "integer", "nullable": true },
+          "palette_name": { "type": "string", "nullable": true },
+          "sort_order": { "type": "integer", "nullable": true },
+          "responses": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/components/schemas/ColorResponse" }
+          }
+        }
+      },
+      "RGB": {
+        "type": "object",
+        "required": ["r", "g", "b"],
+        "properties": {
+          "r": { "type": "integer" },
+          "g": { "type": "integer" },
+          "b": { "type": "integer" }
+        }
+      },
+      "ColorResponse": {
+        "type": "object",
+        "required": ["brightness"],
+        "properties": {
+          "brightness": { "type": "number" },
+          "source": { "type": "string", "nullable": true },
+          "raw_value": { "type": "number", "nullable": true },
+          "raw_unit": { "type": "string", "nullable": true },
+          "apparent_brightness": { "type": "integer", "nullable": true },
+          "measured_at": { "type": "string", "nullable": true },
+          "test_run_id": { "type": "string", "nullable": true }
+        }
+      }
+    }
+  }
+}

@@ -37,14 +37,88 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - Generated-client migration pins (issue #39)
+    //
+    // These pin the observable wire behavior of `PaletteAPIClient` so the
+    // migration to the OpenAPI-generated client (viamin/color_matching#110)
+    // cannot change endpoints, headers, decoding, or error mapping.
+
+    func testFetchColorsRequestsProfileScopedColorsEndpoint() async throws {
+        let lock = NSLock()
+        var requests: [URLRequest] = []
+        let client = makeClient { request in
+            lock.lock()
+            requests.append(request)
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(requests.count, 1)
+        XCTAssertEqual(
+            requests[0].url?.absoluteString,
+            "http://example.com/api/v1/colors?printer_profile_id=7"
+        )
+        XCTAssertEqual(requests[0].value(forHTTPHeaderField: "Accept"), "application/json")
+        XCTAssertEqual(requests[0].value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+        XCTAssertEqual(fetched.colors.map(\.id), [123])
+        XCTAssertEqual(fetched.colors.first?.responses["red"]?.brightness, 0.87)
+        XCTAssertEqual(fetched.profile?.id, 7)
+    }
+
+    func testFetchColorsThrowsMalformedResponseForUndecodableBody() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("{\"colors\":".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 1)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testFetchColorsThrowsBadStatusForServerError() async {
+        let client = makeClient { request in
+            (.init(statusCode: 503, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 1)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(503))
+        }
+    }
+
+    func testOmitsAuthorizationHeaderWithoutToken() async throws {
+        let lock = NSLock()
+        var headers: [String?] = []
+        let client = makeClient(token: nil) { request in
+            lock.lock()
+            headers.append(request.value(forHTTPHeaderField: "Authorization"))
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(headers, [nil])
+    }
+
+    func testTestConnectionSucceedsOn2xx() async throws {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        try await client.testConnection()
+    }
+
     private func makeClient(
+        token: String? = "  stale-token  ",
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
         MockURLProtocol.handler = handler
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
+        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: token, session: session)
     }
 
     private func printerProfilesResponse() -> Data {
@@ -56,6 +130,30 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 7,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 123,
+              "name": "Red 12",
+              "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement"}
+              }
             }
           ]
         }
