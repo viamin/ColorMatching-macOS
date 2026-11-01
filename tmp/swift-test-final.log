@@ -1,0 +1,517 @@
+Building for debugging...
+[0/2] Write swift-version-3AAE498FB4055B1E.txt
+Build complete! (0.13s)
+Test Suite 'All tests' started at 2026-11-01 06:14:14.236
+Test Suite 'debug.xctest' started at 2026-11-01 06:14:14.240
+Test Suite 'APIDecodingTests' started at 2026-11-01 06:14:14.240
+Test Case 'APIDecodingTests.testDecodesColorsResponseWithResponses' started at 2026-11-01 06:14:14.240
+Test Case 'APIDecodingTests.testDecodesColorsResponseWithResponses' passed (0.001 seconds)
+Test Case 'APIDecodingTests.testDecodesPrinterProfiles' started at 2026-11-01 06:14:14.241
+Test Case 'APIDecodingTests.testDecodesPrinterProfiles' passed (0.0 seconds)
+Test Case 'APIDecodingTests.testDomainConversionDropsUnknownLightSources' started at 2026-11-01 06:14:14.242
+Test Case 'APIDecodingTests.testDomainConversionDropsUnknownLightSources' passed (0.0 seconds)
+Test Case 'APIDecodingTests.testDomainConversionFallsBackToHexWhenRGBOmitted' started at 2026-11-01 06:14:14.242
+Test Case 'APIDecodingTests.testDomainConversionFallsBackToHexWhenRGBOmitted' passed (0.0 seconds)
+Test Case 'APIDecodingTests.testMissingMeasurementsAreAbsentNotZero' started at 2026-11-01 06:14:14.242
+Test Case 'APIDecodingTests.testMissingMeasurementsAreAbsentNotZero' passed (0.0 seconds)
+Test Suite 'APIDecodingTests' passed at 2026-11-01 06:14:14.242
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'BrightnessColorSpaceTests' started at 2026-11-01 06:14:14.242
+Test Case 'BrightnessColorSpaceTests.testCodableRoundTrip' started at 2026-11-01 06:14:14.242
+Test Case 'BrightnessColorSpaceTests.testCodableRoundTrip' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testDefaultIsGammaToMatchServer' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testDefaultIsGammaToMatchServer' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testGammaDecodeIsIdentity' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testGammaDecodeIsIdentity' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeDarkValueUsesLinearSegment' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeDarkValueUsesLinearSegment' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeEndpointsAreZeroAndOne' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeEndpointsAreZeroAndOne' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeIsAlwaysBelowGammaForMidtones' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeIsAlwaysBelowGammaForMidtones' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeKnownSRGBValues' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeKnownSRGBValues' passed (0.0 seconds)
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeMatchesStaticTransferFunction' started at 2026-11-01 06:14:14.243
+Test Case 'BrightnessColorSpaceTests.testLinearDecodeMatchesStaticTransferFunction' passed (0.0 seconds)
+Test Suite 'BrightnessColorSpaceTests' passed at 2026-11-01 06:14:14.243
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DitheringTests' started at 2026-11-01 06:14:14.243
+Test Case 'DitheringTests.testDitheringLeavesCellUnmatchedWhenAllCandidatesExcluded' started at 2026-11-01 06:14:14.243
+Test Case 'DitheringTests.testDitheringLeavesCellUnmatchedWhenAllCandidatesExcluded' passed (0.0 seconds)
+Test Case 'DitheringTests.testFloydSteinbergIsDeterministic' started at 2026-11-01 06:14:14.244
+Test Case 'DitheringTests.testFloydSteinbergIsDeterministic' passed (0.0 seconds)
+Test Case 'DitheringTests.testGradientDePosterizes' started at 2026-11-01 06:14:14.244
+Test Case 'DitheringTests.testGradientDePosterizes' passed (0.003 seconds)
+Test Case 'DitheringTests.testMatchesHandComputedSmallCase' started at 2026-11-01 06:14:14.247
+Test Case 'DitheringTests.testMatchesHandComputedSmallCase' passed (0.0 seconds)
+Test Case 'DitheringTests.testOffMatchesCallingWithoutDithering' started at 2026-11-01 06:14:14.247
+Test Case 'DitheringTests.testOffMatchesCallingWithoutDithering' passed (0.0 seconds)
+Test Case 'DitheringTests.testVectorDitheringAveragesTowardTargetTone' started at 2026-11-01 06:14:14.247
+Test Case 'DitheringTests.testVectorDitheringAveragesTowardTargetTone' passed (0.003 seconds)
+Test Suite 'DitheringTests' passed at 2026-11-01 06:14:14.250
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.007 (0.007) seconds
+Test Suite 'LightingConditionTests' started at 2026-11-01 06:14:14.250
+Test Case 'LightingConditionTests.testCanonicalOrderMatchesPreviewShortcutNumbering' started at 2026-11-01 06:14:14.250
+Test Case 'LightingConditionTests.testCanonicalOrderMatchesPreviewShortcutNumbering' passed (0.0 seconds)
+Test Suite 'LightingConditionTests' passed at 2026-11-01 06:14:14.250
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'OpenAPISpecConformanceTests' started at 2026-11-01 06:14:14.250
+Test Case 'OpenAPISpecConformanceTests.testClientDecodesSpecConformantColorsPayload' started at 2026-11-01 06:14:14.251
+Test Case 'OpenAPISpecConformanceTests.testClientDecodesSpecConformantColorsPayload' passed (0.002 seconds)
+Test Case 'OpenAPISpecConformanceTests.testClientDecodesSpecConformantPrinterProfilesPayload' started at 2026-11-01 06:14:14.253
+Test Case 'OpenAPISpecConformanceTests.testClientDecodesSpecConformantPrinterProfilesPayload' passed (0.0 seconds)
+Test Case 'OpenAPISpecConformanceTests.testColorItemRequiredFieldsAreClientDecodable' started at 2026-11-01 06:14:14.253
+Test Case 'OpenAPISpecConformanceTests.testColorItemRequiredFieldsAreClientDecodable' passed (0.001 seconds)
+Test Case 'OpenAPISpecConformanceTests.testColorsOperationTakesThePrinterProfileIDQueryTheClientSends' started at 2026-11-01 06:14:14.254
+Test Case 'OpenAPISpecConformanceTests.testColorsOperationTakesThePrinterProfileIDQueryTheClientSends' passed (0.0 seconds)
+Test Case 'OpenAPISpecConformanceTests.testPrinterProfileRequiredFieldsAreClientDecodable' started at 2026-11-01 06:14:14.254
+Test Case 'OpenAPISpecConformanceTests.testPrinterProfileRequiredFieldsAreClientDecodable' passed (0.0 seconds)
+Test Case 'OpenAPISpecConformanceTests.testResponsesMapIsFreeFormInTheSpec' started at 2026-11-01 06:14:14.254
+Test Case 'OpenAPISpecConformanceTests.testResponsesMapIsFreeFormInTheSpec' passed (0.0 seconds)
+Test Case 'OpenAPISpecConformanceTests.testSpecServesTheEndpointsTheClientUses' started at 2026-11-01 06:14:14.255
+Test Case 'OpenAPISpecConformanceTests.testSpecServesTheEndpointsTheClientUses' passed (0.0 seconds)
+Test Suite 'OpenAPISpecConformanceTests' passed at 2026-11-01 06:14:14.255
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Test Suite 'PaletteAPIClientTests' started at 2026-11-01 06:14:14.255
+Test Case 'PaletteAPIClientTests.testFetchColorsRequestsProfileIDQueryAndDecodesEnvelope' started at 2026-11-01 06:14:14.255
+Test Case 'PaletteAPIClientTests.testFetchColorsRequestsProfileIDQueryAndDecodesEnvelope' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testFetchColorsWithoutBearerTokenOmitsAuthorizationHeader' started at 2026-11-01 06:14:14.255
+Test Case 'PaletteAPIClientTests.testFetchColorsWithoutBearerTokenOmitsAuthorizationHeader' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesDecodesEnvelope' started at 2026-11-01 06:14:14.255
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesDecodesEnvelope' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesThrowsUnauthorizedWithoutRetryHandler' started at 2026-11-01 06:14:14.256
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesThrowsUnauthorizedWithoutRetryHandler' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesUsesTrimmedBearerToken' started at 2026-11-01 06:14:14.256
+Test Case 'PaletteAPIClientTests.testFetchPrinterProfilesUsesTrimmedBearerToken' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testNon2xxSurfacesBadStatus' started at 2026-11-01 06:14:14.256
+Test Case 'PaletteAPIClientTests.testNon2xxSurfacesBadStatus' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testRequestsAcceptJSON' started at 2026-11-01 06:14:14.256
+Test Case 'PaletteAPIClientTests.testRequestsAcceptJSON' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testTestConnectionSucceedsOn2xx' started at 2026-11-01 06:14:14.257
+Test Case 'PaletteAPIClientTests.testTestConnectionSucceedsOn2xx' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testTestConnectionSurfacesUnauthorized' started at 2026-11-01 06:14:14.257
+Test Case 'PaletteAPIClientTests.testTestConnectionSurfacesUnauthorized' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testUndecodableBodySurfacesMalformedResponse' started at 2026-11-01 06:14:14.257
+Test Case 'PaletteAPIClientTests.testUndecodableBodySurfacesMalformedResponse' passed (0.0 seconds)
+Test Case 'PaletteAPIClientTests.testWhitespaceOnlyTokenOmitsAuthorizationHeader' started at 2026-11-01 06:14:14.257
+Test Case 'PaletteAPIClientTests.testWhitespaceOnlyTokenOmitsAuthorizationHeader' passed (0.0 seconds)
+Test Suite 'PaletteAPIClientTests' passed at 2026-11-01 06:14:14.258
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PrintLayoutTests' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testBleedExpandsCanvasWithoutMarks' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testBleedExpandsCanvasWithoutMarks' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testBleedPushesMarksOutsideArtworkBounds' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testBleedPushesMarksOutsideArtworkBounds' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testCropMarksAndRegistrationMarksUseRequestedInset' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testCropMarksAndRegistrationMarksUseRequestedInset' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testLayoutAddsBleedAndMarkMarginOutsideTrimArea' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testLayoutAddsBleedAndMarkMarginOutsideTrimArea' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testLayoutAddsEnoughPaddingForRegistrationCrosshairs' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testLayoutAddsEnoughPaddingForRegistrationCrosshairs' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testLayoutWithoutBleedOrMarksMatchesArtworkSize' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testLayoutWithoutBleedOrMarksMatchesArtworkSize' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testNegativeBleedAndInsetAreClampedToZero' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testNegativeBleedAndInsetAreClampedToZero' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testNegativePhysicalSizeIsClampedToZero' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testNegativePhysicalSizeIsClampedToZero' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testNonFiniteMeasurementsAreClampedToZero' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testNonFiniteMeasurementsAreClampedToZero' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testNonFiniteMeasurementsWithMarksStillProduceFiniteLayout' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testNonFiniteMeasurementsWithMarksStillProduceFiniteLayout' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsClampsNegativeAndNonFiniteMeasurements' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsClampsNegativeAndNonFiniteMeasurements' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDecodeClampsInvalidMeasurements' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDecodeClampsInvalidMeasurements' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDecodesPresentFieldsWithoutOverwritingThem' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDecodesPresentFieldsWithoutOverwritingThem' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDefaultsMissingFieldsDuringDecode' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsDefaultsMissingFieldsDuringDecode' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsRoundTripPreservesSanitizedValues' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testPrintOverlayOptionsRoundTripPreservesSanitizedValues' passed (0.0 seconds)
+Test Case 'PrintLayoutTests.testZeroPhysicalSizeWithMarksStillProducesFiniteLayout' started at 2026-11-01 06:14:14.258
+Test Case 'PrintLayoutTests.testZeroPhysicalSizeWithMarksStillProducesFiniteLayout' passed (0.0 seconds)
+Test Suite 'PrintLayoutTests' passed at 2026-11-01 06:14:14.258
+	 Executed 16 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ProfileColorCacheTests' started at 2026-11-01 06:14:14.258
+Test Case 'ProfileColorCacheTests.testAllEntriesDropProfileMetadataWhoseNestedIDDisagreesWithProfileID' started at 2026-11-01 06:14:14.258
+Test Case 'ProfileColorCacheTests.testAllEntriesDropProfileMetadataWhoseNestedIDDisagreesWithProfileID' passed (0.002 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile' started at 2026-11-01 06:14:14.260
+Test Case 'ProfileColorCacheTests.testAllEntriesDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresASymbolicLinkCacheFile' started at 2026-11-01 06:14:14.260
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresASymbolicLinkCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresFilesOutsideTheNamingContract' started at 2026-11-01 06:14:14.261
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresFilesOutsideTheNamingContract' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresNonCanonicalProfileFileNames' started at 2026-11-01 06:14:14.261
+Test Case 'ProfileColorCacheTests.testAllEntriesIgnoresNonCanonicalProfileFileNames' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesIncludesEntriesWithoutProfileMetadata' started at 2026-11-01 06:14:14.262
+Test Case 'ProfileColorCacheTests.testAllEntriesIncludesEntriesWithoutProfileMetadata' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesIsEmptyWithoutDirectory' started at 2026-11-01 06:14:14.263
+Test Case 'ProfileColorCacheTests.testAllEntriesIsEmptyWithoutDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile' started at 2026-11-01 06:14:14.263
+Test Case 'ProfileColorCacheTests.testAllEntriesNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesOnlyReturnsTheRequestingServersEntries' started at 2026-11-01 06:14:14.264
+Test Case 'ProfileColorCacheTests.testAllEntriesOnlyReturnsTheRequestingServersEntries' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsCorruptFilesAndSortsByProfile' started at 2026-11-01 06:14:14.264
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsCorruptFilesAndSortsByProfile' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename' started at 2026-11-01 06:14:14.266
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsEntriesWhoseStoredIDDisagreesWithFilename' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsEntriesWhoseStoredServerDisagreesWithDirectory' started at 2026-11-01 06:14:14.266
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsEntriesWhoseStoredServerDisagreesWithDirectory' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsSymbolicLinkCacheFiles' started at 2026-11-01 06:14:14.267
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsSymbolicLinkCacheFiles' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsSymbolicLinkServerDirectory' started at 2026-11-01 06:14:14.268
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsSymbolicLinkServerDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsUnmarkedServerDirectory' started at 2026-11-01 06:14:14.268
+Test Case 'ProfileColorCacheTests.testAllEntriesSkipsUnmarkedServerDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testAllEntriesThroughSymbolicLinkRootIsEmpty' started at 2026-11-01 06:14:14.268
+Test Case 'ProfileColorCacheTests.testAllEntriesThroughSymbolicLinkRootIsEmpty' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testCorruptCacheFileCountsAsMiss' started at 2026-11-01 06:14:14.268
+Test Case 'ProfileColorCacheTests.testCorruptCacheFileCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testDecodesHandWrittenSnakeCaseCacheFile' started at 2026-11-01 06:14:14.269
+Test Case 'ProfileColorCacheTests.testDecodesHandWrittenSnakeCaseCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testDefaultPortAndSchemeCaseUseTheSameCacheNamespace' started at 2026-11-01 06:14:14.269
+Test Case 'ProfileColorCacheTests.testDefaultPortAndSchemeCaseUseTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testDomainColorsConvertRoundTrippedDTOs' started at 2026-11-01 06:14:14.270
+Test Case 'ProfileColorCacheTests.testDomainColorsConvertRoundTrippedDTOs' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testDomainColorsIsEmptyForAnEmptyCachedFetch' started at 2026-11-01 06:14:14.270
+Test Case 'ProfileColorCacheTests.testDomainColorsIsEmptyForAnEmptyCachedFetch' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testDomainColorsIsEmptyWhenEveryDTOFailsConversion' started at 2026-11-01 06:14:14.270
+Test Case 'ProfileColorCacheTests.testDomainColorsIsEmptyWhenEveryDTOFailsConversion' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEmptyCachedFetchSurvivesDiskRoundTrip' started at 2026-11-01 06:14:14.270
+Test Case 'ProfileColorCacheTests.testEmptyCachedFetchSurvivesDiskRoundTrip' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile' started at 2026-11-01 06:14:14.270
+Test Case 'ProfileColorCacheTests.testEntryDropsMismatchedNestedProfileMetadataWhenReadingLegacyCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryDropsProfileMetadataWhoseNestedIDDisagreesWithProfileID' started at 2026-11-01 06:14:14.271
+Test Case 'ProfileColorCacheTests.testEntryDropsProfileMetadataWhoseNestedIDDisagreesWithProfileID' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryForMissingDirectoryIsNil' started at 2026-11-01 06:14:14.271
+Test Case 'ProfileColorCacheTests.testEntryForMissingDirectoryIsNil' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryForUncachedProfileIsNil' started at 2026-11-01 06:14:14.271
+Test Case 'ProfileColorCacheTests.testEntryForUncachedProfileIsNil' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryFromAnotherServerCountsAsMiss' started at 2026-11-01 06:14:14.272
+Test Case 'ProfileColorCacheTests.testEntryFromAnotherServerCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryFromUnmarkedServerDirectoryCountsAsMiss' started at 2026-11-01 06:14:14.272
+Test Case 'ProfileColorCacheTests.testEntryFromUnmarkedServerDirectoryCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryIgnoresASymbolicLinkCacheFile' started at 2026-11-01 06:14:14.272
+Test Case 'ProfileColorCacheTests.testEntryIgnoresASymbolicLinkCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile' started at 2026-11-01 06:14:14.273
+Test Case 'ProfileColorCacheTests.testEntryNormalizesStoredServerBaseUrlWhenReadingLegacyCacheFile' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryThroughSymbolicLinkRootCountsAsMiss' started at 2026-11-01 06:14:14.273
+Test Case 'ProfileColorCacheTests.testEntryThroughSymbolicLinkRootCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryThroughSymbolicLinkServerDirectoryCountsAsMiss' started at 2026-11-01 06:14:14.273
+Test Case 'ProfileColorCacheTests.testEntryThroughSymbolicLinkServerDirectoryCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryWhoseStoredIDDisagreesWithFilenameCountsAsMiss' started at 2026-11-01 06:14:14.273
+Test Case 'ProfileColorCacheTests.testEntryWhoseStoredIDDisagreesWithFilenameCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testEntryWhoseStoredServerDisagreesWithDirectoryCountsAsMiss' started at 2026-11-01 06:14:14.274
+Test Case 'ProfileColorCacheTests.testEntryWhoseStoredServerDisagreesWithDirectoryCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testHTTPSDefaultPortAndSchemeCaseUseTheSameCacheNamespace' started at 2026-11-01 06:14:14.274
+Test Case 'ProfileColorCacheTests.testHTTPSDefaultPortAndSchemeCaseUseTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testHasServableColorsIsFalseWhenNoCachedColorConverts' started at 2026-11-01 06:14:14.275
+Test Case 'ProfileColorCacheTests.testHasServableColorsIsFalseWhenNoCachedColorConverts' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testHasServableColorsIsTrueWhenAnyCachedColorConverts' started at 2026-11-01 06:14:14.275
+Test Case 'ProfileColorCacheTests.testHasServableColorsIsTrueWhenAnyCachedColorConverts' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testLeadingAndInternalPathSlashesKeepDistinctCacheNamespaces' started at 2026-11-01 06:14:14.275
+Test Case 'ProfileColorCacheTests.testLeadingAndInternalPathSlashesKeepDistinctCacheNamespaces' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testLeadingAndTrailingWhitespaceUsesTheSameCacheNamespace' started at 2026-11-01 06:14:14.275
+Test Case 'ProfileColorCacheTests.testLeadingAndTrailingWhitespaceUsesTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testNonDefaultPortsKeepDistinctCacheNamespaces' started at 2026-11-01 06:14:14.276
+Test Case 'ProfileColorCacheTests.testNonDefaultPortsKeepDistinctCacheNamespaces' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testOnlyTrailingSlashesUseTheSameCacheNamespace' started at 2026-11-01 06:14:14.277
+Test Case 'ProfileColorCacheTests.testOnlyTrailingSlashesUseTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testQueryAndFragmentUseTheSameCacheNamespace' started at 2026-11-01 06:14:14.278
+Test Case 'ProfileColorCacheTests.testQueryAndFragmentUseTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllClearsEveryProfile' started at 2026-11-01 06:14:14.278
+Test Case 'ProfileColorCacheTests.testRemoveAllClearsEveryProfile' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllDoesNotDeleteANonDirectoryRoot' started at 2026-11-01 06:14:14.279
+Test Case 'ProfileColorCacheTests.testRemoveAllDoesNotDeleteANonDirectoryRoot' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllDoesNotDeleteASymbolicLinkRoot' started at 2026-11-01 06:14:14.279
+Test Case 'ProfileColorCacheTests.testRemoveAllDoesNotDeleteASymbolicLinkRoot' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllKeepsTheCacheRootDirectory' started at 2026-11-01 06:14:14.279
+Test Case 'ProfileColorCacheTests.testRemoveAllKeepsTheCacheRootDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesForeignServerPrefixedDirectoriesInPlace' started at 2026-11-01 06:14:14.279
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesForeignServerPrefixedDirectoriesInPlace' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesSymbolicLinkServerPrefixedDirectoriesInPlace' started at 2026-11-01 06:14:14.280
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesSymbolicLinkServerPrefixedDirectoriesInPlace' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesUnmarkedEmptyServerPrefixedDirectoriesInPlace' started at 2026-11-01 06:14:14.280
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesUnmarkedEmptyServerPrefixedDirectoriesInPlace' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesUnrelatedRootChildrenInPlace' started at 2026-11-01 06:14:14.281
+Test Case 'ProfileColorCacheTests.testRemoveAllLeavesUnrelatedRootChildrenInPlace' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testRemoveAllSucceedsWhenNothingIsCached' started at 2026-11-01 06:14:14.281
+Test Case 'ProfileColorCacheTests.testRemoveAllSucceedsWhenNothingIsCached' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreClaimsAnEmptyPreexistingServerDirectory' started at 2026-11-01 06:14:14.281
+Test Case 'ProfileColorCacheTests.testStoreClaimsAnEmptyPreexistingServerDirectory' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testStoreCreatesSeparateServerDirectories' started at 2026-11-01 06:14:14.282
+Test Case 'ProfileColorCacheTests.testStoreCreatesSeparateServerDirectories' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreDropsMismatchedNestedProfileMetadataBeforePersisting' started at 2026-11-01 06:14:14.282
+Test Case 'ProfileColorCacheTests.testStoreDropsMismatchedNestedProfileMetadataBeforePersisting' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreNormalizesServerBaseUrlInTheWrittenJSON' started at 2026-11-01 06:14:14.282
+Test Case 'ProfileColorCacheTests.testStoreNormalizesServerBaseUrlInTheWrittenJSON' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreOverwritesPreviousFetch' started at 2026-11-01 06:14:14.282
+Test Case 'ProfileColorCacheTests.testStoreOverwritesPreviousFetch' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testStoreRecreatesDirectoryAfterRemoveAll' started at 2026-11-01 06:14:14.283
+Test Case 'ProfileColorCacheTests.testStoreRecreatesDirectoryAfterRemoveAll' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testStoreRejectsANonDirectoryRoot' started at 2026-11-01 06:14:14.284
+Test Case 'ProfileColorCacheTests.testStoreRejectsANonDirectoryRoot' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreRejectsANonEmptyUnmarkedServerDirectory' started at 2026-11-01 06:14:14.284
+Test Case 'ProfileColorCacheTests.testStoreRejectsANonEmptyUnmarkedServerDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreRejectsASymbolicLinkRoot' started at 2026-11-01 06:14:14.284
+Test Case 'ProfileColorCacheTests.testStoreRejectsASymbolicLinkRoot' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreRejectsASymbolicLinkServerDirectory' started at 2026-11-01 06:14:14.284
+Test Case 'ProfileColorCacheTests.testStoreRejectsASymbolicLinkServerDirectory' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreThenReadRoundTripsEntry' started at 2026-11-01 06:14:14.284
+Test Case 'ProfileColorCacheTests.testStoreThenReadRoundTripsEntry' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testStoreTrimsWhitespaceBeforePersistingServerBaseUrl' started at 2026-11-01 06:14:14.285
+Test Case 'ProfileColorCacheTests.testStoreTrimsWhitespaceBeforePersistingServerBaseUrl' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testStoredFileUsesSnakeCaseWireKeys' started at 2026-11-01 06:14:14.286
+Test Case 'ProfileColorCacheTests.testStoredFileUsesSnakeCaseWireKeys' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testSymbolicLinkCacheFileCountsAsMiss' started at 2026-11-01 06:14:14.286
+Test Case 'ProfileColorCacheTests.testSymbolicLinkCacheFileCountsAsMiss' passed (0.0 seconds)
+Test Case 'ProfileColorCacheTests.testTrailingSlashAndHostCaseUseTheSameCacheNamespace' started at 2026-11-01 06:14:14.286
+Test Case 'ProfileColorCacheTests.testTrailingSlashAndHostCaseUseTheSameCacheNamespace' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testTwoServersKeepSeparateEntriesForTheSameProfileID' started at 2026-11-01 06:14:14.287
+Test Case 'ProfileColorCacheTests.testTwoServersKeepSeparateEntriesForTheSameProfileID' passed (0.001 seconds)
+Test Case 'ProfileColorCacheTests.testUserInfoUsesTheSameCacheNamespaceAndIsNotStored' started at 2026-11-01 06:14:14.288
+Test Case 'ProfileColorCacheTests.testUserInfoUsesTheSameCacheNamespaceAndIsNotStored' passed (0.001 seconds)
+Test Suite 'ProfileColorCacheTests' passed at 2026-11-01 06:14:14.288
+	 Executed 69 tests, with 0 failures (0 unexpected) in 0.03 (0.03) seconds
+Test Suite 'RGBColorTests' started at 2026-11-01 06:14:14.288
+Test Case 'RGBColorTests.testHexParsingSixDigits' started at 2026-11-01 06:14:14.288
+Test Case 'RGBColorTests.testHexParsingSixDigits' passed (0.0 seconds)
+Test Case 'RGBColorTests.testHexParsingWithoutHash' started at 2026-11-01 06:14:14.288
+Test Case 'RGBColorTests.testHexParsingWithoutHash' passed (0.0 seconds)
+Test Case 'RGBColorTests.testInvalidHexReturnsNil' started at 2026-11-01 06:14:14.288
+Test Case 'RGBColorTests.testInvalidHexReturnsNil' passed (0.0 seconds)
+Test Case 'RGBColorTests.testNormalized' started at 2026-11-01 06:14:14.288
+Test Case 'RGBColorTests.testNormalized' passed (0.0 seconds)
+Test Suite 'RGBColorTests' passed at 2026-11-01 06:14:14.289
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'RasterModeTests' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testFlatModeMatchesLegacyDefault' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testFlatModeMatchesLegacyDefault' passed (0.0 seconds)
+Test Case 'RasterModeTests.testHalftoneDotCountMatchesCoverage' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testHalftoneDotCountMatchesCoverage' passed (0.0 seconds)
+Test Case 'RasterModeTests.testHalftoneUnmatchedCellIsPaperWhite' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testHalftoneUnmatchedCellIsPaperWhite' passed (0.0 seconds)
+Test Case 'RasterModeTests.testHalftoneUsesCenteredPixelOrder' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testHalftoneUsesCenteredPixelOrder' passed (0.0 seconds)
+Test Case 'RasterModeTests.testRasterModeCodableRoundTrip' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testRasterModeCodableRoundTrip' passed (0.0 seconds)
+Test Case 'RasterModeTests.testRasterOutputSizeScalesWithPixelsPerCell' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testRasterOutputSizeScalesWithPixelsPerCell' passed (0.0 seconds)
+Test Case 'RasterModeTests.testTwoColorCellUsesOnlyTwoPaletteColors' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testTwoColorCellUsesOnlyTwoPaletteColors' passed (0.0 seconds)
+Test Case 'RasterModeTests.testTwoColorModeIgnoresColorsMissingActiveConditionMeasurements' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testTwoColorModeIgnoresColorsMissingActiveConditionMeasurements' passed (0.0 seconds)
+Test Case 'RasterModeTests.testTwoColorModeLowersSpatiallyAveragedError' started at 2026-11-01 06:14:14.289
+Test Case 'RasterModeTests.testTwoColorModeLowersSpatiallyAveragedError' passed (0.002 seconds)
+Test Suite 'RasterModeTests' passed at 2026-11-01 06:14:14.292
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'RasterTilerTests' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testAdjacentTilesOverlapByAtLeastTheRequestedAmount' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testAdjacentTilesOverlapByAtLeastTheRequestedAmount' passed (0.0 seconds)
+Test Case 'RasterTilerTests.testExtractCopiesTilePixelsFromSource' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testExtractCopiesTilePixelsFromSource' passed (0.0 seconds)
+Test Case 'RasterTilerTests.testExtractedTileMatchesFullPlanRoundTrip' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testExtractedTileMatchesFullPlanRoundTrip' passed (0.0 seconds)
+Test Case 'RasterTilerTests.testImageSmallerThanTileProducesSingleFullTile' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testImageSmallerThanTileProducesSingleFullTile' passed (0.0 seconds)
+Test Case 'RasterTilerTests.testOverlapIsClampedBelowTileSize' started at 2026-11-01 06:14:14.292
+Test Case 'RasterTilerTests.testOverlapIsClampedBelowTileSize' passed (0.005 seconds)
+Test Case 'RasterTilerTests.testOversizedImageIsSplitIntoMultipleTiles' started at 2026-11-01 06:14:14.297
+Test Case 'RasterTilerTests.testOversizedImageIsSplitIntoMultipleTiles' passed (0.001 seconds)
+Test Case 'RasterTilerTests.testTileOriginsSnapToCellBoundaries' started at 2026-11-01 06:14:14.298
+Test Case 'RasterTilerTests.testTileOriginsSnapToCellBoundaries' passed (0.009 seconds)
+Test Case 'RasterTilerTests.testTilesAreOrderedRowMajorWithMatchingRowColumnIndices' started at 2026-11-01 06:14:14.308
+Test Case 'RasterTilerTests.testTilesAreOrderedRowMajorWithMatchingRowColumnIndices' passed (0.0 seconds)
+Test Case 'RasterTilerTests.testTilesFullyCoverTheSourceImage' started at 2026-11-01 06:14:14.308
+Test Case 'RasterTilerTests.testTilesFullyCoverTheSourceImage' passed (0.007 seconds)
+Test Suite 'RasterTilerTests' passed at 2026-11-01 06:14:14.315
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.023 (0.023) seconds
+Test Suite 'ResponseGamutTests' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testClusterBrightnessIsBinCenter' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testClusterBrightnessIsBinCenter' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testColorsMissingAnActiveConditionAreExcluded' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testColorsMissingAnActiveConditionAreExcluded' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testCoverageIsEmptyWithoutActiveConditions' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testCoverageIsEmptyWithoutActiveConditions' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testCoverageReportsBrightnessShortfall' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testCoverageReportsBrightnessShortfall' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testCoveredAxisHasNoGapSummary' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testCoveredAxisHasNoGapSummary' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testGapSummaryNamesTheConditionAndDirection' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testGapSummaryNamesTheConditionAndDirection' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testGapSummaryReportsDarknessShortfall' started at 2026-11-01 06:14:14.315
+Test Case 'ResponseGamutTests.testGapSummaryReportsDarknessShortfall' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testGapsAreOrderedByWorstShortfallFirst' started at 2026-11-01 06:14:14.316
+Test Case 'ResponseGamutTests.testGapsAreOrderedByWorstShortfallFirst' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testIdenticalTargetsCollapseIntoOneClusterCarryingCellCount' started at 2026-11-01 06:14:14.316
+Test Case 'ResponseGamutTests.testIdenticalTargetsCollapseIntoOneClusterCarryingCellCount' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testInactiveConditionsAreNotAxes' started at 2026-11-01 06:14:14.316
+Test Case 'ResponseGamutTests.testInactiveConditionsAreNotAxes' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testLargeGridCollapsesToBoundedClusterCount' started at 2026-11-01 06:14:14.316
+Test Case 'ResponseGamutTests.testLargeGridCollapsesToBoundedClusterCount' passed (0.024 seconds)
+Test Case 'ResponseGamutTests.testMissingSourceGridForActiveConditionYieldsNoTargets' started at 2026-11-01 06:14:14.340
+Test Case 'ResponseGamutTests.testMissingSourceGridForActiveConditionYieldsNoTargets' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testNearestErrorAgreesWithSolverForExactBinCenters' started at 2026-11-01 06:14:14.340
+Test Case 'ResponseGamutTests.testNearestErrorAgreesWithSolverForExactBinCenters' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testNearestErrorHonoursChannelWeights' started at 2026-11-01 06:14:14.340
+Test Case 'ResponseGamutTests.testNearestErrorHonoursChannelWeights' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testNearestErrorIsTheBestAchievableWeightedSquaredError' started at 2026-11-01 06:14:14.340
+Test Case 'ResponseGamutTests.testNearestErrorIsTheBestAchievableWeightedSquaredError' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testNoEligibleColorsMakesEveryTargetUnreachable' started at 2026-11-01 06:14:14.340
+Test Case 'ResponseGamutTests.testNoEligibleColorsMakesEveryTargetUnreachable' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testPaletteOnlyAnalysisHasNoTargets' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testPaletteOnlyAnalysisHasNoTargets' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testTargetsAreClusteredAcrossEveryActiveAxis' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testTargetsAreClusteredAcrossEveryActiveAxis' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testTargetsBeyondThePaletteAreReportedUnreachable' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testTargetsBeyondThePaletteAreReportedUnreachable' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testThresholdReclassifiesWithoutReanalysis' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testThresholdReclassifiesWithoutReanalysis' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testUnreachableFractionIsZeroWithoutTargets' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testUnreachableFractionIsZeroWithoutTargets' passed (0.0 seconds)
+Test Case 'ResponseGamutTests.testVectorsCarryBrightnessInConditionOrder' started at 2026-11-01 06:14:14.341
+Test Case 'ResponseGamutTests.testVectorsCarryBrightnessInConditionOrder' passed (0.0 seconds)
+Test Suite 'ResponseGamutTests' passed at 2026-11-01 06:14:14.341
+	 Executed 22 tests, with 0 failures (0 unexpected) in 0.026 (0.026) seconds
+Test Suite 'ScorerTests' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testCandidateMissingRequiredChannelExcluded' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testCandidateMissingRequiredChannelExcluded' passed (0.0 seconds)
+Test Case 'ScorerTests.testChannelWeightingScalesError' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testChannelWeightingScalesError' passed (0.0 seconds)
+Test Case 'ScorerTests.testExactMatchScoresZero' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testExactMatchScoresZero' passed (0.0 seconds)
+Test Case 'ScorerTests.testMatchesElixirDoctestExample' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testMatchesElixirDoctestExample' passed (0.0 seconds)
+Test Case 'ScorerTests.testPerceptualExcludesMissingChannel' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testPerceptualExcludesMissingChannel' passed (0.0 seconds)
+Test Case 'ScorerTests.testPerceptualGreenOutweighsBlue' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testPerceptualGreenOutweighsBlue' passed (0.0 seconds)
+Test Case 'ScorerTests.testPerceptualUsesFixedWeightsNotUserWeights' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testPerceptualUsesFixedWeightsNotUserWeights' passed (0.0 seconds)
+Test Case 'ScorerTests.testScorerKindMakesCorrectType' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testScorerKindMakesCorrectType' passed (0.0 seconds)
+Test Case 'ScorerTests.testScorerKindRoundTrips' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testScorerKindRoundTrips' passed (0.0 seconds)
+Test Case 'ScorerTests.testTargetMissingRequiredChannelExcluded' started at 2026-11-01 06:14:14.341
+Test Case 'ScorerTests.testTargetMissingRequiredChannelExcluded' passed (0.0 seconds)
+Test Case 'ScorerTests.testWorstCaseExactMatchScoresZero' started at 2026-11-01 06:14:14.342
+Test Case 'ScorerTests.testWorstCaseExactMatchScoresZero' passed (0.0 seconds)
+Test Case 'ScorerTests.testWorstCaseExcludesMissingChannel' started at 2026-11-01 06:14:14.342
+Test Case 'ScorerTests.testWorstCaseExcludesMissingChannel' passed (0.0 seconds)
+Test Case 'ScorerTests.testWorstCaseReturnsMaxChannelError' started at 2026-11-01 06:14:14.342
+Test Case 'ScorerTests.testWorstCaseReturnsMaxChannelError' passed (0.0 seconds)
+Test Case 'ScorerTests.testWorstCaseScoreIsBoundedByMaxChannel' started at 2026-11-01 06:14:14.342
+Test Case 'ScorerTests.testWorstCaseScoreIsBoundedByMaxChannel' passed (0.0 seconds)
+Test Case 'ScorerTests.testZeroWeightChannelsIgnored' started at 2026-11-01 06:14:14.342
+Test Case 'ScorerTests.testZeroWeightChannelsIgnored' passed (0.0 seconds)
+Test Suite 'ScorerTests' passed at 2026-11-01 06:14:14.342
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SolverParityCorpusTests' started at 2026-11-01 06:14:14.342
+Test Case 'SolverParityCorpusTests.testCorpusAlgorithmVersionIsTheOneThisClientMirrors' started at 2026-11-01 06:14:14.342
+Test Case 'SolverParityCorpusTests.testCorpusAlgorithmVersionIsTheOneThisClientMirrors' passed (0.001 seconds)
+Test Case 'SolverParityCorpusTests.testCorpusCarriesTieAndExclusionEvidence' started at 2026-11-01 06:14:14.344
+Test Case 'SolverParityCorpusTests.testCorpusCarriesTieAndExclusionEvidence' passed (0.001 seconds)
+Test Case 'SolverParityCorpusTests.testCorpusLightSourcesMatchClientConditions' started at 2026-11-01 06:14:14.345
+Test Case 'SolverParityCorpusTests.testCorpusLightSourcesMatchClientConditions' passed (0.001 seconds)
+Test Case 'SolverParityCorpusTests.testReplayMatchesExpectedSelectionsExactly' started at 2026-11-01 06:14:14.346
+Test Case 'SolverParityCorpusTests.testReplayMatchesExpectedSelectionsExactly' passed (0.103 seconds)
+Test Suite 'SolverParityCorpusTests' passed at 2026-11-01 06:14:14.448
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.106 (0.106) seconds
+Test Suite 'SolverTests' started at 2026-11-01 06:14:14.448
+Test Case 'SolverTests.testAllCandidatesExcludedLeavesCellUnmatched' started at 2026-11-01 06:14:14.448
+Test Case 'SolverTests.testAllCandidatesExcludedLeavesCellUnmatched' passed (0.0 seconds)
+Test Case 'SolverTests.testExcludesColorMissingRequiredMeasurement' started at 2026-11-01 06:14:14.449
+Test Case 'SolverTests.testExcludesColorMissingRequiredMeasurement' passed (0.0 seconds)
+Test Case 'SolverTests.testFastPathAgreesWithGeneralPath' started at 2026-11-01 06:14:14.449
+Test Case 'SolverTests.testFastPathAgreesWithGeneralPath' passed (0.001 seconds)
+Test Case 'SolverTests.testHandlesReasonableSizeQuickly' started at 2026-11-01 06:14:14.449
+Test Case 'SolverTests.testHandlesReasonableSizeQuickly' passed (55.671 seconds)
+Test Case 'SolverTests.testInversionFlipsSelection' started at 2026-11-01 06:15:10.120
+Test Case 'SolverTests.testInversionFlipsSelection' passed (0.102 seconds)
+Test Case 'SolverTests.testSelectsNearestColor' started at 2026-11-01 06:15:10.222
+Test Case 'SolverTests.testSelectsNearestColor' passed (0.0 seconds)
+Test Case 'SolverTests.testThrowsOnEmptyPalette' started at 2026-11-01 06:15:10.222
+Test Case 'SolverTests.testThrowsOnEmptyPalette' passed (0.0 seconds)
+Test Case 'SolverTests.testThrowsOnMissingSourceGridForActiveCondition' started at 2026-11-01 06:15:10.223
+Test Case 'SolverTests.testThrowsOnMissingSourceGridForActiveCondition' passed (0.0 seconds)
+Test Case 'SolverTests.testThrowsOnNoActiveConditions' started at 2026-11-01 06:15:10.223
+Test Case 'SolverTests.testThrowsOnNoActiveConditions' passed (0.0 seconds)
+Test Case 'SolverTests.testTiesBrokenByEarliestCandidate' started at 2026-11-01 06:15:10.223
+Test Case 'SolverTests.testTiesBrokenByEarliestCandidate' passed (0.0 seconds)
+Test Suite 'SolverTests' passed at 2026-11-01 06:15:10.223
+	 Executed 10 tests, with 0 failures (0 unexpected) in 55.774 (55.774) seconds
+Test Suite 'StatisticsAndRendererTests' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testBrightnessGridInversion' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testBrightnessGridInversion' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testBrightnessGridUpsampleBlocksCells' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testBrightnessGridUpsampleBlocksCells' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testCompositePreviewMarksUnmatchedCellBlockAtPixelsPerCell' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testCompositePreviewMarksUnmatchedCellBlockAtPixelsPerCell' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testCompositePreviewMarksUnmatchedCellsMagenta' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testCompositePreviewMarksUnmatchedCellsMagenta' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testCompositeUsesSelectedPaletteColors' started at 2026-11-01 06:15:10.223
+Test Case 'StatisticsAndRendererTests.testCompositeUsesSelectedPaletteColors' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testDifferenceTintedDivergingColors' started at 2026-11-01 06:15:10.224
+Test Case 'StatisticsAndRendererTests.testDifferenceTintedDivergingColors' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testErrorMapNormalizesToUnitRange' started at 2026-11-01 06:15:10.224
+Test Case 'StatisticsAndRendererTests.testErrorMapNormalizesToUnitRange' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testErrorStatistics' started at 2026-11-01 06:15:10.224
+Test Case 'StatisticsAndRendererTests.testErrorStatistics' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testFractionBelowThreshold' started at 2026-11-01 06:15:10.224
+Test Case 'StatisticsAndRendererTests.testFractionBelowThreshold' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testLightingDifferenceIsSourceMinusPredicted' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testLightingDifferenceIsSourceMinusPredicted' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testLightingDifferenceZeroWhenNoSourceGrid' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testLightingDifferenceZeroWhenNoSourceGrid' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testLightingPreviewMissingMeasurementIsBlack' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testLightingPreviewMissingMeasurementIsBlack' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testLightingPreviewUsesMeasuredBrightness' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testLightingPreviewUsesMeasuredBrightness' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testMattePrinterProfileSoftProofIsMoreConservativeThanGlossy' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testMattePrinterProfileSoftProofIsMoreConservativeThanGlossy' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameFallsBackToIdentifier' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameFallsBackToIdentifier' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameIncludesPrinterPaperAndInk' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameIncludesPrinterPaperAndInk' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameTrimsWhitespace' started at 2026-11-01 06:15:10.225
+Test Case 'StatisticsAndRendererTests.testPrinterProfileDisplayNameTrimsWhitespace' passed (0.13 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofFallsBackToGenericWhenMetadataIsMissing' started at 2026-11-01 06:15:10.356
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofFallsBackToGenericWhenMetadataIsMissing' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofMatchesGlossyNamesWithDiacritics' started at 2026-11-01 06:15:10.356
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofMatchesGlossyNamesWithDiacritics' passed (0.001 seconds)
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofMatchesUppercasePaperAndInkNames' started at 2026-11-01 06:15:10.357
+Test Case 'StatisticsAndRendererTests.testPrinterProfileSoftProofMatchesUppercasePaperAndInkNames' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofFlagsSaturatedColorAndAddsWarningTint' started at 2026-11-01 06:15:10.357
+Test Case 'StatisticsAndRendererTests.testSoftProofFlagsSaturatedColorAndAddsWarningTint' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofGamutFlagsAreRowMajor' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofGamutFlagsAreRowMajor' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofLeavesNeutralColorInGamut' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofLeavesNeutralColorInGamut' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofPreviewMarksUnmatchedCellsWithoutGamutFlags' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofPreviewMarksUnmatchedCellsWithoutGamutFlags' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofPreviewOutOfGamutCountStaysInCellUnitsWhenRasterized' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofPreviewOutOfGamutCountStaysInCellUnitsWhenRasterized' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofProfileClampsInvalidParameters' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofProfileClampsInvalidParameters' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofProfileTreatsNonFiniteParametersAsZero' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofProfileTreatsNonFiniteParametersAsZero' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofTracksPerCellFlags' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofTracksPerCellFlags' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofUsesProvidedProfilePaperWhite' started at 2026-11-01 06:15:10.358
+Test Case 'StatisticsAndRendererTests.testSoftProofUsesProvidedProfilePaperWhite' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSoftProofWideGamutProfileKeepsSaturatedColorUntinted' started at 2026-11-01 06:15:10.359
+Test Case 'StatisticsAndRendererTests.testSoftProofWideGamutProfileKeepsSaturatedColorUntinted' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testSourcePreviewTintedMirrorsPredicted' started at 2026-11-01 06:15:10.359
+Test Case 'StatisticsAndRendererTests.testSourcePreviewTintedMirrorsPredicted' passed (0.0 seconds)
+Test Case 'StatisticsAndRendererTests.testTintedLightingPreviewUsesChannelColor' started at 2026-11-01 06:15:10.359
+Test Case 'StatisticsAndRendererTests.testTintedLightingPreviewUsesChannelColor' passed (0.0 seconds)
+Test Suite 'StatisticsAndRendererTests' passed at 2026-11-01 06:15:10.359
+	 Executed 32 tests, with 0 failures (0 unexpected) in 0.136 (0.136) seconds
+Test Suite 'debug.xctest' passed at 2026-11-01 06:15:10.359
+	 Executed 228 tests, with 0 failures (0 unexpected) in 56.116 (56.116) seconds
+Test Suite 'All tests' passed at 2026-11-01 06:15:10.359
+	 Executed 228 tests, with 0 failures (0 unexpected) in 56.116 (56.116) seconds
+◇ Test run started.
+↳ Testing Library Version: 6.1 (43b6f88e2f2712e)
+↳ Target Platform: aarch64-unknown-linux-gnu
+✔ Test run with 0 tests passed after 0.001 seconds.

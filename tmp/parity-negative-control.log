@@ -1,0 +1,16 @@
+Building for debugging...
+[0/2] Write swift-version-3AAE498FB4055B1E.txt
+Build complete! (0.16s)
+Test Suite 'Selected tests' started at 2026-11-01 06:15:18.033
+Test Suite 'SolverParityCorpusTests' started at 2026-11-01 06:15:18.034
+Test Case 'SolverParityCorpusTests.testReplayMatchesExpectedSelectionsExactly' started at 2026-11-01 06:15:18.034
+/workspace/ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:158: error: SolverParityCorpusTests.testReplayMatchesExpectedSelectionsExactly : XCTAssertEqual failed: ("0.0234375") is not equal to ("0.5") - distinct-errors: score for candidate 2 drifted from the corpus
+Test Case 'SolverParityCorpusTests.testReplayMatchesExpectedSelectionsExactly' failed (0.003 seconds)
+Test Suite 'SolverParityCorpusTests' failed at 2026-11-01 06:15:18.037
+	 Executed 1 test, with 1 failure (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'Selected tests' failed at 2026-11-01 06:15:18.037
+	 Executed 1 test, with 1 failure (0 unexpected) in 0.003 (0.003) seconds
+◇ Test run started.
+↳ Testing Library Version: 6.1 (43b6f88e2f2712e)
+↳ Target Platform: aarch64-unknown-linux-gnu
+✔ Test run with 0 tests passed after 0.001 seconds.

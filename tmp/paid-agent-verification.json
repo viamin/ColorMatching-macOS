@@ -1,0 +1,87 @@
+{
+  "status": "partial",
+  "summary": "Tests-only phase for issue #39: committed the viamin/color_matching solver parity corpus (byte-identical fixture) with a replay suite asserting WeightedSquaredErrorScorer matches the Elixed-generated expectations exactly (all 12 scenarios: selections, score tables, errors, ties, exclusions — parity holds, no divergence); added an OpenAPI /api/v1 spec-conformance fixture + tests and an 11-test PaletteAPIClient behavior net as the generated-client migration target; full swift test green (228/228, executed on Linux with Swift 6.1 after installing a local toolchain). The generated swift-openapi-runtime client, Package.swift changes, README.md section, and PR description are implementation-phase work and are recorded as not_run/skipped with reasons; migration notes and parity findings are staged in docs/solver-parity-corpus.md.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore, generate typed client from the OpenAPI document, migrate (or wrap) PaletteAPIClient",
+      "status": "not_run",
+      "reason": "Implementation-phase work; this run may only change test paths and LID docs (Package.swift, openapi.yaml, and generated sources are rejected at commit time in the tests-only phase). The executable contract the migration must satisfy is staged and green.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPISpecConformanceTests.swift", "result": "passed (7 tests — endpoint/query/required-field coverage + spec-conformant payload round-trip through PaletteAPIClient)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "passed (11 tests — paths, printer_profile_id query, bearer-token handling, Accept header, 401/badStatus/malformedResponse mapping, testConnection)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/openapi/v1-openapi.json", "result": "committed spec transcription of GET /api/v1/printer_profiles and GET /api/v1/colors from upstream open_api_spex definitions" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "passed",
+      "reason": "No implementation files were modified in this run; the disk cache and its fallback semantics are pinned by the existing permanent suite, re-run green at this head, and the client behavior net above must stay green through the migration.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "passed (69 tests: per-server scoping/normalization, snake_case on-disk format, corrupt/symlink rejection, removeAll semantics, domainColors/offline servability)" },
+          { "locator": "tmp/swift-test-final.log", "result": "Executed 228 tests, with 0 failures — ProfileColorCacheTests 69/69 passed at this head" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target in ColorComposerCore tests that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "passed (4 tests: corpus metadata/algorithm_version=1 guard, light-source parity, tie+exclusion evidence guards, and exact replay of all 12 scenarios — score tables with == (no epsilon), earliest-wins selection, selected hex/error, tie_broke, tied_indices)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "byte-identical mirror of upstream priv/parity/v1/corpus.json (SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604, verified in tmp/corpus-restored.sha)" },
+          { "locator": "tmp/parity-negative-control.log", "result": "sensitivity check: corrupting two corpus expectations produced 3 precise assertion failures (score/selection/hex drift), fixture then restored byte-identical" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "reason": "Root README.md is outside the paths permitted in the tests-only phase; the full documentation (location, refresh commands, algorithm_version guard behavior) is staged at docs/solver-parity-corpus.md for the implementation run to link from the README.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "staged: corpus location (upstream + mirrored fixture with SHA-256), refresh commands, parity findings, OpenAPI shape findings, generated-client migration notes" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "reason": "No PR is opened from this tests-only run (no push); the three required content blocks are staged verbatim in docs/solver-parity-corpus.md for the implementation run to lift into the PR description.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "notes": "Staged content: parity results (all 12 scenarios exact; ties earliest-wins; missing-measurement exclusions; zero-weight and unknown-light-source weight handling), /api/v1 shape findings (spec tightens printer-profile fields and color name/palette_id/sort_order to required while the client stays a tolerant superset; responses map is additionalProperties:true; palette_name is the only declared-nullable field; no breaking changes), migration notes (plugin/runtime wiring, wrap-vs-migrate guidance, behavior nets to keep green)."
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with the parity corpus test (and generated client) in place",
+      "status": "partial",
+      "reason": "swift test is fully green including the parity corpus replay and spec-conformance suites; the generated client half of the criterion is implementation-phase work (see AC-1). Verified on Linux/aarch64 with Swift 6.1 installed into the container; no Swift toolchain was preinstalled and no database services were involved or needed.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "tmp/swift-test-final.log", "result": "Executed 228 tests, with 0 failures (0 unexpected) — includes SolverParityCorpusTests 4/4, OpenAPISpecConformanceTests 7/7, PaletteAPIClientTests 11/11, ProfileColorCacheTests 69/69" }
+        ]
+      }
+    }
+  ],
+  "infrastructure_notes": [
+    "No Swift toolchain was preinstalled; Swift 6.1 (ubuntu24.04-aarch64) was installed under $HOME/toolchains plus libxml2/libicu under $HOME/.local/lib to run swift test on this host.",
+    "Pre-existing defect (not caused by this change, unfixed because bin/ is outside permitted paths): bin/lint's non-Apple harness excludes PaletteAPIClient.swift yet compiles PaletteAPIClientTests, so bin/lint cannot build on Linux. Direct swift test builds the FULL package (including PaletteAPIClient.swift and BrightnessGridSampler.swift) and passes 228/228; the harness exclusions are stale with current toolchains and should be dropped when Package.swift is next touched.",
+    "One pre-existing compile error in PaletteAPIClientTests.swift (missing explicit self. in a @Sendable closure under Swift 6.1) was fixed within the test file to unblock the suite.",
+    "The solver parity replay was independently cross-checked with an exact IEEE-754 double reimplementation in Python against the corpus before the Swift suite was written."
+  ]
+}
