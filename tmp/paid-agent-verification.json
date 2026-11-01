@@ -1,0 +1,75 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing (red-phase) run for issue #39. Committed: solver parity corpus fixture (verbatim from viamin/color_matching priv/parity/v1/corpus.json, algorithm_version 1, 12 scenarios) + SolverParityCorpusTests (scorer- and solver-level replay asserting per-candidate scores, selections, winning errors, tie sets/earliest-wins tie-breaks, missing-measurement exclusions, unknown-weight-key handling); OpenAPISpecContractTests (red until the generated-client run commits ColorComposerCore/openapi.json fetched from GET /api/v1/openapi.json; pins OpenAPI 3.x, GET /api/v1/printer_profiles, GET /api/v1/colors with required printer_profile_id query parameter); PaletteAPIClientTests extended to pin the wire contract the migration must preserve (endpoints, query, Accept/bearer headers incl. omission, snake_case envelopes, 500->badStatus, undecodable->malformedResponse, testConnection 2xx). docs/solver-parity-corpus.md documents corpus location/refresh and spec-snapshot contract. BLOCKER: no Swift toolchain in this container - swift test could not be executed. Static verification performed instead: corpus decode + full scorer/solver semantics replayed in Python against all 12 scenarios with zero mismatches (scores exact within 1e-12, selections, ties, exclusions); upstream spec source (api_schemas.ex, color_palette_controller.ex) cross-checked - /api/v1 shapes unchanged vs existing DTOs. Run swift test on macOS to confirm. Parity findings (ties: earliest-index-wins, 3 tie scenarios incl. three-way; exclusions: candidate- and target-side, all-excluded case; weights: plain weighted sum not per-channel mean, zero-weight channels ignored, unknown weight keys ignored) are recorded in docs/solver-parity-corpus.md for the PR description.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-generated-openapi-client",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPISpecContractTests.swift", "result": "committed_red" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "committed" }
+        ],
+        "reason": "Implementation (swift-openapi-generator deps, Package.swift, client migration) is deferred to the post-paid-tests-approved run per phase rules. Red contract tests pin the snapshot location and the endpoints/parameter the generated client must describe; PaletteAPIClientTests pins the public wire behavior the migration must keep green."
+      }
+    },
+    {
+      "id": "AC-2-preserve-caching-offline-behavior",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "unchanged_pinned" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:96", "result": "committed" }
+        ],
+        "reason": "No code changes touch the cache; existing suite already pins per-server/profile scoping, snake_case on-disk format, fetchedAt staleness, clear/repopulate. swift test could not run: no Swift toolchain in this container."
+      }
+    },
+    {
+      "id": "AC-3-solver-parity-corpus-tests",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "committed_verbatim_upstream_v1" }
+        ],
+        "reason": "Tests + corpus committed; swift test not executable here (no Swift toolchain). Offline Python replay of the exact scorer/solver semantics against all 12 corpus scenarios produced zero mismatches; expected green on macOS swift test."
+      }
+    },
+    {
+      "id": "AC-4-document-corpus-consumption",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "inspectable_artifact" }
+        ],
+        "reason": "Documents corpus provenance (viamin/color_matching#111 -> #112), committed location, curl/mix parity.generate refresh path, algorithm_version bump policy, and the OpenAPI snapshot contract. README lift is noted in the doc for the implementation run (README.md is outside this phase's allowlist)."
+      }
+    },
+    {
+      "id": "AC-5-pr-findings-recorded",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "inspectable_artifact" }
+        ],
+        "reason": "Parity findings (tie policy, exclusions, weight handling, no /api/v1 shape changes vs published spec) recorded in the parity findings sections; PR body should carry them at publish time."
+      }
+    },
+    {
+      "id": "AC-6-swift-test-green",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "bin/lint", "result": "exit_0_skipped_no_swift_toolchain" }
+        ],
+        "reason": "Exit criterion requires swift test with parity test and generated client in place; neither executable here (no Swift toolchain; generated client lands next phase). OpenAPISpecContractTests is intentionally red until the spec snapshot is committed."
+      }
+    }
+  ]
+}
