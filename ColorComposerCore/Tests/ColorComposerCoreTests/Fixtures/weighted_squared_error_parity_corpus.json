@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "solver": "ColorMatching.WeightedSquaredError",
+  "selection_policy": "IlluminantMatching.best_match/4 — lowest weighted squared error wins; ties go to the earliest palette candidate; a candidate missing a measurement for any weight>0 channel is excluded (missing is never treated as zero brightness)",
+  "source": "Seed corpus hand-derived from the Elixir WeightedSquaredError semantics, anchored on the module doctest (score 0.205). To be replaced/superseded by the upstream parity corpus from viamin/color_matching#111 once it lands — see docs/parity-corpus.md for the refresh procedure.",
+  "cases": [
+    {
+      "id": "doctest-score-value",
+      "kind": "score-value",
+      "description": "The Elixir WeightedSquaredError doctest pair: score 0.205. Blue carries weight 0 and the candidate has no blue measurement, so blue is neither required nor summed.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "palette": [
+        { "id": 101, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } }
+      ],
+      "expected": { "selected_color_id": 101, "score": 0.205 }
+    },
+    {
+      "id": "exact-match-scores-zero",
+      "kind": "exact-match",
+      "description": "A candidate equal to the target on every active channel scores exactly zero and wins.",
+      "weights": { "white": 2.0, "red": 1.0 },
+      "target": { "white": 0.3, "red": 0.7 },
+      "palette": [
+        { "id": 201, "responses": { "white": 0.3, "red": 0.7 } }
+      ],
+      "expected": { "selected_color_id": 201, "score": 0.0 }
+    },
+    {
+      "id": "symmetric-tie-earliest-wins",
+      "kind": "tie",
+      "description": "Candidates 301 and 302 are mirror images around the target and score identically (0.02); the earliest palette entry (301) must win. 303 scores worse.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.4, "green": 0.6 } },
+        { "id": 302, "responses": { "red": 0.6, "green": 0.4 } },
+        { "id": 303, "responses": { "red": 0.5, "green": 0.9 } }
+      ],
+      "expected": { "selected_color_id": 301, "score": 0.02 }
+    },
+    {
+      "id": "duplicate-candidates-tie-earliest-wins",
+      "kind": "tie",
+      "description": "Two candidates with identical measurements both score exactly zero; the first (311) wins.",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 311, "responses": { "red": 0.5 } },
+        { "id": 312, "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_color_id": 311, "score": 0.0 }
+    },
+    {
+      "id": "excluded-candidate-would-win-if-missing-counted-as-zero",
+      "kind": "exclusion",
+      "description": "401 matches red exactly and would score 0.0 if its missing green measurement were treated as brightness 0 (target green is 0.0); it must instead be excluded, letting 402 (0.005) win.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.0 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.5 } },
+        { "id": 402, "responses": { "red": 0.55, "green": 0.05 } }
+      ],
+      "expected": { "selected_color_id": 402, "score": 0.005, "excluded_color_ids": [401] }
+    },
+    {
+      "id": "all-candidates-excluded-null-selection",
+      "kind": "exclusion",
+      "description": "Every candidate is missing one required channel, so nothing is selectable: the expected selection is null (an unmatched cell in composition terms).",
+      "weights": { "white": 1.0, "blue": 1.0 },
+      "target": { "white": 0.5, "blue": 0.5 },
+      "palette": [
+        { "id": 501, "responses": { "white": 0.5 } },
+        { "id": 502, "responses": { "blue": 0.5 } }
+      ],
+      "expected": { "selected_color_id": null, "excluded_color_ids": [501, 502] }
+    },
+    {
+      "id": "zero-weight-channels-are-optional",
+      "kind": "weights",
+      "description": "Blue and lps carry weight 0: 601 lacking their measurements is NOT excluded, and 602's blue/lps values never enter the sum. Both rank on red+green alone.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 601, "responses": { "red": 0.4, "green": 0.4 } },
+        { "id": 602, "responses": { "red": 0.45, "green": 0.5, "blue": 0.9, "lps": 0.9 } }
+      ],
+      "expected": { "selected_color_id": 602, "score": 0.0025 }
+    },
+    {
+      "id": "heavy-weight-channel-dominates",
+      "kind": "weights",
+      "description": "Each candidate is 0.1 off on exactly one channel. The red weight (4.0) punishes 701's red error (0.04) far more than the white weight (0.25) punishes 702's white error (0.0025), so 702 wins.",
+      "weights": { "white": 0.25, "red": 4.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "palette": [
+        { "id": 701, "responses": { "white": 0.5, "red": 0.4 } },
+        { "id": 702, "responses": { "white": 0.4, "red": 0.5 } }
+      ],
+      "expected": { "selected_color_id": 702, "score": 0.0025 }
+    },
+    {
+      "id": "single-channel-lps-tie-and-exclusion",
+      "kind": "tie",
+      "description": "LPS-only matching: 801 and 803 tie at 0.0025 so the earliest (801) wins; 802 has no measurements at all and is excluded.",
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.6 },
+      "palette": [
+        { "id": 801, "responses": { "lps": 0.55 } },
+        { "id": 802, "responses": {} },
+        { "id": 803, "responses": { "lps": 0.65 } }
+      ],
+      "expected": { "selected_color_id": 801, "score": 0.0025, "excluded_color_ids": [802] }
+    },
+    {
+      "id": "ignored-extra-channel-preserves-tie",
+      "kind": "tie",
+      "description": "903 differs from 901 only by a blue measurement; blue has weight 0, so both score exactly 0.205 and the earliest (901) wins. A measurement on an inactive channel can never change the outcome.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "palette": [
+        { "id": 901, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 903, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3, "blue": 0.99 } }
+      ],
+      "expected": { "selected_color_id": 901, "score": 0.205 }
+    },
+    {
+      "id": "weights-are-not-normalized",
+      "kind": "weights",
+      "description": "A single weight of 2.0 with a 0.1 difference yields 0.02 — the raw weighted sum. The Elixir scorer never divides by the sum of weights.",
+      "weights": { "red": 2.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 1001, "responses": { "red": 0.4 } }
+      ],
+      "expected": { "selected_color_id": 1001, "score": 0.02 }
+    }
+  ]
+}
