@@ -1,0 +1,65 @@
+{
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted multi-channel selection",
+      "weights": { "red": 2.0, "green": 0.5 },
+      "target": { "red": 0.7, "green": 0.2 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.8, "green": 0.2 } },
+        { "id": 102, "responses": { "red": 0.6, "green": 0.0 } }
+      ],
+      "expected_color_id": 101,
+      "expected_error": 0.020000000000000004,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties select the earliest eligible palette color",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_color_id": 201,
+      "expected_error": 0.009999999999999995,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing active measurements are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.4 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.4 } }
+      ],
+      "expected_color_id": 302,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude candidates",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.75, "green": 1.0 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.75 } },
+        { "id": 402, "responses": { "red": 0.7, "green": 1.0 } }
+      ],
+      "expected_color_id": 401,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all candidates missing an active measurement leave the target unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.5 } },
+        { "id": 502, "responses": { "green": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 2
+    }
+  ]
+}
