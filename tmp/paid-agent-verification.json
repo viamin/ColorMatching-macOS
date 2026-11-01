@@ -1,0 +1,108 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing run for issue #39. Added a solver parity corpus test target (red: corpus not vendored — dependency viamin/color_matching#111 unmerged) and PaletteAPIClient regression tests to pin behavior ahead of the OpenAPI client migration. No implementation files were touched, per TDD-boundary instructions. No Swift toolchain is installed in this sandbox, so no test in the suite (new or pre-existing) could actually be executed here; all statuses below reflect static/code-review verification only, not an observed test run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-adoption",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Sources/ColorComposerCore/PaletteAPIClient.swift",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2a-per-server-profile-disk-cache",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2b-offline-stale-badge-and-cached-profile-fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2c-palette-api-client-request-response-contract",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:47",
+            "result": "not_run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:61",
+            "result": "not_run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:73",
+            "result": "not_run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:81",
+            "result": "not_run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:93",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-solver-parity-corpus-test",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:123",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-readme-documents-corpus-consumption",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/README.md",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-pr-description-records-parity-findings",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": []
+      }
+    }
+  ]
+}
