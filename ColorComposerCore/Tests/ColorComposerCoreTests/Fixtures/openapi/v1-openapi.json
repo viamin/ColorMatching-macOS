@@ -1,0 +1,276 @@
+{
+  "openapi": "3.0.0",
+  "x-upstream-source": "color_matching (viamin/color_matching), served live at GET /api/v1/openapi.json (issue #110 / PR #113)",
+  "x-transcription-note": "Operations for the two endpoints PaletteAPIClient consumes, transcribed from lib/color_matching_web/api_spec.ex, api_schemas.ex, and ColorPaletteController operation specs. Kept as a test fixture until the generated swift-openapi client lands (issue #39); then replace with the package's own openapi.yaml.",
+  "info": {
+    "title": "Color Matching API",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/v1/printer_profiles": {
+      "get": {
+        "tags": ["Palettes"],
+        "summary": "List printer profiles",
+        "operationId": "ColorMatchingWeb.ColorPaletteController.printer_profiles",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Printer profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrinterProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/colors": {
+      "get": {
+        "tags": ["Palettes"],
+        "summary": "List palette colors and illuminant responses",
+        "operationId": "ColorMatchingWeb.ColorPaletteController.colors",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "printer_profile_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            }
+          },
+          {
+            "name": "palette_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColorsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid palette or printer profile ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Palette or printer profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API token"
+      }
+    },
+    "schemas": {
+      "PrinterProfile": {
+        "title": "PrinterProfile",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "printer_make_model": {
+            "type": "string"
+          },
+          "paper_type": {
+            "type": "string"
+          },
+          "ink_type": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "printer_make_model", "paper_type", "ink_type"]
+      },
+      "Rgb": {
+        "title": "Rgb",
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "integer"
+          },
+          "g": {
+            "type": "integer"
+          },
+          "b": {
+            "type": "integer"
+          }
+        },
+        "required": ["r", "g", "b"]
+      },
+      "PrinterProfilesResponse": {
+        "title": "PrinterProfilesResponse",
+        "type": "object",
+        "properties": {
+          "printer_profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrinterProfile"
+            }
+          }
+        },
+        "required": ["printer_profiles"]
+      },
+      "ColorsResponse": {
+        "title": "ColorsResponse",
+        "type": "object",
+        "properties": {
+          "printer_profile": {
+            "$ref": "#/components/schemas/PrinterProfile"
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hex": {
+                  "type": "string"
+                },
+                "rgb": {
+                  "$ref": "#/components/schemas/Rgb"
+                },
+                "palette_id": {
+                  "type": "integer"
+                },
+                "palette_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sort_order": {
+                  "type": "integer"
+                },
+                "responses": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "required": ["id", "name", "hex", "palette_id", "sort_order", "responses"]
+            }
+          }
+        },
+        "required": ["printer_profile", "colors"]
+      },
+      "ApiErrorResponse": {
+        "title": "ApiErrorResponse",
+        "type": "object",
+        "properties": {
+          "errors": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "pointer": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["pointer"]
+                    }
+                  },
+                  "required": ["detail", "source"]
+                }
+              }
+            ]
+          }
+        },
+        "required": ["errors"]
+      }
+    }
+  }
+}
