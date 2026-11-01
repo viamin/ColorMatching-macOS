@@ -1,0 +1,59 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run for issue #39. Added a solver parity test target (SolverParityTests.swift) plus a vendored 12-scenario corpus fixture mirroring viamin/color_matching#111, replaying WeightedSquaredErrorScorer against every scenario including ties and exclusions. The corpus fixture was independently verified against the weighted-squared-error formula with a standalone Python check (all 12 scenarios self-consistent). Could not execute `swift test` in this environment (no Swift toolchain on Linux; this is a macOS/Xcode project), so the new test's pass/fail status under the real toolchain is not_run here and must be confirmed in CI/Xcode. The OpenAPI-client migration, disk-cache/offline-fallback preservation, and README documentation deliverables are implementation-phase work out of scope for this test-only run; existing ProfileColorCacheTests.swift already pins the cache/offline behavior that migration must preserve.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-migration",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "N/A - implementation deliverable, not permitted in this test-writing-only run (TDD boundary restricts changes to test/doc paths)", "result": "not_applicable" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-preserve-cache-offline-fallback-behavior",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift (pre-existing, ~90 tests covering store/read round-trip, server/profile namespacing, corrupt/symlink handling, removeAll, domain-color conversion)", "result": "not_run" }
+        ]
+      },
+      "notes": "Not modified in this run. Existing suite already pins disk-cache, offline-stale, and cached-profile-fallback behavior; the implementation run migrating PaletteAPIClient must keep this suite green. Could not execute swift test here (no Swift toolchain in this Linux sandbox)."
+    },
+    {
+      "id": "AC-3-solver-parity-test-against-committed-corpus",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity-corpus-v1.json", "result": "not_run" }
+        ]
+      },
+      "notes": "New test replays all 12 corpus scenarios (distinct-errors, tie-symmetric-around-target, tie-duplicate-vectors, tie-three-way-on-lps, missing-candidate-excluded, missing-target-excluded, zero-weight-channel-missing, all-excluded, single-channel-lps, exact-match-zero-error, unknown-weight-ignored, mixed-large-palette) against WeightedSquaredErrorScorer, asserting per-candidate scores/exclusions and earliest-index-wins selection with ties. Fixture values were independently cross-checked against the weighted-squared-error formula via a standalone Python script (all scenarios internally consistent). Cannot execute `swift test` in this Linux sandbox (no Swift toolchain available; the project targets macOS/Xcode) so actual green/red status under the real toolchain is unverified here and should be confirmed in CI."
+    },
+    {
+      "id": "AC-4-document-corpus-in-readme",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "README.md not modified - outside the test-writing run's permitted doc allowlist (docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md)", "result": "not_applicable" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-pr-description-records-parity-findings",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "No PR opened in this run; this run only commits tests per the test-writing-run workflow", "result": "not_applicable" }
+        ]
+      }
+    }
+  ]
+}
