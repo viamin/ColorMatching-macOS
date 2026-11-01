@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase completed: the permanent v1 parity corpus test was added. README documentation and generated-client migration are deferred to the implementation phase. swift test was not runnable because Swift is not installed in this container.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "deferred to implementation phase: no generated client exists yet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not run: requires Swift toolchain, and generated-client migration is deferred"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "not run: `swift` is not installed in this container"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "deferred to implementation phase because the test-writing allowlist excludes README.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "pull request description",
+            "result": "not applicable in test-writing phase; no PR is opened or pushed"
+          }
+        ]
+      }
+    }
+  ]
+}
