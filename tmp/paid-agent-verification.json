@@ -1,0 +1,107 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing phase for issue #39: committed the solver parity corpus (verbatim from viamin/color_matching#111), a 12-scenario exact-replay parity suite, a migration-invariant PaletteAPIClient wire-contract suite, offline cache flow tests, and red structural tests for the generated OpenAPI client, plus docs/ LID documentation. No Swift toolchain exists in this Linux container (ColorComposerCore targets macOS with Core Graphics), so swift test could not be executed here; parity semantics were validated out-of-band by exact simulation over all 12 corpus scenarios (Python). Implementation (swift-openapi-generator wiring, client migration, README edit) lands in the follow-up implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1a",
+      "description": "swift-openapi-generator + swift-openapi-runtime added to ColorComposerCore; typed client generated from the OpenAPI document; PaletteAPIClient migrated or wraps it",
+      "status": "skipped",
+      "reason": "Implementation is out of scope for this test-writing run; committed tests run red by design until it lands",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIGeneratedClientTests.swift:24",
+            "result": "committed_red_expected",
+            "detail": "Asserts Package.swift wires swift-openapi-generator/runtime, a committed OpenAPI document describes GET /api/v1/printer_profiles and GET /api/v1/colors, and generated sources exist under Sources/ColorComposerCore/OpenAPI. Fails at this head (expected red phase); not executable in this container (no Swift toolchain)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-1b",
+      "description": "Migration preserves PaletteAPIClient behavior (URLs, auth header, error mapping, wire decoding)",
+      "status": "skipped",
+      "reason": "Tests committed; cannot execute swift test in this Linux container (no Swift toolchain; package targets macOS)",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:23",
+            "result": "committed_not_run_in_container",
+            "detail": "Pins /api/v1 endpoint URLs, Accept header, bearer-token handling (trimmed/absent), 401 -> .unauthorized, non-2xx -> .badStatus, undecodable -> .malformedResponse, and full DTO decoding incl. response-less colors. Must stay green across the generated-client migration."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Disk cache + offline fallback behavior verified unchanged (per-server/profile caching, offline-stale fetch date, cached profile fallback)",
+      "status": "skipped",
+      "reason": "Tests committed; cannot execute swift test in this container",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OfflineCacheFlowTests.swift:22",
+            "result": "committed_not_run_in_container",
+            "detail": "Wire DTOs -> CachedProfileColors -> ProfileColorCache round-trip with fetchedAt preserved, allEntries fallback ordering and serveability, cross-server isolation. Backed by 69 pre-existing ProfileColorCacheTests."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target loads the committed corpus and asserts WeightedSquaredErrorScorer selections match exactly, including tie cases",
+      "status": "skipped",
+      "reason": "Test + corpus committed; cannot execute swift test in this container. Out-of-band exact simulation of all 12 scenarios (Python) matched every expected score, selection, tie set, and exclusion",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:54",
+            "result": "committed_not_run_in_container",
+            "detail": "Replays every scenario with exact Double equality; dedicated tests for ties (earliest tied index wins), no-selection exclusions, unknown-weight keys, corpus metadata contract, and CompositionSolver fast-path agreement."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ParityCorpus/corpus.json",
+            "result": "committed",
+            "detail": "Verbatim copy of viamin/color_matching priv/parity/v1/corpus.json (PR #111 artifact), sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604, algorithm_version 1, 12 scenarios."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "README documents corpus consumption (location, refresh)",
+      "status": "skipped",
+      "reason": "README.md is outside this run's allowlist (test paths + docs/ + AGENTS.md/CLAUDE.md); documentation written to docs/ for the implementation run to link from the README",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "committed",
+            "detail": "Corpus location (upstream priv/parity/v1/corpus.json and local Tests/ParityCorpus/corpus.json), contract semantics, and refresh procedure."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results (ties, exclusions, weight handling)",
+      "status": "skipped",
+      "reason": "PR is published by Paid after this run; findings prepared and committed for the PR author",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/openapi-client-migration.md",
+            "result": "committed",
+            "detail": "Migration notes, criterion-to-test map, parity findings (5 tie scenarios, 2 no-selection scenarios, zero-weight and unknown-weight handling, exact dyadic-rational equality), and /api/v1 findings from the published spec (served at /api/v1/openapi.json; no envelope shape changes; extra path-parameter endpoints not adopted per non-goals)."
+          }
+        ]
+      }
+    }
+  ]
+}
