@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "generator": {
+    "module": "ColorMatching.WeightedSquaredError",
+    "source": "ColorComposerCore seed corpus — format reference for the upstream parity corpus (viamin/color_matching#111)",
+    "commit": null
+  },
+  "cases": [
+    {
+      "id": "elixir-doctest-selection",
+      "description": "The Elixir WeightedSquaredError doctest example run as a selection: candidate 10 reproduces the documented 0.205 error and wins over two farther candidates.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 10, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 11, "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 } },
+        { "id": 12, "responses": { "white": 1.0, "red": 0.9, "green": 0.9, "blue": 0.2, "lps": 0.9 } }
+      ],
+      "expected": { "selected_id": 10, "score": 0.205, "tie": false, "excluded_ids": [] }
+    },
+    {
+      "id": "exact-tie-earliest-index-wins",
+      "description": "Candidates 20 and 21 both score exactly 0; the earlier palette index must be selected (IlluminantMatching.best_match/4 policy).",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 20, "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 21, "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 22, "responses": { "red": 0.4, "green": 0.4 } }
+      ],
+      "expected": { "selected_id": 20, "score": 0.0, "tie": true, "excluded_ids": [] }
+    },
+    {
+      "id": "symmetric-tie-earliest-index-wins",
+      "description": "Mirror-symmetric candidates 30 and 31 tie at 0.02; the earliest index wins.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 30, "responses": { "red": 0.4, "green": 0.6 } },
+        { "id": 31, "responses": { "red": 0.6, "green": 0.4 } },
+        { "id": 32, "responses": { "red": 0.5, "green": 0.7 } }
+      ],
+      "expected": { "selected_id": 30, "score": 0.02, "tie": true, "excluded_ids": [] }
+    },
+    {
+      "id": "missing-required-channel-excludes-candidate",
+      "description": "Candidate 40 lacks a measurement for green and blue (weight > 0), so it is excluded rather than scored; the best eligible candidate wins.",
+      "weights": { "red": 1.0, "green": 1.0, "blue": 1.0 },
+      "target": { "red": 0.5, "green": 0.5, "blue": 0.5 },
+      "palette": [
+        { "id": 40, "responses": { "red": 0.5 } },
+        { "id": 41, "responses": { "red": 0.6, "green": 0.6, "blue": 0.6 } },
+        { "id": 42, "responses": { "red": 0.5, "green": 0.4, "blue": 0.6 } }
+      ],
+      "expected": { "selected_id": 42, "score": 0.02, "tie": false, "excluded_ids": [40] }
+    },
+    {
+      "id": "all-candidates-excluded-yields-no-selection",
+      "description": "No candidate has the required lps measurement, so nothing is selectable and the cell stays unmatched.",
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.5 },
+      "palette": [
+        { "id": 50, "responses": { "white": 0.9 } },
+        { "id": 51, "responses": { "red": 0.1 } }
+      ],
+      "expected": { "selected_id": null, "score": null, "tie": false, "excluded_ids": [50, 51] }
+    },
+    {
+      "id": "zero-weight-channel-is-not-required",
+      "description": "Only white and blue carry weight; candidate 60 lacks red/green/lps measurements entirely yet stays eligible and wins exactly.",
+      "weights": { "white": 1.0, "blue": 1.0 },
+      "target": { "white": 0.6, "blue": 0.2 },
+      "palette": [
+        { "id": 60, "responses": { "white": 0.6, "blue": 0.2 } },
+        { "id": 61, "responses": { "white": 0.7, "red": 0.1, "green": 0.1, "blue": 0.3, "lps": 0.1 } }
+      ],
+      "expected": { "selected_id": 60, "score": 0.0, "tie": false, "excluded_ids": [] }
+    },
+    {
+      "id": "weights-scale-channel-contributions",
+      "description": "A single candidate scored with white weighted 2x: (0.2^2 * 2) + (0.2^2 * 1) = 0.12.",
+      "weights": { "white": 2.0, "red": 1.0 },
+      "target": { "white": 0.7, "red": 0.3 },
+      "palette": [
+        { "id": 70, "responses": { "white": 0.5, "red": 0.1 } }
+      ],
+      "expected": { "selected_id": 70, "score": 0.12, "tie": false, "excluded_ids": [] }
+    },
+    {
+      "id": "unmeasured-is-not-zero-brightness",
+      "description": "Candidate 80 has no responses at all (excluded) while candidate 81 measured white as exactly 0 brightness and wins with score 0 — absence is not a measurement of zero.",
+      "weights": { "white": 1.0 },
+      "target": { "white": 0.0 },
+      "palette": [
+        { "id": 80, "responses": {} },
+        { "id": 81, "responses": { "white": 0.0 } }
+      ],
+      "expected": { "selected_id": 81, "score": 0.0, "tie": false, "excluded_ids": [80] }
+    }
+  ]
+}
