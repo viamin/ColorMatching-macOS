@@ -1,0 +1,105 @@
+{
+  "status": "skipped_overall_test_writing_phase",
+  "summary": "Test-writing phase for issue #39. Committed: solver parity corpus fixture (10 cases incl. 3 ties, 5 exclusion cases, 1 all-excluded, zero-weight and all-five-channel cases) + SolverParityCorpusTests (corpus integrity, per-candidate score parity, earliest-wins tie-break selection, CompositionSolver fast-path selection); OpenAPIClientAdoptionTests (red guard: Package.swift must declare swift-openapi-generator + swift-openapi-runtime); OpenAPIMigrationContractTests (pins /api/v1 request shape, snake_case envelope decode, 401/badStatus/malformed mapping through PaletteAPIClient); docs/solver-parity-corpus.md. Fixture expectations were independently verified with a Python reimplementation of WeightedSquaredError + best_match semantics (all 10 cases reproduce exactly). swift test could NOT be executed: no Swift toolchain exists in this container (bin/lint detects and skips). The two adoption-guard tests are intentionally red at this head (missing behavior); implementation lands in the separate Paid implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore and migrate PaletteAPIClient to the generated client",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:19",
+            "result": "red (expected in test-writing phase; Package.swift does not yet declare swift-openapi-runtime)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:28",
+            "result": "red (expected; swift-openapi-generator plugin not yet declared)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIMigrationContractTests.swift:22",
+            "result": "not executed — no Swift toolchain in environment; compiles against existing PaletteAPIClient and defines the behavior the migration must preserve"
+          }
+        ],
+        "notes": "Implementation is deliberately out of scope for this tests-only run; the guard tests fail until it lands."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIMigrationContractTests.swift:22",
+            "result": "not executed (no Swift toolchain); pins fetch semantics the client must keep so cache/offline behavior is unchanged"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "pre-existing permanent suite covering disk cache round-trip, server scoping, corrupt-file misses; not executed in this environment"
+          }
+        ],
+        "notes": "Offline-stale badge UI lives in the app target (xcodebuild, macOS-only), not runnable here."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test loading the committed corpus, asserting WeightedSquaredErrorScorer selections match exactly, including tie cases",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-parity-corpus.json",
+            "result": "committed; all expected values reproduced exactly by an independent Python reimplementation of the scorer + earliest-wins selection (10/10 cases)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:193",
+            "result": "not executed — Swift toolchain unavailable; asserts per-candidate scores/exclusions with 1e-12 tolerance"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:224",
+            "result": "not executed; asserts selection including tie cases resolves to earliest candidate"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:249",
+            "result": "not executed; asserts CompositionSolver fast path picks the corpus-expected color, error, and excluded count"
+          }
+        ],
+        "notes": "Corpus is a schema-v1 stand-in modeled on the documented Elixir semantics; refresh procedure from viamin/color_matching#111 is documented."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (location, refresh)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "committed; documents corpus location, contract, test consumption, and refresh procedure"
+          }
+        ],
+        "notes": "README.md is outside this phase's permitted paths; linking from the README belongs to the implementation run."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "parity findings captured: 3 tie cases (earliest-wins), 5 exclusion cases, measured-zero vs missing distinction, zero-weight non-requirement, weight-driven selection flips"
+          }
+        ],
+        "notes": "No PR opened in this phase (tests-only run; Paid publishes the draft). /api/v1 shape findings: current envelope is snake_case with optional printer_profile in colors and optional fields throughout — recorded in OpenAPIMigrationContractTests for the implementation PR body."
+      }
+    }
+  ]
+}
