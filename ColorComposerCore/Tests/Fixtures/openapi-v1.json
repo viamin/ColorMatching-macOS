@@ -1,0 +1,292 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Color Matching API",
+    "version": "v1",
+    "description": "Mirror of the subset of viamin/color_matching's served OpenAPI document (GET /api/v1/openapi.json, see lib/color_matching_web/api_spec.ex + api_schemas.ex) that PaletteAPIClient consumes. Pinned here so the generated-client migration and wire-shape tests have a committed contract; refresh by re-fetching from a running server."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/v1/openapi.json": {
+      "get": {
+        "operationId": "OpenApiController.show",
+        "summary": "The served OpenAPI document",
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/printer_profiles": {
+      "get": {
+        "operationId": "ColorMatchingWeb.ColorPaletteController.printer_profiles",
+        "tags": ["Palettes"],
+        "summary": "List printer profiles",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Printer profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrinterProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/colors": {
+      "get": {
+        "operationId": "ColorMatchingWeb.ColorPaletteController.colors",
+        "tags": ["Palettes"],
+        "summary": "List palette colors and illuminant responses",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "printer_profile_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "palette_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColorsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid palette or printer profile ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Palette or printer profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API token"
+      }
+    },
+    "schemas": {
+      "PrinterProfile": {
+        "type": "object",
+        "title": "PrinterProfile",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "printer_make_model": {
+            "type": "string"
+          },
+          "paper_type": {
+            "type": "string"
+          },
+          "ink_type": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "printer_make_model", "paper_type", "ink_type"]
+      },
+      "Rgb": {
+        "type": "object",
+        "title": "Rgb",
+        "properties": {
+          "r": {
+            "type": "integer"
+          },
+          "g": {
+            "type": "integer"
+          },
+          "b": {
+            "type": "integer"
+          }
+        },
+        "required": ["r", "g", "b"]
+      },
+      "PrinterProfilesResponse": {
+        "type": "object",
+        "title": "PrinterProfilesResponse",
+        "properties": {
+          "printer_profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrinterProfile"
+            }
+          }
+        },
+        "required": ["printer_profiles"]
+      },
+      "ColorsResponse": {
+        "type": "object",
+        "title": "ColorsResponse",
+        "properties": {
+          "printer_profile": {
+            "$ref": "#/components/schemas/PrinterProfile"
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hex": {
+                  "type": "string"
+                },
+                "rgb": {
+                  "$ref": "#/components/schemas/Rgb"
+                },
+                "palette_id": {
+                  "type": "integer"
+                },
+                "palette_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sort_order": {
+                  "type": "integer"
+                },
+                "responses": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "required": ["id", "name", "hex", "palette_id", "sort_order", "responses"]
+            }
+          }
+        },
+        "required": ["printer_profile", "colors"]
+      },
+      "ApiErrorResponse": {
+        "type": "object",
+        "title": "ApiErrorResponse",
+        "properties": {
+          "errors": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "pointer": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["pointer"]
+                    }
+                  },
+                  "required": ["detail", "source"]
+                }
+              }
+            ]
+          }
+        },
+        "required": ["errors"]
+      }
+    }
+  }
+}
