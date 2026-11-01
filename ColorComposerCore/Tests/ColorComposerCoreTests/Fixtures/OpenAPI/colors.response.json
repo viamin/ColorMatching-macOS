@@ -1,0 +1,54 @@
+{
+  "printer_profile": {
+    "id": 3,
+    "printer_make_model": "Epson SureColor P700",
+    "paper_type": "Premium Matte",
+    "ink_type": "Pigment"
+  },
+  "colors": [
+    {
+      "id": 101,
+      "name": "Sienna Deep",
+      "hex": "#A0522D",
+      "rgb": { "r": 160, "g": 82, "b": 45 },
+      "palette_id": 5,
+      "palette_name": "Earth Tones",
+      "sort_order": 0,
+      "responses": {
+        "white": { "brightness": 0.375, "source": "measurement", "raw_value": 41.2, "raw_unit": "cd/m2", "apparent_brightness": null, "measured_at": "2026-10-01T12:00:00Z", "test_run_id": "run-9" },
+        "red": { "brightness": 0.5, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 5, "measured_at": null, "test_run_id": null },
+        "green": { "brightness": 0.375, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 4, "measured_at": null, "test_run_id": null },
+        "blue": { "brightness": 0.25, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 2, "measured_at": null, "test_run_id": null },
+        "lps": { "brightness": 0.125, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 1, "measured_at": null, "test_run_id": null }
+      }
+    },
+    {
+      "id": 102,
+      "name": "Slate Gray",
+      "hex": "#708090",
+      "rgb": { "r": 112, "g": 128, "b": 144 },
+      "palette_id": 5,
+      "palette_name": null,
+      "sort_order": 1,
+      "responses": {
+        "white": { "brightness": 0.5, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 5, "measured_at": null, "test_run_id": null },
+        "red": { "brightness": 0.25, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 3, "measured_at": null, "test_run_id": null },
+        "green": { "brightness": 0.625, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 6, "measured_at": null, "test_run_id": null },
+        "blue": { "brightness": 0.125, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 2, "measured_at": null, "test_run_id": null },
+        "lps": { "brightness": 0.5, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 5, "measured_at": null, "test_run_id": null },
+        "ultraviolet": { "brightness": 0.9, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 9, "measured_at": null, "test_run_id": null }
+      }
+    },
+    {
+      "id": 103,
+      "name": "Ink Black",
+      "hex": "#112233",
+      "palette_id": 5,
+      "palette_name": null,
+      "sort_order": 2,
+      "responses": {
+        "red": { "brightness": 0.0625, "source": "response", "raw_value": null, "raw_unit": null, "apparent_brightness": 1, "measured_at": null, "test_run_id": null }
+      }
+    }
+  ]
+}

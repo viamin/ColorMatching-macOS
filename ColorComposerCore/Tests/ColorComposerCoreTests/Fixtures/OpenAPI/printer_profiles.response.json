@@ -1,0 +1,16 @@
+{
+  "printer_profiles": [
+    {
+      "id": 3,
+      "printer_make_model": "Epson SureColor P700",
+      "paper_type": "Premium Matte",
+      "ink_type": "Pigment"
+    },
+    {
+      "id": 7,
+      "printer_make_model": "Canon PRO-300",
+      "paper_type": "Photo Glossy",
+      "ink_type": "Dye"
+    }
+  ]
+}
