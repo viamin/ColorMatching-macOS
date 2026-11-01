@@ -1,0 +1,13 @@
+PASS distinct-errors
+PASS tie-symmetric-around-target
+PASS tie-duplicate-vectors
+PASS tie-three-way-on-lps
+PASS missing-candidate-excluded
+PASS missing-target-excluded
+PASS zero-weight-channel-missing
+PASS all-excluded
+PASS single-channel-lps
+PASS exact-match-zero-error
+PASS unknown-weight-ignored
+PASS mixed-large-palette
+scenarios: 12 passed, 0 failed (algorithm_version=1)
