@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/viamin/color_matching/pull/111",
+  "refresh_note": "Replace this bootstrap fixture with the committed upstream corpus when PR #111 is available to this repository.",
+  "cases": [
+    {
+      "name": "selects nearest single-channel candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.7 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.2 } },
+        { "id": 20, "responses": { "red": 0.8 } }
+      ],
+      "expected_candidate_id": 20,
+      "expected_score": 0.010000000000000018
+    },
+    {
+      "name": "weights change the selected candidate",
+      "weights": { "red": 4.0, "green": 1.0 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5, "green": 0.2 } },
+        { "id": 20, "responses": { "red": 0.8, "green": 0.8 } }
+      ],
+      "expected_candidate_id": 20,
+      "expected_score": 0.3600000000000001
+    },
+    {
+      "name": "zero-weight channels do not exclude a candidate",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 0.9 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 20, "responses": { "red": 0.7, "blue": 0.9 } }
+      ],
+      "expected_candidate_id": 10,
+      "expected_score": 0.0
+    },
+    {
+      "name": "missing active measurement is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 20, "responses": { "red": 0.5, "green": 0.7 } }
+      ],
+      "expected_candidate_id": 20,
+      "expected_score": 0.03999999999999998
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.4 } },
+        { "id": 20, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 10,
+      "expected_score": 0.009999999999999995
+    },
+    {
+      "name": "all candidates missing an active measurement remain unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 20, "responses": { "green": 0.5 } }
+      ],
+      "expected_candidate_id": null,
+      "expected_score": null
+    }
+  ]
+}
