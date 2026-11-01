@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added a permanent corpus-driven solver test. Swift is unavailable in this container, and production/package/README edits are prohibited until the approved implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:8",
+            "result": "Existing HTTP-contract coverage; generated-client migration is deferred by the test-writing boundary."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:39",
+            "result": "Existing cache coverage was not runnable because the Swift toolchain is absent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "Permanent corpus-driven selection test added but not runnable: swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "Bootstrap fixture committed; canonical viamin/color_matching#111 corpus remains inaccessible from this run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:15",
+            "result": "Refresh procedure documented; README edit is deferred by the test-writing allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "PR inspection is deferred; no pull request is opened in this run."
+          }
+        ]
+      }
+    }
+  ]
+}
