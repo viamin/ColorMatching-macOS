@@ -1,0 +1,726 @@
+{
+  "version": 1,
+  "generator": "generate_solver_parity_corpus.py — reference implementation of the Elixir ColorMatching.WeightedSquaredError / IlluminantMatching.best_match semantics; to be replaced by the machine-generated corpus from viamin/color_matching#111",
+  "cases": [
+    {
+      "id": "score-doctest-anchor",
+      "kind": "score",
+      "description": "The Elixir ColorMatching.WeightedSquaredError doctest: weights {white: 0.5, red: 1, green: 1, blue: 0, lps: 1.5} must yield 0.205.",
+      "weights": {
+        "white": 0.5,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 1.5
+      },
+      "candidate": {
+        "white": 0.5,
+        "red": 0.1,
+        "green": 0.4,
+        "blue": 0.0,
+        "lps": 0.3
+      },
+      "target": {
+        "white": 0.8,
+        "red": 0.2,
+        "green": 0.7,
+        "blue": 0.1,
+        "lps": 0.5
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.20499999999999996
+      }
+    },
+    {
+      "id": "score-exact-match-zero",
+      "kind": "score",
+      "description": "Identical candidate and target vectors score exactly zero.",
+      "weights": {
+        "white": 2.0,
+        "red": 1.0
+      },
+      "candidate": {
+        "white": 0.3,
+        "red": 0.7
+      },
+      "target": {
+        "white": 0.3,
+        "red": 0.7
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.0
+      }
+    },
+    {
+      "id": "score-zero-weight-ignores-other-channels",
+      "kind": "score",
+      "description": "Only white is active; candidate/target missing every other channel must not be excluded and only white contributes.",
+      "weights": {
+        "white": 1.0,
+        "red": 0.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "candidate": {
+        "white": 0.5
+      },
+      "target": {
+        "white": 0.8
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.09000000000000002
+      }
+    },
+    {
+      "id": "score-zero-weight-missing-channel-not-excluded",
+      "kind": "score",
+      "description": "Blue carries weight 0 and is missing from both sides; red alone scores. A naive required-all-channels reading would exclude here.",
+      "weights": {
+        "red": 1.0,
+        "blue": 0.0
+      },
+      "candidate": {
+        "red": 0.5
+      },
+      "target": {
+        "red": 0.3
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.04000000000000001
+      }
+    },
+    {
+      "id": "score-measured-zero-is-not-missing",
+      "kind": "score",
+      "description": "White is measured as exactly 0.0 (present) and must contribute 0.0625, not trigger exclusion.",
+      "weights": {
+        "white": 1.0,
+        "red": 1.0
+      },
+      "candidate": {
+        "white": 0.0,
+        "red": 0.5
+      },
+      "target": {
+        "white": 0.25,
+        "red": 0.5
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.0625
+      }
+    },
+    {
+      "id": "score-weight-scales-channel-error",
+      "kind": "score",
+      "description": "Unit diffs on both channels; the channel weight multiplies the squared contribution (10*1 + 1*1 = 11).",
+      "weights": {
+        "white": 10.0,
+        "red": 1.0
+      },
+      "candidate": {
+        "white": 0.0,
+        "red": 1.0
+      },
+      "target": {
+        "white": 1.0,
+        "red": 0.0
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 11.0
+      }
+    },
+    {
+      "id": "score-fractional-weights",
+      "kind": "score",
+      "description": "Fractional weights: 0.25*(-0.25)^2 + 2.0*(0.8)^2 = 1.295625.",
+      "weights": {
+        "red": 0.25,
+        "green": 2.0
+      },
+      "candidate": {
+        "red": 0.3,
+        "green": 0.9
+      },
+      "target": {
+        "red": 0.55,
+        "green": 0.1
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 1.2956250000000002
+      }
+    },
+    {
+      "id": "score-all-five-channels-mixed-weights",
+      "kind": "score",
+      "description": "All five conditions active with distinct weights.",
+      "weights": {
+        "white": 1.5,
+        "red": 2.0,
+        "green": 0.5,
+        "blue": 1.0,
+        "lps": 3.0
+      },
+      "candidate": {
+        "white": 0.62,
+        "red": 0.11,
+        "green": 0.84,
+        "blue": 0.03,
+        "lps": 0.47
+      },
+      "target": {
+        "white": 0.3,
+        "red": 0.72,
+        "green": 0.29,
+        "blue": 0.95,
+        "lps": 0.4
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 1.9101499999999998
+      }
+    },
+    {
+      "id": "score-lps-only",
+      "kind": "score",
+      "description": "LPS-only matching: (0.42-0.58)^2 = 0.0256.",
+      "weights": {
+        "lps": 1.0
+      },
+      "candidate": {
+        "lps": 0.42
+      },
+      "target": {
+        "lps": 0.58
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.02559999999999999
+      }
+    },
+    {
+      "id": "score-diff-sign-symmetric",
+      "kind": "score",
+      "description": "Opposite-sign diffs of equal magnitude on equal weights: 0.64 + 0.64 = 1.28.",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "candidate": {
+        "red": 0.9,
+        "green": 0.1
+      },
+      "target": {
+        "red": 0.1,
+        "green": 0.9
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 1.2800000000000002
+      }
+    },
+    {
+      "id": "score-tiny-weight",
+      "kind": "score",
+      "description": "Very small weight keeps the score well under 1e-3.",
+      "weights": {
+        "white": 0.001
+      },
+      "candidate": {
+        "white": 0.25
+      },
+      "target": {
+        "white": 0.75
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.00025
+      }
+    },
+    {
+      "id": "score-large-weight",
+      "kind": "score",
+      "description": "Large weight: 100*(0.1)^2 = 1.0.",
+      "weights": {
+        "white": 100.0
+      },
+      "candidate": {
+        "white": 0.4
+      },
+      "target": {
+        "white": 0.5
+      },
+      "expected": {
+        "outcome": "score",
+        "value": 0.9999999999999996
+      }
+    },
+    {
+      "id": "excluded-candidate-missing-required-channel",
+      "kind": "score",
+      "description": "Green has positive weight but the candidate lacks it: excluded.",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "candidate": {
+        "red": 0.5
+      },
+      "target": {
+        "red": 0.5,
+        "green": 0.5
+      },
+      "expected": {
+        "outcome": "excluded"
+      }
+    },
+    {
+      "id": "excluded-target-missing-required-channel",
+      "kind": "score",
+      "description": "Green has positive weight but the target lacks it: excluded.",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "candidate": {
+        "red": 0.5,
+        "green": 0.5
+      },
+      "target": {
+        "red": 0.5
+      },
+      "expected": {
+        "outcome": "excluded"
+      }
+    },
+    {
+      "id": "selection-nearest-wins",
+      "kind": "selection",
+      "description": "Single channel; the nearer brightness wins with its exact error.",
+      "weights": {
+        "white": 1.0
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.1
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.8
+          }
+        }
+      ],
+      "cells": [
+        {
+          "white": 0.75
+        }
+      ],
+      "expected": {
+        "selections": [
+          11
+        ],
+        "errors": [
+          0.0025000000000000044
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 0
+      }
+    },
+    {
+      "id": "selection-tie-earliest-palette-order-not-lowest-id",
+      "kind": "selection",
+      "description": "Two candidates exactly equidistant from the target; the earlier palette entry (id 22) must win over the later one (id 11), proving ties break on palette order rather than color id.",
+      "weights": {
+        "white": 1.0
+      },
+      "palette": [
+        {
+          "id": 22,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.0
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "white": 1.0
+          }
+        }
+      ],
+      "cells": [
+        {
+          "white": 0.5
+        }
+      ],
+      "expected": {
+        "selections": [
+          22
+        ],
+        "errors": [
+          0.25
+        ],
+        "ties": [
+          true
+        ],
+        "excludedCandidateCount": 0
+      }
+    },
+    {
+      "id": "selection-tie-three-way-first-wins",
+      "kind": "selection",
+      "description": "Three-way tie at exactly 0.0625 (two identical entries plus a symmetric third); the first palette entry wins.",
+      "weights": {
+        "white": 1.0
+      },
+      "palette": [
+        {
+          "id": 5,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.25
+          }
+        },
+        {
+          "id": 6,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.25
+          }
+        },
+        {
+          "id": 7,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.75
+          }
+        }
+      ],
+      "cells": [
+        {
+          "white": 0.5
+        }
+      ],
+      "expected": {
+        "selections": [
+          5
+        ],
+        "errors": [
+          0.0625
+        ],
+        "ties": [
+          true
+        ],
+        "excludedCandidateCount": 0
+      }
+    },
+    {
+      "id": "selection-excluded-closer-candidate-skipped",
+      "kind": "selection",
+      "description": "The closest candidate (exact red match) lacks the required green measurement and is excluded; the fully-measured candidate wins.",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.5
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.6,
+            "green": 0.4
+          }
+        }
+      ],
+      "cells": [
+        {
+          "red": 0.5,
+          "green": 0.5
+        }
+      ],
+      "expected": {
+        "selections": [
+          11
+        ],
+        "errors": [
+          0.01999999999999999
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 1
+      }
+    },
+    {
+      "id": "selection-excluded-all-candidates-unmatched",
+      "kind": "selection",
+      "description": "Every candidate misses a required measurement; the cell stays unmatched (null selection, infinite error).",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.5
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "green": 0.5
+          }
+        }
+      ],
+      "cells": [
+        {
+          "red": 0.5,
+          "green": 0.5
+        }
+      ],
+      "expected": {
+        "selections": [
+          null
+        ],
+        "errors": [
+          null
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 2
+      }
+    },
+    {
+      "id": "selection-weight-flip-green-heavy",
+      "kind": "selection",
+      "description": "Same palette and target as selection-weight-flip-red-heavy; reweighting flips the winner to id 11.",
+      "weights": {
+        "red": 1.0,
+        "green": 1.0
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.6,
+            "green": 0.2
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.4,
+            "green": 0.8
+          }
+        }
+      ],
+      "cells": [
+        {
+          "red": 0.55,
+          "green": 0.75
+        }
+      ],
+      "expected": {
+        "selections": [
+          11
+        ],
+        "errors": [
+          0.025000000000000012
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 0
+      }
+    },
+    {
+      "id": "selection-weight-flip-red-heavy",
+      "kind": "selection",
+      "description": "Down-weighting green (0.01) makes id 10's small red error dominate; the winner flips relative to equal weights.",
+      "weights": {
+        "red": 1.0,
+        "green": 0.01
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.6,
+            "green": 0.2
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.4,
+            "green": 0.8
+          }
+        }
+      ],
+      "cells": [
+        {
+          "red": 0.55,
+          "green": 0.75
+        }
+      ],
+      "expected": {
+        "selections": [
+          10
+        ],
+        "errors": [
+          0.0055249999999999935
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 0
+      }
+    },
+    {
+      "id": "selection-grid-cells-independent",
+      "kind": "selection",
+      "description": "A 2x1 grid whose two cells select different colors; each cell matches independently with its own error.",
+      "weights": {
+        "red": 1.0
+      },
+      "palette": [
+        {
+          "id": 10,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.1
+          }
+        },
+        {
+          "id": 11,
+          "hex": "#000000",
+          "responses": {
+            "red": 0.9
+          }
+        }
+      ],
+      "cells": [
+        {
+          "red": 0.0
+        },
+        {
+          "red": 1.0
+        }
+      ],
+      "expected": {
+        "selections": [
+          10,
+          11
+        ],
+        "errors": [
+          0.010000000000000002,
+          0.009999999999999995
+        ],
+        "ties": [
+          false,
+          false
+        ],
+        "excludedCandidateCount": 0
+      },
+      "gridWidth": 2,
+      "gridHeight": 1
+    },
+    {
+      "id": "selection-multi-channel-mixed-weights",
+      "kind": "selection",
+      "description": "Four candidates over three channels (white/red/lps) with distinct weights; includes one candidate excluded for a missing lps measurement.",
+      "weights": {
+        "white": 0.5,
+        "red": 1.0,
+        "lps": 1.5
+      },
+      "palette": [
+        {
+          "id": 41,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.2,
+            "red": 0.8,
+            "lps": 0.5
+          }
+        },
+        {
+          "id": 42,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.65,
+            "red": 0.15,
+            "lps": 0.2
+          }
+        },
+        {
+          "id": 43,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.5,
+            "red": 0.5
+          }
+        },
+        {
+          "id": 44,
+          "hex": "#000000",
+          "responses": {
+            "white": 0.0,
+            "red": 0.0,
+            "lps": 0.0
+          }
+        }
+      ],
+      "cells": [
+        {
+          "white": 0.4,
+          "red": 0.4,
+          "lps": 0.4
+        }
+      ],
+      "expected": {
+        "selections": [
+          42
+        ],
+        "errors": [
+          0.15375
+        ],
+        "ties": [
+          false
+        ],
+        "excludedCandidateCount": 1
+      }
+    }
+  ]
+}
