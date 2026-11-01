@@ -1,0 +1,67 @@
+{
+  "status": "skipped",
+  "summary": "Tests-writing run for issue #39 (OpenAPI client adoption + solver parity corpus). Committed: parity corpus fixture (11 hand-derived cases incl. the Elixir doctest 0.205 anchor, ties, exclusions, weight handling), WeightedSquaredErrorParityTests (scorer-level best_match policy + CompositionSolver fast path), OpenAPIClientAdoptionTests (red: pin manifest deps swift-openapi-generator/-runtime and a committed OpenAPI/color_matching.json describing GET /api/v1/printer_profiles + GET /api/v1/colors?printer_profile_id), PaletteAPIClientMigrationTests + ProfileColorCacheMigrationTests (green characterization of the wire contract and disk-cache/offline-fallback behavior the migration must preserve), and docs (corpus consumption/refresh; AC-to-verification map). swift test could NOT be executed: no Swift toolchain in this container; corpus expected outputs were instead machine cross-checked against a faithful re-implementation of the Swift scorer/selection policy (11/11 cases consistent), and Swift files were brace/paren balanced-checked. AC-1 is red by design (implementation run follows paid-tests-approved).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift", "result": "red (expected: deliverables not yet implemented)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:testPackageManifestDeclaresOpenAPIGeneratorAndRuntime", "result": "failing - Package.swift declares neither swift-openapi-generator nor swift-openapi-runtime (statically verified; swift test unavailable)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:testOpenAPIDocumentIsCommitted", "result": "failing - ColorComposerCore/OpenAPI/color_matching.json absent; also pins /api/v1 paths, printer_profile_id param, snake_case envelope names" }
+        ],
+        "note": "Red by design in the test-writing phase; implementation run must turn these green. Depends on upstream viamin/color_matching#110."
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientMigrationTests.swift", "result": "not_run (no Swift toolchain in container); expected green - pins paths, query param, bearer token, 401/500/malformed mapping, envelope decoding" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheMigrationTests.swift", "result": "not_run (no Swift toolchain); expected green - offline read of cached fetch still solves, fetchedAt exact round-trip, allEntries fallback" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "prior permanent coverage (per-server isolation, cache integrity) - not re-run here" }
+        ],
+        "note": "Blocked on missing Swift toolchain; to be executed by swift test in the implementation run/CI."
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift", "result": "not_run (no Swift toolchain); asserts exact selections/scores incl. tie cases at scorer level and through CompositionSolver fast path" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_corpus.json", "result": "committed corpus, 11 cases; expected outputs machine cross-checked 11/11 against a faithful Python re-implementation of the Swift algorithm" }
+        ],
+        "note": "Corpus is a seed hand-derived from Elixir WeightedSquaredError semantics (doctest anchor 0.205); upstream viamin/color_matching#111 corpus supersedes it per docs/parity-corpus.md refresh procedure."
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/parity-corpus.md", "result": "committed - documents corpus location, schema, consumption, and upstream refresh procedure" },
+          { "locator": "docs/openapi-client-adoption.md", "result": "committed - AC-to-verification map + migration contract for the implementation run" }
+        ],
+        "note": "README.md is outside this phase's writable allowlist; docs/ is the permitted home and the README link is left to the implementation run."
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-adoption.md#pr-description-notes-pre-staged", "result": "pre-staged sections: generated-client migration notes, /api/v1 shape findings, parity test results" }
+        ],
+        "note": "PR body is written when the PR is opened (post paid-tests-approved); not settlable by automation in this run."
+      }
+    }
+  ]
+}
