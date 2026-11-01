@@ -1,0 +1,84 @@
+{
+  "status": "passed",
+  "summary": "Tests-only (red-phase) run for issue #39. All deliverable tests are committed at HEAD 22d2b9e and lint (bin/lint) passes. Two tests fail red by design, demonstrating the missing deliverables: the upstream parity corpus (viamin/color_matching#111) is not committed (SolverParityCorpusTests.testUpstreamParityCorpusIsCommitted) and the OpenAPI document (viamin/color_matching#110) is not committed (OpenAPIContractTests.testOpenAPIDocumentIsCommitted). Both upstream PRs do not exist yet (GitHub API returns no such PRs). No Swift toolchain exists in this container, so swift test could not be executed locally; seed-corpus expectations were independently recomputed and verified with a Python model of the scorer's exact arithmetic (all 8 cases match, scores within 1e-9). Implementation (swift-openapi-generator adoption, corpus/spec commit, README update) belongs to the follow-up implementation run after paid-tests-approved.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime, generate typed client from OpenAPI document, migrate PaletteAPIClient",
+      "status": "not_run",
+      "reason": "Implementation deferred to the post-paid-tests-approved run; this phase may only change test paths and LID docs. Migration safety net and spec-drift tests are in place (references below) and the missing-spec red test demonstrates the gap.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientWireContractTests.swift:32", "result": "authored_not_executed", "note": "pins /api/v1 endpoints, GET, Accept, optional bearer, envelope decoding, error mapping; must stay green across the generated-client migration" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:36", "result": "failed_expected_red", "note": "XCTFail until ColorComposerCore/openapi.json from viamin/color_matching#110 is committed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:56", "result": "skipped_expected", "note": "XCTSkip(issue ref) until the spec lands; then guards GET printer_profiles and printer_profile_id-scoped GET colors drift" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "reason": "Behavior-pinning tests authored at HEAD but not executed: no Swift toolchain in this container (bin/lint reports 'Swift toolchain not available'). Existing ProfileColorCacheTests already cover cache round-trip/namespace behavior.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheDiskFormatTests.swift:82", "result": "authored_not_executed", "note": "literal on-disk bytes from earlier app versions (snake_case keys, ISO-8601 fetched_at, server-<base64url>/profile-<id>.json layout) must keep decoding through the DTO migration" },
+          { "locator": "ColorMatchingTests/ColorCatalogOfflineFallbackTests.swift:41", "result": "authored_not_executed", "note": "transport failure serves cached colors with stale badge; per-server scoping; 401 never claims offline; live fetch clears badge; offline cold start offers cached profiles (macOS app-host test target)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "pre_existing", "note": "existing disk-cache round-trip and server-namespace coverage" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target loading the committed corpus and asserting WeightedSquaredErrorScorer selections exactly, including ties",
+      "status": "failed",
+      "reason": "Expected red-phase failure: the corpus from viamin/color_matching#111 is not committed (the upstream PR does not exist yet), so testUpstreamParityCorpusIsCommitted fails. The harness, corpus format contract, and an 8-case hand-verified seed corpus (ties, exclusions, weight handling, absence-vs-zero, Elixir doctest) are committed and consume any *.json corpus under Fixtures/Parity/ through the real CompositionSolver.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:36", "result": "failed_expected_red", "note": "corpus absent until #111 lands; failure message names the exact expected path" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:79", "result": "authored_not_executed", "note": "runs every corpus case as a real 1x1 CompositionSolver.solve: selection id, score (1e-9), excluded ids, earliest-index tie-breaking" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/Parity/weighted_squared_error_corpus.seed.json:1", "result": "verified_arithmetically", "note": "all 8 seed expectations recomputed independently in Python matching the scorer's accumulation order; JSON valid" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "reason": "README.md is outside the permitted paths for this tests-only phase; the authoritative corpus/spec documentation is committed at docs/solver-parity-corpus.md and should be linked from the README during the implementation run.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md:1", "result": "committed", "note": "corpus location, format contract, enforced rules, refresh procedure, OpenAPI document contract" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results",
+      "status": "not_run",
+      "reason": "No PR is opened in this phase (Paid publishes the tests-only draft); findings are captured in this verification record and docs/solver-parity-corpus.md for the implementation run to fold into the PR description.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "tmp/paid-agent-verification.json", "result": "written", "note": "this record" }
+        ]
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with parity corpus test and generated client in place; disk cache + offline fallback verified unchanged",
+      "status": "not_run",
+      "reason": "Cannot be met in this phase: no Swift toolchain in the container (swift/swiftc absent; bin/lint skips build/tests), and implementation (generated client, committed corpus/spec) is deferred to the follow-up run. Lint gate bin/lint passed (whitespace/conflict checks; build skipped by design of the script).",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "commit 22d2b9e", "result": "committed", "note": "all tests + docs committed; pre-commit clean" }
+        ]
+      }
+    }
+  ]
+}
