@@ -29,7 +29,7 @@ final class PaletteAPIClientTests: XCTestCase {
             lock.lock()
             requests.append(request.value(forHTTPHeaderField: "Authorization"))
             lock.unlock()
-            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+            return (.init(statusCode: 200, url: request.url!), self.printerProfilesResponse())
         }
 
         _ = try await client.fetchPrinterProfiles()
