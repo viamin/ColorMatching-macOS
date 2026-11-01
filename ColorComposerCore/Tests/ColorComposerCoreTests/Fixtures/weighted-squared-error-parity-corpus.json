@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "scorer": "ColorMatching.WeightedSquaredError"
+  },
+  "tie_break": "lowest_score_first_candidate_in_input_order_wins",
+  "notes": "Solver parity corpus for WeightedSquaredErrorScorer (issue #39). Expected outputs are produced by the Elixir ColorMatching.WeightedSquaredError scorer with IlluminantMatching.best_match/4 selection semantics: lowest weighted squared error wins, ties break to the first candidate in input order, and a candidate (or target) missing a measurement for any condition with weight > 0 is excluded - never scored as zero brightness. Replace this file with the artifact exported by viamin/color_matching#111 once it lands (see docs/solver-parity-corpus.md).",
+  "cases": [
+    {
+      "id": "wse-doctest",
+      "description": "The Elixir WeightedSquaredError doctest inputs and its expected 0.205 score.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        {
+          "id": 1,
+          "name": "doctest-candidate",
+          "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 1,
+        "score": 0.205,
+        "tied_candidate_ids": [1],
+        "excluded_candidate_ids": [],
+        "candidate_scores": [
+          { "candidate_id": 1, "score": 0.205 }
+        ]
+      }
+    },
+    {
+      "id": "wse-nearest-white",
+      "description": "Single active channel: the nearest measured brightness wins; a 0.625 candidate loses to the exact 0.5 match.",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.5 },
+      "candidates": [
+        { "id": 101, "name": "far-black", "responses": { "white": 0.0 } },
+        { "id": 102, "name": "exact-mid", "responses": { "white": 0.5 } },
+        { "id": 103, "name": "near-high", "responses": { "white": 0.625 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 102,
+        "score": 0.0,
+        "tied_candidate_ids": [102],
+        "excluded_candidate_ids": [],
+        "candidate_scores": [
+          { "candidate_id": 101, "score": 0.25 },
+          { "candidate_id": 102, "score": 0.0 },
+          { "candidate_id": 103, "score": 0.015625 }
+        ]
+      }
+    },
+    {
+      "id": "wse-tie-identical-vectors-earliest-wins",
+      "description": "Two candidates with identical response vectors both score 0; the first candidate in input order must be selected.",
+      "weights": { "white": 1.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.25, "red": 0.75 },
+      "candidates": [
+        { "id": 11, "name": "first-exact", "responses": { "white": 0.25, "red": 0.75 } },
+        { "id": 12, "name": "second-exact", "responses": { "white": 0.25, "red": 0.75 } },
+        { "id": 13, "name": "off", "responses": { "white": 0.5, "red": 0.5 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 11,
+        "score": 0.0,
+        "tied_candidate_ids": [11, 12],
+        "excluded_candidate_ids": [],
+        "candidate_scores": [
+          { "candidate_id": 11, "score": 0.0 },
+          { "candidate_id": 12, "score": 0.0 },
+          { "candidate_id": 13, "score": 0.125 }
+        ]
+      }
+    },
+    {
+      "id": "wse-tie-symmetric-around-target-earliest-wins",
+      "description": "Candidates symmetric around the target share the minimum nonzero score 0.125 (weight 2, offset 0.25); the earlier candidate wins the tie.",
+      "weights": { "white": 2.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.5 },
+      "candidates": [
+        { "id": 21, "name": "below", "responses": { "white": 0.25 } },
+        { "id": 22, "name": "above", "responses": { "white": 0.75 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 21,
+        "score": 0.125,
+        "tied_candidate_ids": [21, 22],
+        "excluded_candidate_ids": [],
+        "candidate_scores": [
+          { "candidate_id": 21, "score": 0.125 },
+          { "candidate_id": 22, "score": 0.125 }
+        ]
+      }
+    },
+    {
+      "id": "wse-excludes-candidate-missing-required-channel",
+      "description": "A candidate missing a measurement for a weight>0 channel is excluded even when its other channels match exactly; the two complete candidates tie at 0.0625 and the earlier one wins.",
+      "weights": { "white": 0.0, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 31, "name": "complete-a", "responses": { "red": 0.25, "green": 0.5 } },
+        { "id": 32, "name": "missing-green", "responses": { "red": 0.5 } },
+        { "id": 33, "name": "complete-b", "responses": { "red": 0.5, "green": 0.75 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 31,
+        "score": 0.0625,
+        "tied_candidate_ids": [31, 33],
+        "excluded_candidate_ids": [32],
+        "candidate_scores": [
+          { "candidate_id": 31, "score": 0.0625 },
+          { "candidate_id": 32, "score": null },
+          { "candidate_id": 33, "score": 0.0625 }
+        ]
+      }
+    },
+    {
+      "id": "wse-target-missing-required-channel-excludes-all",
+      "description": "The target itself lacks a measurement for a weight>0 channel (green), so every candidate is excluded and no selection exists.",
+      "weights": { "white": 0.0, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 41, "name": "has-both", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 42, "name": "has-red-only", "responses": { "red": 0.5 } }
+      ],
+      "expected": {
+        "selected_candidate_id": null,
+        "score": null,
+        "tied_candidate_ids": [],
+        "excluded_candidate_ids": [41, 42],
+        "candidate_scores": [
+          { "candidate_id": 41, "score": null },
+          { "candidate_id": 42, "score": null }
+        ]
+      }
+    },
+    {
+      "id": "wse-zero-weight-channel-is-not-required",
+      "description": "Only white has weight>0: a candidate with no other measurements is eligible and wins, while a candidate missing the required white measurement is excluded.",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.75 },
+      "candidates": [
+        { "id": 51, "name": "white-only", "responses": { "white": 0.75 } },
+        { "id": 52, "name": "all-but-white", "responses": { "red": 1.0, "blue": 1.0 } },
+        { "id": 53, "name": "full-but-off", "responses": { "white": 1.0, "red": 1.0, "green": 1.0, "blue": 1.0, "lps": 1.0 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 51,
+        "score": 0.0,
+        "tied_candidate_ids": [51],
+        "excluded_candidate_ids": [52],
+        "candidate_scores": [
+          { "candidate_id": 51, "score": 0.0 },
+          { "candidate_id": 52, "score": null },
+          { "candidate_id": 53, "score": 0.0625 }
+        ]
+      }
+    },
+    {
+      "id": "wse-heavy-weight-flips-selection-to-later-candidate",
+      "description": "With white weighted 4 and red 1, the candidate erring only on red (0.25) beats the earlier candidate erring only on white (1.0): weight magnitude, not input order, decides.",
+      "weights": { "white": 4.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "candidates": [
+        { "id": 61, "name": "white-off", "responses": { "white": 1.0, "red": 0.5 } },
+        { "id": 62, "name": "red-off", "responses": { "white": 0.5, "red": 1.0 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 62,
+        "score": 0.25,
+        "tied_candidate_ids": [62],
+        "excluded_candidate_ids": [],
+        "candidate_scores": [
+          { "candidate_id": 61, "score": 1.0 },
+          { "candidate_id": 62, "score": 0.25 }
+        ]
+      }
+    },
+    {
+      "id": "wse-all-five-channels",
+      "description": "All five channels active with distinct weights (1, 0.5, 0.25, 0.125, 2): the lps-exact candidate wins at 0.0625 and the candidate missing its lps measurement is excluded despite matching white/red/green/blue.",
+      "weights": { "white": 1.0, "red": 0.5, "green": 0.25, "blue": 0.125, "lps": 2.0 },
+      "target": { "white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.25 },
+      "candidates": [
+        {
+          "id": 71,
+          "name": "slightly-off-everywhere",
+          "responses": { "white": 0.625, "red": 0.375, "green": 0.625, "blue": 0.375, "lps": 0.5 }
+        },
+        {
+          "id": 72,
+          "name": "lps-exact-white-off",
+          "responses": { "white": 0.25, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.25 }
+        },
+        {
+          "id": 73,
+          "name": "missing-lps",
+          "responses": { "white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5 }
+        }
+      ],
+      "expected": {
+        "selected_candidate_id": 72,
+        "score": 0.0625,
+        "tied_candidate_ids": [72],
+        "excluded_candidate_ids": [73],
+        "candidate_scores": [
+          { "candidate_id": 71, "score": 0.154296875 },
+          { "candidate_id": 72, "score": 0.0625 },
+          { "candidate_id": 73, "score": null }
+        ]
+      }
+    },
+    {
+      "id": "wse-measured-zero-is-not-missing",
+      "description": "A measured brightness of 0.0 scores 0.0 and wins, while an unmeasured channel is excluded - zero brightness must never be confused with a missing measurement.",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.0 },
+      "candidates": [
+        { "id": 81, "name": "measured-zero", "responses": { "red": 0.0 } },
+        { "id": 82, "name": "unmeasured", "responses": {} },
+        { "id": 83, "name": "measured-quarter", "responses": { "red": 0.25 } }
+      ],
+      "expected": {
+        "selected_candidate_id": 81,
+        "score": 0.0,
+        "tied_candidate_ids": [81],
+        "excluded_candidate_ids": [82],
+        "candidate_scores": [
+          { "candidate_id": 81, "score": 0.0 },
+          { "candidate_id": 82, "score": null },
+          { "candidate_id": 83, "score": 0.0625 }
+        ]
+      }
+    }
+  ]
+}
