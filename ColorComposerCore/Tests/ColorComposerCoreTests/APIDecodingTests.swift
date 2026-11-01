@@ -88,4 +88,44 @@ final class APIDecodingTests: XCTestCase {
         )
         XCTAssertEqual(profiles.printerProfiles.first?.id, 1)
     }
+
+    /// The server publishes its `/api/v1` shapes as OpenAPI
+    /// (viamin/color_matching#110, served at `GET /api/v1/openapi.json`).
+    /// This pins the DTOs against that published contract: required
+    /// `ColorsResponse` color fields (id, name, hex, palette_id, sort_order,
+    /// responses), the explicitly nullable `palette_name`, and null
+    /// provenance fields inside a response measurement.
+    func testDecodesColorsResponseConformantWithPublishedOpenAPISpec() throws {
+        let json = """
+        {
+          "printer_profile": {
+            "id": 7, "printer_make_model": "Epson", "paper_type": "Matte", "ink_type": "Dye"
+          },
+          "colors": [
+            {
+              "id": 123, "name": "Red 12", "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "palette_id": 5, "palette_name": null, "sort_order": 12,
+              "responses": {
+                "red": {
+                  "brightness": 0.87, "source": "measurement",
+                  "raw_value": null, "raw_unit": null,
+                  "apparent_brightness": null, "measured_at": null, "test_run_id": null
+                }
+              }
+            }
+          ]
+        }
+        """
+        let envelope = try decode(json, as: ColorsResponse.self)
+
+        XCTAssertEqual(envelope.printerProfile?.id, 7)
+        let color = try XCTUnwrap(envelope.colors.first)
+        XCTAssertEqual(color.id, 123)
+        XCTAssertEqual(color.name, "Red 12")
+        XCTAssertEqual(color.paletteId, 5)
+        XCTAssertEqual(color.paletteName, nil)
+        XCTAssertEqual(color.sortOrder, 12)
+        XCTAssertEqual(color.responses["red"]?.brightness, 0.87)
+    }
 }
