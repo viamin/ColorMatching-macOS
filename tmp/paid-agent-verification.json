@@ -1,0 +1,82 @@
+{
+  "status": "passed",
+  "summary": "Tests-only phase for issue #39. Committed the upstream solver-parity golden corpus (viamin/color_matching priv/parity/v1/corpus.json @ 47057afd, sha256 7b7b4d90...) as a test fixture and added SolverParityCorpusTests (5 tests: metadata contract, risk coverage, exact per-candidate scores, earliest-index-wins selection incl. ties, CompositionSolver fast-path replay) — all green with real execution. Added PaletteAPIClientContractTests (10 tests) pinning the /api/v1 wire contract the generated-OpenAPI-client migration must preserve — all green. Full package suite 223/223 green on Swift 6.0.3/Linux (harness excluding only the CoreGraphics-dependent BrightnessGridSampler.swift). Corpus consumption + refresh and migration notes/findings documented under docs/ (README.md is outside this phase's allowlist). The generated-client migration itself (Package.swift, swift-openapi-generator) is implementation-phase work; dependency viamin/color_matching#110 is not yet an open PR (spec is already served at GET /api/v1/openapi.json on main).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore, generate a typed client from the OpenAPI document, migrate PaletteAPIClient to it (or wrap it), keeping disk-cache/offline-stale behavior intact",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:26", "result": "passed — 10/10 tests green (endpoint URLs, Accept header, query building, server-shape decoding, badStatus/malformedResponse/unauthorized mapping, testConnection, unknown-field tolerance): the behavioral contract the generated client must keep passing" },
+          { "locator": ".ephemeral-tests/openapi_spec_check.sh:1", "result": "passed — live-server /api/v1/openapi.json validation script for the migration PR (validated against a synthetic spec on 2026-11-01; run against a live server during implementation)" },
+          { "locator": "docs/openapi-client-migration.md:1", "result": "passed — migration plan, /api/v1 shape findings, dependency status" }
+        ],
+        "reason": "Implementation-phase deliverable: Package.swift and sources are outside this tests-only phase's commit allowlist. Dependency viamin/color_matching#110 is not yet an open PR (verified 404 via GitHub API); the OpenAPI document is already served at GET /api/v1/openapi.json on color_matching main. Contract tests, ephemeral live-spec check, and migration notes are prepared and green."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "passed — all 69 disk-cache tests green (per-server/profile namespacing, corruption/symlink misses, clear-cache, snake_case wire keys, legacy normalization): the substrate for offline-stale badges and cached-profile fallback" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14", "result": "passed — 2/2 green after a one-line fix (explicit self in handler closure required by Swift 6 toolchains); no test semantics changed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:43", "result": "passed — fetchColors/fetchPrinterProfiles happy paths and error mapping unchanged" },
+          { "locator": "git diff HEAD --stat", "result": "passed — no implementation files modified; only tests, fixtures, and docs changed in this phase" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test in ColorComposerCore tests that loads the committed corpus (from viamin/color_matching#111) and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/Fixtures/parity/v1/corpus.json:1", "result": "passed — corpus committed verbatim from viamin/color_matching main @ 47057afd (priv/parity/v1/corpus.json, sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604); 12 scenarios; upstream PR #111 not yet open — content already on main" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:161", "result": "passed — testCorpusMetadataMatchesClientContract: algorithm_version 1, scorer ColorMatching.WeightedSquaredError, selection earliest-index-wins, missing_policy, canonical light sources" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:175", "result": "passed — testCorpusCoversRequiredParityRisks: all 12 v1 scenario IDs present incl. tie/exclusion/no-selection coverage" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:212", "result": "passed — testScorerMatchesCorpusScoresExactly: every candidate score matches bit-for-bit (exact Double equality) or is excluded exactly as the corpus says (12/12 scenarios)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:245", "result": "passed — testScorerSelectionMatchesCorpusIncludingTies: selected index/hex/error, tied_indices, and tie_broke match on all 12 scenarios incl. 4 exact-tie cases" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:289", "result": "passed — testSolverFastPathMatchesCorpusSelection: production CompositionSolver fast path reproduces corpus selection/error/excluded-count on every grid-expressible scenario (missing-target-excluded covered at scorer level: grids cannot express an absent active channel)" },
+          { "locator": "swift test --filter SolverParityCorpusTests (Swift 6.0.3 Linux harness)", "result": "passed — Executed 5 tests, with 0 failures" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity.md:1", "result": "passed — full corpus-consumption doc: fixture path, upstream source of truth, provenance (commit + sha256), step-by-step refresh procedure, drift-review guidance, parity findings (ties/exclusions/weights)" }
+        ],
+        "reason": "README.md is outside this phase's commit allowlist (docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md only). Content lives in docs/solver-parity.md; the README pointer is queued for the implementation phase and noted in that document."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records: generated-client migration notes, any /api/v1 shape changes found, parity test results",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-migration.md:1", "result": "passed — migration notes: spec served at GET /api/v1/openapi.json (public); shape-comparison table vs current DTOs; verdict: no breaking /api/v1 shape changes (client DTOs are a compatible superset); ProfileColorsResponse/metamer_pairs/palettes noted as intentionally unconsumed" },
+          { "locator": "docs/solver-parity.md:56", "result": "passed — parity findings recorded: earliest-index-wins ties (4 scenarios), exclusion semantics (candidate vs target missing), zero-weight and unknown-light-source handling, 12/12 exact match, no parity defects" }
+        ],
+        "reason": "The PR is published by Paid after this run (no push permitted here); the required PR-description content is recorded in the two docs above and in tmp/paid-agent-verification.json for the implementation run to carry into the PR body."
+      }
+    }
+  ],
+  "exit_criteria": {
+    "swift_test_green": "Full package suite 223/223 green via swift test on Swift 6.0.3/Linux (harness excluding only BrightnessGridSampler.swift, which requires CoreGraphics/macOS); parity corpus tests 5/5 green; generated client lands in the implementation phase (AC-1)",
+    "disk_cache_offline_fallback_unchanged": "No implementation files changed; ProfileColorCacheTests 69/69, PaletteAPIClientTests 2/2, PaletteAPIClientContractTests 10/10 green",
+    "lint": "bin/lint on this Linux host fails identically on the pristine tree (verified by stash/re-run) because its non-Apple harness excludes PaletteAPIClient.swift while PaletteAPIClientTests.swift references it — pre-existing, documented in docs/openapi-client-migration.md for the implementation phase; on the canonical macOS host bin/lint runs plain swift test",
+    "environment_limitations": "No macOS/Xcode host available: BrightnessGridSampler-dependent suites and the app-layer ColorMatchingTests target were not executed; no live color_matching server available, so the ephemeral OpenAPI spec check ran against a synthetic spec only"
+  }
+}
