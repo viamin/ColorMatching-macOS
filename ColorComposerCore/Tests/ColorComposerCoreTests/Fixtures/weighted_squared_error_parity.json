@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "nearest candidate across multiple weighted channels",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.2, "green": 0.7 } },
+        { "id": 102, "responses": { "red": 0.5, "green": 0.8 } }
+      ],
+      "selected_color_id": 101
+    },
+    {
+      "name": "earliest palette candidate wins an exact tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "selected_color_id": 201
+    },
+    {
+      "name": "candidate missing an active response is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "selected_color_id": 302
+    },
+    {
+      "name": "missing zero-weight response does not exclude a candidate",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.25, "green": 0.75 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.25 } },
+        { "id": 402, "responses": { "red": 0.5, "green": 0.75 } }
+      ],
+      "selected_color_id": 401
+    },
+    {
+      "name": "all candidates missing an active response leave the cell unmatched",
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.5 } }
+      ],
+      "selected_color_id": null
+    }
+  ]
+}
