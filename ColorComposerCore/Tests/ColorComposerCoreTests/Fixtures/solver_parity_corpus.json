@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "source": "viamin/color_matching parity corpus (upstream PR #111)",
+  "tie_break": "earliest_palette_candidate",
+  "notes": "Seed corpus asserting parity between ColorComposerCore.WeightedSquaredErrorScorer and the Elixir ColorMatching.WeightedSquaredError solver. Case elixir_doctest_weights reproduces the Elixir module doctest. When the generated corpus from viamin/color_matching#111 lands, replace this file in place (same schema) — see docs/solver-parity-corpus.md.",
+  "cases": [
+    {
+      "id": "elixir_doctest_weights",
+      "description": "The Elixir WeightedSquaredError doctest weights and vectors: expected score 0.205; the near-perfect candidate missing green (weight > 0) is excluded rather than scored.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 101, "hex": "#5A3C2E", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 102, "hex": "#2E1F0A", "responses": { "white": 0.9, "red": 0.8, "green": 0.0, "lps": 1.0 } },
+        { "id": 103, "hex": "#7A8464", "responses": { "white": 0.8, "red": 0.2, "lps": 0.5 } }
+      ],
+      "expected": { "selected_id": 101, "score": 0.205, "excluded_ids": [103] }
+    },
+    {
+      "id": "exact_match_scores_zero",
+      "description": "A candidate reproducing the target vector exactly scores 0 and wins over an equal-distance-on-every-channel rival.",
+      "weights": { "white": 2.0, "red": 1.0 },
+      "target": { "white": 0.3, "red": 0.7 },
+      "palette": [
+        { "id": 201, "hex": "#4D6680", "responses": { "white": 0.3, "red": 0.7 } },
+        { "id": 202, "hex": "#664D66", "responses": { "white": 0.4, "red": 0.6 } }
+      ],
+      "expected": { "selected_id": 201, "score": 0.0, "excluded_ids": [] }
+    },
+    {
+      "id": "tie_symmetric_distance_earliest_wins",
+      "description": "Two candidates at symmetric distance from the target tie at 0.01; the earlier palette entry (101-series first) must win, matching the Elixir first-minimal selection policy.",
+      "tie": true,
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 301, "hex": "#7A3030", "responses": { "red": 0.6 } },
+        { "id": 302, "hex": "#307A4A", "responses": { "red": 0.4 } },
+        { "id": 303, "hex": "#D9A0A0", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_id": 301, "score": 0.01, "excluded_ids": [] }
+    },
+    {
+      "id": "tie_identical_vectors_earliest_wins",
+      "description": "Two candidates with identical measured vectors tie at 0 on a weighted two-channel match; the earliest palette entry must win.",
+      "tie": true,
+      "weights": { "green": 1.0, "lps": 2.0 },
+      "target": { "green": 0.2, "lps": 0.8 },
+      "palette": [
+        { "id": 401, "hex": "#3F5A34", "responses": { "green": 0.2, "lps": 0.8 } },
+        { "id": 402, "hex": "#4A6B3C", "responses": { "green": 0.2, "lps": 0.8 } },
+        { "id": 403, "hex": "#8FA07A", "responses": { "green": 0.1, "lps": 0.9 } }
+      ],
+      "expected": { "selected_id": 401, "score": 0.0, "excluded_ids": [] }
+    },
+    {
+      "id": "missing_required_measurement_excludes_candidate",
+      "description": "A candidate missing a weight > 0 channel is excluded even though it is otherwise closest on its measured channels; selection falls to the next candidate.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "hex": "#A03C3C", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#6B7A4A", "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected": { "selected_id": 502, "score": 0.02, "excluded_ids": [501] }
+    },
+    {
+      "id": "zero_weight_channel_is_not_required",
+      "description": "Channels with weight 0 are ignored: a candidate measured only under the single active channel is eligible and beats a fuller rival.",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.5 },
+      "palette": [
+        { "id": 601, "hex": "#7F7F7F", "responses": { "white": 0.5 } },
+        { "id": 602, "hex": "#8C827A", "responses": { "white": 0.6, "red": 0.9 } }
+      ],
+      "expected": { "selected_id": 601, "score": 0.0, "excluded_ids": [] }
+    },
+    {
+      "id": "weight_emphasis_white",
+      "description": "Identical palette and target as weight_emphasis_red; only the weights differ. Emphasizing white selects the white-accurate candidate 701 (score 0.14 vs 0.41).",
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.8, "red": 0.2 },
+      "palette": [
+        { "id": 701, "hex": "#C2B0A2", "responses": { "white": 0.9, "red": 0.4 } },
+        { "id": 702, "hex": "#5A544E", "responses": { "white": 0.6, "red": 0.1 } }
+      ],
+      "expected": { "selected_id": 701, "score": 0.14, "excluded_ids": [] }
+    },
+    {
+      "id": "weight_emphasis_red",
+      "description": "Identical palette and target as weight_emphasis_white with red emphasized instead; the selection flips to the red-accurate candidate 702 (score 0.14 vs 0.41).",
+      "weights": { "white": 1.0, "red": 10.0 },
+      "target": { "white": 0.8, "red": 0.2 },
+      "palette": [
+        { "id": 701, "hex": "#C2B0A2", "responses": { "white": 0.9, "red": 0.4 } },
+        { "id": 702, "hex": "#5A544E", "responses": { "white": 0.6, "red": 0.1 } }
+      ],
+      "expected": { "selected_id": 702, "score": 0.14, "excluded_ids": [] }
+    },
+    {
+      "id": "measured_zero_brightness_is_not_missing",
+      "description": "A measured 0.0 brightness is a real measurement, not a missing one: the dark candidate participates and wins over a brighter rival.",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.1 },
+      "palette": [
+        { "id": 801, "hex": "#1A0000", "responses": { "red": 0.0 } },
+        { "id": 802, "hex": "#B35B5B", "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_id": 801, "score": 0.01, "excluded_ids": [] }
+    },
+    {
+      "id": "all_candidates_excluded_no_selection",
+      "description": "When every candidate lacks a required channel, nothing is selected: the cell stays unmatched with infinite error.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 901, "hex": "#A03C3C", "responses": { "red": 0.5 } },
+        { "id": 902, "hex": "#3CA05A", "responses": { "green": 0.5 } }
+      ],
+      "expected": { "selected_id": null, "excluded_ids": [901, 902] }
+    },
+    {
+      "id": "five_channel_full_vector",
+      "description": "All five channels active with fractional weights; the uniformly-close candidate wins at 0.055 and a candidate missing blue is excluded.",
+      "weights": { "white": 0.5, "red": 1.25, "green": 0.75, "blue": 2.0, "lps": 1.0 },
+      "target": { "white": 0.4, "red": 0.6, "green": 0.3, "blue": 0.8, "lps": 0.2 },
+      "palette": [
+        { "id": 1001, "hex": "#5A4A63", "responses": { "white": 0.5, "red": 0.5, "green": 0.2, "blue": 0.9, "lps": 0.1 } },
+        { "id": 1002, "hex": "#2F4258", "responses": { "white": 0.3, "red": 0.8, "green": 0.4, "blue": 0.6, "lps": 0.3 } },
+        { "id": 1003, "hex": "#6B5E4E", "responses": { "white": 0.4, "red": 0.6, "green": 0.3, "lps": 0.2 } }
+      ],
+      "expected": { "selected_id": 1001, "score": 0.055, "excluded_ids": [1003] }
+    },
+    {
+      "id": "lps_single_channel_fractional_weight",
+      "description": "LPS-only matching with a fractional weight: closest LPS response wins at 0.0025 * 3.",
+      "weights": { "lps": 3.0 },
+      "target": { "lps": 0.7 },
+      "palette": [
+        { "id": 1101, "hex": "#6E5626", "responses": { "lps": 0.5 } },
+        { "id": 1102, "hex": "#8C7038", "responses": { "lps": 0.65 } },
+        { "id": 1103, "hex": "#C7AD71", "responses": { "lps": 1.0 } }
+      ],
+      "expected": { "selected_id": 1102, "score": 0.0075, "excluded_ids": [] }
+    },
+    {
+      "id": "tie_all_perfect_matches_earliest_wins",
+      "description": "Three identical perfect matches tie at 0; the first palette entry must win.",
+      "tie": true,
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "palette": [
+        { "id": 1201, "hex": "#7F5F5F", "responses": { "white": 0.5, "red": 0.5 } },
+        { "id": 1202, "hex": "#8F6F6F", "responses": { "white": 0.5, "red": 0.5 } },
+        { "id": 1203, "hex": "#9F7F7F", "responses": { "white": 0.5, "red": 0.5 } }
+      ],
+      "expected": { "selected_id": 1201, "score": 0.0, "excluded_ids": [] }
+    }
+  ]
+}
