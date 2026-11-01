@@ -37,6 +37,20 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    func testFetchColorsUsesVersionedOpenAPIPathAndProfileQuery() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(request.url?.queryItems?["printer_profile_id"], "42")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertEqual(response.colors.map(\.id), [7])
+        XCTAssertEqual(response.profile?.id, 42)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -60,6 +74,42 @@ final class PaletteAPIClientTests: XCTestCase {
           ]
         }
         """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "colors": [
+            {
+              "id": 7,
+              "name": "Slate",
+              "hex": "#708090",
+              "rgb": { "r": 112, "g": 128, "b": 144 },
+              "palette_id": 3,
+              "palette_name": "Parity",
+              "sort_order": 1,
+              "responses": {
+                "white": { "brightness": 0.5 },
+                "red": { "brightness": 0.25 }
+              }
+            }
+          ],
+          "printer_profile": {
+            "id": 42,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          }
+        }
+        """.data(using: .utf8)!
+    }
+}
+
+private extension URL {
+    var queryItems: [String: String] {
+        URLComponents(url: self, resolvingAgainstBaseURL: false)?.queryItems?.reduce(into: [:]) {
+            $0[$1.name] = $1.value
+        } ?? [:]
     }
 }
 
