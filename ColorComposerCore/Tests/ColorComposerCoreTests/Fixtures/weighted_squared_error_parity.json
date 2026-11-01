@@ -1,0 +1,53 @@
+{
+  "cases": [
+    {
+      "name": "weighted channels select the lowest summed squared error",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "palette": [
+        { "id": 1, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 2, "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 } }
+      ],
+      "expected": { "selectedColorID": 2, "excludedCandidateCount": 0, "error": 0.0 }
+    },
+    {
+      "name": "equal scores retain the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 10, "responses": { "red": 0.4 } },
+        { "id": 11, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selectedColorID": 10, "excludedCandidateCount": 0, "error": 0.01 }
+    },
+    {
+      "name": "missing active measurements exclude a candidate",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 20, "responses": { "red": 0.5 } },
+        { "id": 21, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "selectedColorID": 21, "excludedCandidateCount": 1, "error": 0.0 }
+    },
+    {
+      "name": "zero-weight channels neither exclude nor affect selection",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.5, "blue": 1.0 } }
+      ],
+      "expected": { "selectedColorID": 30, "excludedCandidateCount": 0, "error": 0.0 }
+    },
+    {
+      "name": "all candidates excluded leave the cell unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 40, "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selectedColorID": null, "excludedCandidateCount": 1, "error": null }
+    }
+  ]
+}
