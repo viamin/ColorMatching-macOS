@@ -1,0 +1,58 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: a permanent solver parity corpus-replay test and verification plan are committed in f8397be. The test is intentionally red until the implementation phase commits the upstream corpus fixture; Swift is unavailable in this container, so compilation could not be run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:5",
+            "result": "Planned for the generated-client implementation phase; no production code is permitted in this tests-only run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:5",
+            "result": "Red-phase permanent corpus replay test added; it awaits Fixtures/weighted_squared_error_v1.json copied verbatim from viamin/color_matching priv/parity/v1/corpus.json."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:5",
+            "result": "Existing cache/fallback tests must be run after the generated-client implementation; this phase cannot change production integration code."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:7",
+            "result": "README and PR-description updates are deferred to implementation because README is outside the test-writing allowlist."
+          }
+        ]
+      }
+    }
+  ]
+}
