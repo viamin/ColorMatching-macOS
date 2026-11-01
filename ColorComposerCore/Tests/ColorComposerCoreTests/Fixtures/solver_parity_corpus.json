@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "source": "seed",
+  "upstream": "viamin/color_matching#111 (solver parity corpus; unpublished when this seed was committed)",
+  "notes": "Seed corpus hand-derived from the documented WeightedSquaredError semantics that WeightedSquaredErrorScorer mirrors. Case 'elixir-doctest' reproduces the Elixir WeightedSquaredError doctest (expected 0.205). Replace with the canonical corpus from viamin/color_matching#111 once published — see docs/solver-parity-corpus.md for the format and refresh procedure.",
+  "cases": [
+    {
+      "id": "elixir-doctest",
+      "description": "The Elixir WeightedSquaredError doctest: weights white=0.5 red=1 green=1 blue=0 lps=1.5 against the documented candidate/target pair. Blue has weight 0 so its values are inert.",
+      "tags": ["doctest", "weights"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "name": "doctest-candidate", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "name": "opaque-far", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "blue": 0.9, "lps": 1.0 } }
+      ],
+      "expected_selection": "doctest-candidate",
+      "expected_score": 0.205,
+      "expected_excluded": []
+    },
+    {
+      "id": "exact-match-beats-earlier-worse",
+      "description": "A later candidate with a strictly lower score must beat an earlier one — selection is lowest-score, not first-seen.",
+      "tags": ["selection"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.25 },
+      "candidates": [
+        { "name": "slightly-off", "responses": { "red": 0.5 } },
+        { "name": "exact", "responses": { "red": 0.25 } }
+      ],
+      "expected_selection": "exact",
+      "expected_score": 0.0,
+      "expected_excluded": []
+    },
+    {
+      "id": "tie-earliest-candidate-wins",
+      "description": "Two candidates with identical weighted squared error (0.125, binary-exact values): the earliest candidate in input order wins, matching the Elixir best_match tie policy.",
+      "tags": ["tie"],
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.25 },
+      "candidates": [
+        { "name": "tie-first", "responses": { "white": 0.25, "red": 0.5 } },
+        { "name": "tie-second", "responses": { "white": 0.75, "red": 0.0 } }
+      ],
+      "expected_selection": "tie-first",
+      "expected_score": 0.125,
+      "expected_excluded": []
+    },
+    {
+      "id": "tie-three-way-earliest-wins",
+      "description": "Three-way palette where two candidates tie at 0.0625 and a third is worse: the earliest of the tied pair wins.",
+      "tags": ["tie"],
+      "weights": { "green": 1.0 },
+      "target": { "green": 0.5 },
+      "candidates": [
+        { "name": "green-low", "responses": { "green": 0.25 } },
+        { "name": "green-high", "responses": { "green": 0.75 } },
+        { "name": "green-far", "responses": { "green": 0.0 } }
+      ],
+      "expected_selection": "green-low",
+      "expected_score": 0.0625,
+      "expected_excluded": []
+    },
+    {
+      "id": "missing-measurement-excluded",
+      "description": "A candidate missing a measurement for a required (weight > 0) channel is excluded — even though it is closer on the channels it does have. Missing is never treated as zero brightness.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "name": "closer-but-incomplete", "responses": { "red": 0.5 } },
+        { "name": "complete-but-farther", "responses": { "red": 0.0, "green": 0.0 } }
+      ],
+      "expected_selection": "complete-but-farther",
+      "expected_score": 0.5,
+      "expected_excluded": ["closer-but-incomplete"]
+    },
+    {
+      "id": "all-candidates-excluded-unmatched",
+      "description": "When every candidate lacks a measurement for a required channel, nothing is selected: the cell stays unmatched rather than falling back to an arbitrary color.",
+      "tags": ["exclusion"],
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.5 },
+      "candidates": [
+        { "name": "no-lps-a", "responses": { "red": 1.0 } },
+        { "name": "no-lps-b", "responses": { "green": 1.0 } }
+      ],
+      "expected_selection": null,
+      "expected_excluded": ["no-lps-a", "no-lps-b"]
+    },
+    {
+      "id": "zero-weight-channel-not-required",
+      "description": "A channel with weight 0 is neither scored nor required: the 'white-only' candidate lacks a red measurement yet stays eligible because red has zero weight.",
+      "tags": ["weights", "exclusion"],
+      "weights": { "white": 1.0, "red": 0.0 },
+      "target": { "white": 0.75 },
+      "candidates": [
+        { "name": "white-only", "responses": { "white": 0.5 } },
+        { "name": "white-and-red", "responses": { "white": 0.9, "red": 1.0 } }
+      ],
+      "expected_selection": "white-and-red",
+      "expected_score": 0.0225,
+      "expected_excluded": []
+    },
+    {
+      "id": "weights-flip-selection-heavy-white",
+      "description": "Weight handling: with white weighted 10x, the candidate that nails white (red-off) beats the one that nails red.",
+      "tags": ["weights"],
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 1.0, "red": 0.0 },
+      "candidates": [
+        { "name": "white-off", "responses": { "white": 0.0, "red": 0.0 } },
+        { "name": "red-off", "responses": { "white": 1.0, "red": 1.0 } }
+      ],
+      "expected_selection": "red-off",
+      "expected_score": 1.0,
+      "expected_excluded": []
+    },
+    {
+      "id": "weights-flip-selection-heavy-red",
+      "description": "The mirror of weights-flip-selection-heavy-white: identical palette and target, but with red weighted 10x the selection flips to white-off.",
+      "tags": ["weights"],
+      "weights": { "white": 1.0, "red": 10.0 },
+      "target": { "white": 1.0, "red": 0.0 },
+      "candidates": [
+        { "name": "white-off", "responses": { "white": 0.0, "red": 0.0 } },
+        { "name": "red-off", "responses": { "white": 1.0, "red": 1.0 } }
+      ],
+      "expected_selection": "white-off",
+      "expected_score": 1.0,
+      "expected_excluded": []
+    }
+  ]
+}
