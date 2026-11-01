@@ -1,0 +1,76 @@
+{
+  "status": "passed",
+  "summary": "Tests-only phase for issue #39 (adopt generated OpenAPI client + solver parity corpus). Committed: (1) SolverParityCorpusTests.swift — a corpus-driven parity harness over WeightedSquaredErrorScorer and CompositionSolver that loads solver_parity_corpus.json (23 cases: 14 score, 9 selection) and asserts exact expected outcomes including dyadic-exact tie cases (earliest palette entry wins, not lowest id), candidate/target exclusions, measured-zero vs missing, and weight handling (zero-weight channels never exclude; weight flips flip winners); expected values are computed by an independent Python reference implementation (generate_solver_parity_corpus.py) and re-verified end-to-end a second time (24 score/cell assertions, 0 mismatches). (2) PaletteAPIClientContractTests.swift — 10-test behavioral safety net pinning GET /api/v1/colors?printer_profile_id=N and GET /api/v1/printer_profiles request shape, trimmed bearer tokens, 401/badStatus/malformedResponse mapping, and snake_case envelope decoding so the generated-client migration cannot change observable behavior. (3) OpenAPIClientMigrationTests.swift — intentionally red contract tests requiring swift-openapi-generator + swift-openapi-runtime in Package.swift and the /api/v1 OpenAPI document at a conventional path (red confirmed: neither exists at PR head). (4) docs/solver-parity-corpus.md and docs/openapi-client-contract.md. BLOCKER: no Swift toolchain exists in this Linux container and CI is macOS-only, so swift test could not be executed here — all Swift tests are written but not run (per-criterion statuses below record this); corpus JSON validated with jq + Python, Swift files passed delimiter/structure checks but no compiler check was possible.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore and generate a typed client from the OpenAPI document; migrate PaletteAPIClient",
+      "status": "failed",
+      "reason": "Intentional red phase: implementation is out of scope for this tests-only run. Contract tests fail at PR head exactly as designed (Package.swift contains no swift-openapi deps; no OpenAPI document committed), demonstrating the missing behavior for the implementation run to satisfy.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:38", "result": "failed", "note": "requires swift-openapi-generator + swift-openapi-runtime in Package.swift; grep confirms 0 occurrences at PR head (red)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:55", "result": "failed", "note": "requires committed OpenAPI document; none of the candidate paths exist at PR head (red)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:67", "result": "failed", "note": "requires /api/v1/printer_profiles + /api/v1/colors + printer_profile_id in the document (red)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:48", "result": "not_run", "note": "migration safety net written; see AC-2" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "not_run",
+      "reason": "Behavioral safety-net tests are written (and were desk-checked against the current PaletteAPIClient implementation, which satisfies every assertion), but no Swift toolchain exists in this container, so they could not be executed. Disk-cache/offline-stale behavior itself remains covered by the pre-existing ProfileColorCacheTests suite; no production files were touched in this run, so current behavior is unchanged by construction.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:18", "result": "not_run", "note": "10 tests pinning /api/v1 request shape, token handling, error mapping, snake_case envelopes" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "not_run", "note": "pre-existing disk-cache suite, unmodified; guards per-server/profile caching + offline fallback" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target in ColorComposerCore tests that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "not_run",
+      "reason": "Harness + committed corpus are in place and every expected value was verified by two independent Python computations of the Elixir WeightedSquaredError / best_match semantics (24 score/cell assertions, 0 mismatches; jq-valid JSON), but swift test could not run in this container (no Swift toolchain).",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:49", "result": "not_run", "note": "score cases: exact values (1e-9) or excluded" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:92", "result": "not_run", "note": "selection cases through CompositionSolver: per-cell id, error, excluded count; ties assert earliest-palette-entry winner" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:178", "result": "not_run", "note": "corpus coverage guard: doctest anchor, zero-weight, exclusions, ties" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/solver_parity_corpus.json:1", "result": "passed", "note": "committed corpus, version 1, 23 cases, expected values independently computed (Python) and re-verified" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/generate_solver_parity_corpus.py:1", "result": "passed", "note": "reference implementation + refresh generator; validates doctest anchor 0.205 and tie integrity" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "reason": "README.md is outside this phase's commit allowlist (tests + docs/ + LID files only); full corpus-consumption documentation written to docs/solver-parity-corpus.md, ready for the implementation run to link from the README.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md:1", "result": "passed", "note": "corpus location, schema, tie/exclusion/weight semantics, refresh via generator or SOLVER_PARITY_CORPUS_PATH override" },
+          { "locator": "docs/openapi-client-contract.md:1", "result": "passed", "note": "conventions the red migration tests enforce + migration notes" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records: generated-client migration notes, any /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "reason": "PR is published by Paid after the implementation run; the pinned /api/v1 wire shapes (fixtures in PaletteAPIClientContractTests) and parity corpus findings (dyadic-exact ties, exclusions, weight flips) are recorded in the docs/ deliverables for the PR author to cite.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-contract.md:1", "result": "passed", "note": "wire-shape truth + migration notes for the PR description" },
+          { "locator": "docs/solver-parity-corpus.md:1", "result": "passed", "note": "parity semantics findings (ties break on palette order; ulp-exactness rationale) for the PR description" }
+        ]
+      }
+    }
+  ]
+}
