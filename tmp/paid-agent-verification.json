@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase: Swift is unavailable in the container; the generated OpenAPI manifest contract is intentionally red until implementation adds the dependencies and plugin.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientContractTests.swift:4",
+            "result": "not run: swift executable is unavailable; assertions intentionally fail before implementation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "not run: swift executable is unavailable; existing tests cover per-server/profile disk-cache isolation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:5",
+            "result": "not run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_v1.json:1",
+            "result": "committed upstream v1 corpus fixture"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:10",
+            "result": "README change deferred by the tests-only phase allowlist"
+          }
+        ]
+      }
+    }
+  ]
+}
