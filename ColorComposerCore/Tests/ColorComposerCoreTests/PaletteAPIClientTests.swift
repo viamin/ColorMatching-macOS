@@ -37,6 +37,144 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - /api/v1 wire contract (must survive the generated OpenAPI client migration, issue #39)
+
+    func testFetchColorsSendsPrinterProfileIDQueryAndDecodesEnvelope() async throws {
+        let lock = NSLock()
+        var observedURLs: [URL] = []
+        let body = Self.colorsEnvelope()
+        let client = makeClient { request in
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            lock.lock()
+            observedURLs.append(request.url!)
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        let (colors, profile) = try await client.fetchColors(printerProfileID: 7)
+
+        let url = try XCTUnwrap(observedURLs.first)
+        XCTAssertEqual(url.path, "/api/v1/colors")
+        XCTAssertEqual(url.query, "printer_profile_id=7")
+        XCTAssertEqual(colors.count, 1)
+        let color = try XCTUnwrap(colors.first)
+        XCTAssertEqual(color.id, 123)
+        XCTAssertEqual(color.name, "Red 12")
+        XCTAssertEqual(color.rgb?.r, 198)
+        let redBrightness = try XCTUnwrap(color.responses["red"]?.brightness)
+        XCTAssertEqual(redBrightness, 0.87, accuracy: 1e-12)
+        XCTAssertEqual(color.responses["lps"]?.apparentBrightness, 5)
+        XCTAssertEqual(profile?.id, 9)
+    }
+
+    func testFetchColorsWithoutTokenOmitsAuthorizationHeader() async throws {
+        let body = Self.emptyColorsEnvelope()
+        MockURLProtocol.handler = { request in
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+            return (.init(statusCode: 200, url: request.url!), body)
+        }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let client = PaletteAPIClient(
+            baseURL: URL(string: "http://example.com")!,
+            token: "   ",
+            session: URLSession(configuration: configuration)
+        )
+
+        _ = try await client.fetchColors(printerProfileID: 1)
+    }
+
+    func testFetchColorsThrowsUnauthorizedOn401() async {
+        let client = makeClient { request in
+            (.init(statusCode: 401, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 2)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
+        }
+    }
+
+    func testFetchColorsThrowsBadStatusOnServerError() async {
+        let client = makeClient { request in
+            (.init(statusCode: 500, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 2)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(500))
+        }
+    }
+
+    func testFetchColorsThrowsMalformedResponseOnNonJSONBody() async {
+        let body = Data("<html>gateway crash</html>".utf8)
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 3)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testFetchPrinterProfilesDecodesList() async throws {
+        let body = printerProfilesResponse()
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        let profiles = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(profiles.count, 1)
+        let profile = try XCTUnwrap(profiles.first)
+        XCTAssertEqual(profile.id, 1)
+        XCTAssertEqual(profile.printerMakeModel, "Example Printer")
+        XCTAssertEqual(profile.paperType, "Matte")
+        XCTAssertEqual(profile.inkType, "Pigment")
+    }
+
+    func testTestConnectionSucceedsOn2xx() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles")
+            return (.init(statusCode: 204, url: request.url!), Data())
+        }
+
+        try await client.testConnection()
+    }
+
+    func testTestConnectionThrowsUnauthorizedOn401() async {
+        let client = makeClient { request in
+            (.init(statusCode: 401, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.testConnection()) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
+        }
+    }
+
+    private static func colorsEnvelope() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 9, "printer_make_model": "Epson", "paper_type": "Matte", "ink_type": "Dye"
+          },
+          "colors": [
+            {
+              "id": 123, "name": "Red 12", "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "palette_id": 5, "palette_name": "Default", "sort_order": 12,
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement"},
+                "lps": {"brightness": 0.52, "source": "response", "apparent_brightness": 5}
+              }
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private static func emptyColorsEnvelope() -> Data {
+        #"{"printer_profile": null, "colors": []}"#.data(using: .utf8)!
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
