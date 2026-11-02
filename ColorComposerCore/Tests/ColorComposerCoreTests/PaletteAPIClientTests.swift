@@ -37,14 +37,128 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - /api/v1 wire contract (pinned for the generated-client migration, issue #39)
+
+    /// The migration to the generated OpenAPI client must keep the observable
+    /// wire behavior identical: endpoint paths, query, headers, decoded
+    /// payloads, and error mapping. These tests pin that contract.
+
+    func testFetchPrinterProfilesDecodesEnvelope() async throws {
+        let body = printerProfilesResponse()
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        let profiles = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(profiles.count, 1)
+        XCTAssertEqual(profiles[0].id, 1)
+        XCTAssertEqual(profiles[0].printerMakeModel, "Example Printer")
+        XCTAssertEqual(profiles[0].paperType, "Matte")
+        XCTAssertEqual(profiles[0].inkType, "Pigment")
+    }
+
+    func testFetchColorsRequestsProfileQueryAndDecodesEnvelope() async throws {
+        let lock = NSLock()
+        var urls: [URL] = []
+        let body = colorsResponse()
+        let client = makeClient { request in
+            lock.lock()
+            urls.append(request.url!)
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        let (colors, profile) = try await client.fetchColors(printerProfileID: 3)
+
+        XCTAssertEqual(urls.map(\.absoluteString), ["http://example.com/api/v1/colors?printer_profile_id=3"])
+        XCTAssertEqual(profile?.id, 3)
+        XCTAssertEqual(profile?.printerMakeModel, "Epson P700")
+        XCTAssertEqual(profile?.paperType, "Matte")
+        XCTAssertEqual(profile?.inkType, "Pigment")
+
+        XCTAssertEqual(colors.count, 1)
+        let color = colors[0]
+        XCTAssertEqual(color.id, 10)
+        XCTAssertEqual(color.name, "Sodium Yellow")
+        XCTAssertEqual(color.hex, "#F0E020")
+        XCTAssertEqual(color.rgb?.r, 240)
+        XCTAssertEqual(color.rgb?.g, 224)
+        XCTAssertEqual(color.rgb?.b, 32)
+        XCTAssertEqual(color.paletteId, 1)
+        XCTAssertEqual(color.paletteName, "Sodium Metamers A")
+        XCTAssertEqual(color.sortOrder, 4)
+        XCTAssertEqual(color.responses["red"]?.brightness, 0.5)
+        XCTAssertEqual(color.responses["red"]?.source, "response")
+        XCTAssertEqual(color.responses["lps"]?.brightness, 0.75)
+        XCTAssertEqual(color.responses["lps"]?.apparentBrightness, 8)
+        XCTAssertEqual(color.responses["lps"]?.rawValue, 42.5)
+        XCTAssertEqual(color.responses["lps"]?.rawUnit, "cd/m2")
+    }
+
+    func testFetchColorsMapsServerErrorToBadStatus() async {
+        let client = makeClient { request in
+            (.init(statusCode: 503, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 3)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(503))
+        }
+    }
+
+    func testFetchColorsMapsUndecodableBodyToMalformedResponse() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("not json".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 3)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testTestConnectionRequestsPrinterProfilesEndpoint() async throws {
+        let lock = NSLock()
+        var requests: [URLRequest] = []
+        let client = makeClient { request in
+            lock.lock()
+            requests.append(request)
+            lock.unlock()
+            return (.init(statusCode: 204, url: request.url!), Data())
+        }
+
+        try await client.testConnection()
+
+        XCTAssertEqual(requests.count, 1)
+        XCTAssertEqual(requests[0].url?.absoluteString, "http://example.com/api/v1/printer_profiles")
+        XCTAssertEqual(requests[0].httpMethod, "GET")
+        XCTAssertEqual(requests[0].value(forHTTPHeaderField: "Accept"), "application/json")
+    }
+
+    func testOmittedTokenSendsNoAuthorizationHeader() async throws {
+        let lock = NSLock()
+        var headers: [String?] = []
+        let body = printerProfilesResponse()
+        let client = makeClient(token: nil) { request in
+            lock.lock()
+            headers.append(request.value(forHTTPHeaderField: "Authorization"))
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), body)
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(headers, [nil])
+    }
+
     private func makeClient(
+        token: String? = "  stale-token  ",
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
         MockURLProtocol.handler = handler
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
+        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: token, session: session)
     }
 
     private func printerProfilesResponse() -> Data {
@@ -56,6 +170,42 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 3,
+            "printer_make_model": "Epson P700",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 10,
+              "name": "Sodium Yellow",
+              "hex": "#F0E020",
+              "rgb": {"r": 240, "g": 224, "b": 32},
+              "palette_id": 1,
+              "palette_name": "Sodium Metamers A",
+              "sort_order": 4,
+              "responses": {
+                "red": {"brightness": 0.5, "source": "response"},
+                "lps": {
+                  "brightness": 0.75,
+                  "source": "measurement",
+                  "apparent_brightness": 8,
+                  "raw_value": 42.5,
+                  "raw_unit": "cd/m2",
+                  "measured_at": "2026-01-01T00:00:00Z",
+                  "test_run_id": "run-7"
+                }
+              }
             }
           ]
         }
