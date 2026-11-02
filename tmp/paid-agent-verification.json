@@ -1,0 +1,132 @@
+{
+  "status": "passed",
+  "summary": "Test-writing run for #39. The client/server solver contract is now enforced: the upstream golden-vector corpus (viamin/color_matching priv/parity/v1/corpus.json) is committed as a fixture and replayed through WeightedSquaredErrorScorer and the real CompositionSolver path, asserting every score, exclusion, selection, error and tie index exactly (7 tests, green). A second contract test pins the published OpenAPI document to the two /api/v1 endpoints and response shapes the app decodes; it fails on purpose until the document is vendored for the generated client (6 red tests, expected in this phase). The existing disk-cache suite is unchanged and green (69 tests). README and docs/solver-parity-corpus.md record where the corpus lives, how to refresh it and the parity findings. The generated client, its migration and the PR body remain implementation-phase work. Verification ran with Swift 6.4.2 on Linux over the portable Foundation subset of the package (the two Apple-only files BrightnessGridSampler.swift / BrightnessColorSpaceTests.swift and the pre-existing PaletteAPIClientTests.swift Swift-6.4 compile error were excluded; bin/lint's Linux harness fails the same way on the base commit 95437fe, so that breakage is pre-existing and unrelated).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:11",
+            "result": "red_by_design: 6 tests fail with 'No vendored OpenAPI document was found' until the OpenAPI document is committed for swift-openapi-generator; verified locally with Swift 6.4.2 on Linux"
+          }
+        ]
+      },
+      "reason": "Adding swift-openapi-generator/swift-openapi-runtime, vendoring the document and migrating PaletteAPIClient are implementation changes, which this test-writing run must not make. The contract test written here gates them and fails loudly until the document is committed."
+    },
+    {
+      "id": "AC-2",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "passed: 69 tests green (per-server/per-profile namespacing, corrupt/foreign entries as misses, atomic writes, removal)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:84",
+            "result": "passed: the new corpus tests do not touch the cache path; solver selection still comes from the cached palette"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "passed",
+      "verification": {
+        "kind": "permanent_system_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:12",
+            "result": "passed: 7 tests green - corpus contract, coverage guards, per-candidate scores, exclusion policy, solver selection, tie-breaking"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:130",
+            "result": "passed: exact (bit-for-bit) score equality against the server corpus for every candidate of every scenario"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:145",
+            "result": "passed: the real CompositionSolver path selects the same color, error and excluded-candidate count as the server"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:122",
+            "result": "passed: tie scenarios resolve to the earliest tied candidate, matching the server's earliest-index-wins policy"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/Fixtures/parity/v1/corpus.json",
+            "result": "passed: byte-for-byte copy of viamin/color_matching priv/parity/v1/corpus.json (sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:95",
+            "result": "inspectable: 'Solver parity corpus' section - where the corpus lives, which test replays it, how to refresh it (mix parity.generate + copy + digest update) and the algorithm_version rule"
+          },
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "inspectable: full corpus documentation, per-scenario parity findings (ties, exclusions, weight handling, float exactness) and the refresh procedure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:61",
+            "result": "inspectable: the parity findings (ties, exclusions, weight handling) are recorded in-repo because the PR body itself is published by the harness from this run's commit"
+          }
+        ]
+      },
+      "reason": "This run must not push, so it cannot open or edit the pull request. The generated-client migration notes, the /api/v1 shape findings and the parity results are recorded in docs/solver-parity-corpus.md and in the run report, ready to be pasted into the PR body."
+    },
+    {
+      "id": "AC-6",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:44",
+            "result": "not automatable here: the offline-stale badge (isServingFromCache) and the cached-profile fallback live in the macOS app target, which needs Xcode/SwiftUI; this Linux container cannot build or run it"
+          }
+        ]
+      },
+      "reason": "The app-layer offline-stale badge and cached-profile fallback have no automated coverage in this repository and cannot be exercised in this environment (no macOS/Xcode toolchain). The disk-cache layer underneath them is covered by the green ProfileColorCacheTests; the migration must leave ColorCatalog's cache paths untouched."
+    },
+    {
+      "id": "AC-7",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "lib/color_matching_web/api_schemas.ex:105",
+            "result": "inspectable upstream (viamin/color_matching @ 47057af): PrinterProfile requires id, printer_make_model, paper_type, ink_type - the app's PrinterProfileDTO treats them as optional, i.e. the app is more lenient than the published contract, so no shape change breaks it"
+          },
+          {
+            "locator": "lib/color_matching_web/api_schemas.ex:204",
+            "result": "inspectable upstream: ColorsResponse requires printer_profile and colors; the app decodes printer_profile as optional and colors with id, name, hex, rgb, palette_id, palette_name, sort_order, responses - unchanged from what the app already handles"
+          },
+          {
+            "locator": "lib/color_matching_web/router.ex:52",
+            "result": "inspectable upstream: GET /api/v1/printer_profiles and GET /api/v1/colors?printer_profile_id=N are unchanged; the new published surface is GET /api/v1/openapi.json and GET /api/v1/printer_profiles/:id/colors"
+          }
+        ]
+      }
+    }
+  ]
+}
