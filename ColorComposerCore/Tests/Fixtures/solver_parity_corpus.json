@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "source": "Stand-in corpus hand-authored to the documented WeightedSquaredError semantics; to be refreshed from the parity corpus published by viamin/color_matching#111. See docs/solver-parity-corpus.md for the schema and refresh procedure.",
+  "cases": [
+    {
+      "id": "doctest-example",
+      "description": "Mirrors the Elixir WeightedSquaredError doctest: weighted sum over white/red/green/lps with blue zero-weighted; blue is absent on the candidate and must neither exclude it nor contribute.",
+      "covers": ["weights", "zero-weight"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "hex": "#C64A35", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } }
+      ],
+      "expected": { "selected_id": 101, "score": 0.205 }
+    },
+    {
+      "id": "tie-exact-match-picks-earliest",
+      "description": "Two candidates both match the target exactly; the earliest candidate in list order wins the tie, matching CompositionSolver's earliest-wins rule.",
+      "covers": ["tie", "exact-match"],
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 900, "hex": "#800000", "responses": { "red": 0.5 } },
+        { "id": 901, "hex": "#7F0000", "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_id": 900, "score": 0.0 }
+    },
+    {
+      "id": "tie-ignores-inactive-channels",
+      "description": "Candidates tie on the only active channel (green) but differ on inactive channels; inactive differences must not break the tie, and the earliest candidate wins.",
+      "covers": ["tie", "zero-weight"],
+      "weights": { "green": 1.0 },
+      "target": { "green": 0.6 },
+      "candidates": [
+        { "id": 801, "hex": "#008000", "responses": { "green": 0.6, "red": 0.1 } },
+        { "id": 802, "hex": "#007F00", "responses": { "green": 0.6, "red": 0.9, "blue": 1.0 } }
+      ],
+      "expected": { "selected_id": 801, "score": 0.0 }
+    },
+    {
+      "id": "missing-required-channel-excluded",
+      "description": "The would-be-perfect candidate lacks the required green measurement, so it is excluded (never scored as zero brightness); the runner-up with complete measurements wins.",
+      "covers": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 710, "hex": "#804000", "responses": { "red": 0.5 } },
+        { "id": 711, "hex": "#803F00", "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "expected": { "selected_id": 711, "score": 0.02 }
+    },
+    {
+      "id": "target-missing-channel-excludes-all",
+      "description": "The target itself lacks a measurement for an active channel, so every candidate is excluded and nothing is selected.",
+      "covers": ["exclusion", "all-excluded"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 721, "hex": "#808000", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 722, "hex": "#7F8000", "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected": { "selected_id": null }
+    },
+    {
+      "id": "all-candidates-missing-required-channel",
+      "description": "No candidate has the only required channel (blue), so nothing is selected even though every candidate is otherwise complete.",
+      "covers": ["all-excluded", "exclusion"],
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "candidates": [
+        { "id": 731, "hex": "#202030", "responses": { "red": 0.2, "green": 0.3 } },
+        { "id": 732, "hex": "#302020", "responses": { "white": 0.9 } }
+      ],
+      "expected": { "selected_id": null }
+    },
+    {
+      "id": "zero-weight-channels-do-not-exclude",
+      "description": "Only white is active: candidates missing the inactive channels stay eligible, the candidate missing white is excluded, and the closest white wins.",
+      "covers": ["zero-weight", "exclusion"],
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.8 },
+      "candidates": [
+        { "id": 641, "hex": "#808080", "responses": { "white": 0.5 } },
+        { "id": 642, "hex": "#BFBFBF", "responses": { "white": 0.75, "red": 0.9 } },
+        { "id": 643, "hex": "#000000", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_id": 642, "score": 0.0025 }
+    },
+    {
+      "id": "white-heavy-weight-decides",
+      "description": "Same candidates and target as the red-heavy case: with white weighted 10x the candidate with the small white error wins.",
+      "covers": ["weights"],
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.4, "red": 0.4 },
+      "candidates": [
+        { "id": 651, "hex": "#4D0000", "responses": { "white": 0.3, "red": 0.0 } },
+        { "id": 652, "hex": "#00004D", "responses": { "white": 0.0, "red": 0.3 } }
+      ],
+      "expected": { "selected_id": 651, "score": 0.26 }
+    },
+    {
+      "id": "red-heavy-weight-decides",
+      "description": "Same candidates and target as the white-heavy case: with red weighted 10x the selection flips to the other candidate.",
+      "covers": ["weights"],
+      "weights": { "white": 1.0, "red": 10.0 },
+      "target": { "white": 0.4, "red": 0.4 },
+      "candidates": [
+        { "id": 651, "hex": "#4D0000", "responses": { "white": 0.3, "red": 0.0 } },
+        { "id": 652, "hex": "#00004D", "responses": { "white": 0.0, "red": 0.3 } }
+      ],
+      "expected": { "selected_id": 652, "score": 0.26 }
+    },
+    {
+      "id": "multi-channel-realistic-palette",
+      "description": "A five-candidate palette across all channels including a doubled LPS weight; the near-miss on LPS beats the mid-pack tie at 0.04.",
+      "covers": ["multi-channel", "weights", "tie"],
+      "weights": { "white": 1.0, "red": 1.0, "green": 1.0, "blue": 1.0, "lps": 2.0 },
+      "target": { "white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.5 },
+      "candidates": [
+        { "id": 671, "hex": "#669966", "responses": { "white": 0.4, "red": 0.6, "green": 0.5, "blue": 0.5, "lps": 0.5 } },
+        { "id": 672, "hex": "#666699", "responses": { "white": 0.5, "red": 0.5, "green": 0.4, "blue": 0.6, "lps": 0.6 } },
+        { "id": 673, "hex": "#996666", "responses": { "white": 0.6, "red": 0.4, "green": 0.5, "blue": 0.5, "lps": 0.4 } },
+        { "id": 674, "hex": "#808080", "responses": { "white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.55 } },
+        { "id": 675, "hex": "#4D8033", "responses": { "white": 0.3, "red": 0.7, "green": 0.5, "blue": 0.5, "lps": 0.5 } }
+      ],
+      "expected": { "selected_id": 674, "score": 0.005 }
+    }
+  ]
+}
