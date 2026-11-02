@@ -37,14 +37,126 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - Wire contract pins (must survive the generated-client migration, issue #39)
+
+    func testFetchColorsSendsPrinterProfileIDQueryAndDecodesEnvelope() async throws {
+        let lock = NSLock()
+        var paths: [String] = []
+        var queries: [String] = []
+        let client = makeClient { request in
+            lock.lock()
+            paths.append(request.url!.path)
+            queries.append(request.url?.query ?? "")
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let (colors, profile) = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(paths, ["/api/v1/colors"])
+        XCTAssertEqual(queries, ["printer_profile_id=7"])
+        XCTAssertEqual(colors.first?.id, 123)
+        XCTAssertEqual(colors.first?.responses["red"]?.brightness, 0.87)
+        XCTAssertEqual(profile?.id, 1)
+    }
+
+    func testRequestsSendJSONAcceptHeader() async throws {
+        let lock = NSLock()
+        var accepts: [String?] = []
+        let client = makeClient { request in
+            lock.lock()
+            accepts.append(request.value(forHTTPHeaderField: "Accept"))
+            lock.unlock()
+            if request.url!.path.hasSuffix("/colors") {
+                return (.init(statusCode: 200, url: request.url!), colorsResponse())
+            }
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+        _ = try await client.fetchColors(printerProfileID: 1)
+
+        XCTAssertEqual(accepts, ["application/json", "application/json"])
+    }
+
+    func testOmitsAuthorizationHeaderWhenNoTokenIsConfigured() async throws {
+        let lock = NSLock()
+        var authorizations: [String?] = []
+        let client = makeClient(token: nil) { request in
+            lock.lock()
+            authorizations.append(request.value(forHTTPHeaderField: "Authorization"))
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(authorizations, [nil])
+    }
+
+    func testFetchColorsSurfacesUnauthorizedSeparatelyFromOtherStatuses() async {
+        let client = makeClient { request in
+            (.init(statusCode: 401, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 1)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .unauthorized)
+        }
+    }
+
+    func testFetchColorsSurfacesBadStatus() async {
+        let client = makeClient { request in
+            (.init(statusCode: 503, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 1)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(503))
+        }
+    }
+
+    func testFetchColorsSurfacesMalformedResponse() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("not json".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 1)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testBaseURLWithTrailingSlashStillTargetsAPIV1() async throws {
+        let lock = NSLock()
+        var paths: [String] = []
+        let client = makeClient(baseURL: "http://example.com/sub/") { request in
+            lock.lock()
+            paths.append(request.url!.path)
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(paths, ["/sub/api/v1/printer_profiles"])
+    }
+
+    func testTestConnectionSucceedsOnAny2xx() async {
+        let client = makeClient { request in
+            (.init(statusCode: 204, url: request.url!), Data())
+        }
+
+        await XCTAssertNoThrowAsync(try await client.testConnection())
+    }
+
     private func makeClient(
+        baseURL: String = "http://example.com",
+        token: String? = "  stale-token  ",
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
         MockURLProtocol.handler = handler
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
+        return PaletteAPIClient(baseURL: URL(string: baseURL)!, token: token, session: session)
     }
 
     private func printerProfilesResponse() -> Data {
@@ -56,6 +168,30 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 1,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 123,
+              "name": "Red 12",
+              "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement"}
+              }
             }
           ]
         }
@@ -110,5 +246,17 @@ private func XCTAssertThrowsErrorAsync<T>(
         XCTFail("Expected error to be thrown", file: file, line: line)
     } catch {
         assertions(error)
+    }
+}
+
+private func XCTAssertNoThrowAsync<T>(
+    _ expression: @autoclosure () async throws -> T,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async {
+    do {
+        _ = try await expression()
+    } catch {
+        XCTFail("Expected no error to be thrown, got \(error)", file: file, line: line)
     }
 }

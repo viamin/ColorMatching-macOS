@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "schema": 1,
+    "generator": "seed corpus (hand-derived in ColorMatching-macOS)",
+    "source": "WeightedSquaredError doctest in viamin/color_matching plus documented solver semantics (earliest-candidate tie-breaking, required-channel exclusion, zero-weight inactivity)",
+    "notes": "Committed harness-validation corpus. Expected selections and scores are hand-computed from the same formula the Elixir WeightedSquaredError solver implements: sum over conditions with weight > 0 of (candidate - target)^2 * weight, excluding any candidate that lacks a required condition. Ties resolve to the earliest candidate in corpus order, mirroring IlluminantMatching.best_match/4."
+  },
+  "cases": [
+    {
+      "id": "elixir-doctest-weighted-squared-error",
+      "kind": "selection",
+      "description": "The Elixir WeightedSquaredError doctest vector (expected 0.205) wins against two distractors; blue is measured but inactive (weight 0) so it cannot contribute.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "candidates": [
+        { "id": 2, "hex": "#002040", "responses": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.5, "lps": 1.0 } },
+        { "id": 1, "hex": "#402060", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 3, "hex": "#603090", "responses": { "white": 0.4, "red": 0.6, "green": 0.2, "blue": 0.1, "lps": 0.9 } }
+      ],
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "expected_selection": 1,
+      "expected_score": 0.205,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "tie-between-mirror-candidates-earliest-wins",
+      "kind": "tie",
+      "description": "Candidates 10 (red 0.4) and 11 (red 0.6) tie at 0.01 around target 0.5; the earlier candidate in corpus order must win.",
+      "weights": { "red": 1.0 },
+      "candidates": [
+        { "id": 10, "hex": "#111111", "responses": { "red": 0.4 } },
+        { "id": 11, "hex": "#eeeeee", "responses": { "red": 0.6 } },
+        { "id": 12, "hex": "#555555", "responses": { "red": 0.1 } }
+      ],
+      "target": { "red": 0.5 },
+      "expected_selection": 10,
+      "expected_score": 0.01,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "tie-exact-zero-earliest-wins",
+      "kind": "tie",
+      "description": "Two exact matches both score 0; the earliest candidate (id 21, listed first) must win over the later identical one.",
+      "weights": { "white": 1.0, "red": 1.0 },
+      "candidates": [
+        { "id": 21, "hex": "#33aa33", "responses": { "white": 0.3, "red": 0.7 } },
+        { "id": 20, "hex": "#aa3333", "responses": { "white": 0.3, "red": 0.7 } },
+        { "id": 22, "hex": "#3333aa", "responses": { "white": 0.4, "red": 0.6 } }
+      ],
+      "target": { "white": 0.3, "red": 0.7 },
+      "expected_selection": 21,
+      "expected_score": 0.0,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "excluded-candidate-missing-required-channel",
+      "kind": "exclusion",
+      "description": "Candidate 30 would score 0 but lacks the required green measurement, so it is excluded and candidate 31 (score 0.02) wins.",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "candidates": [
+        { "id": 30, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 31, "hex": "#888888", "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "target": { "red": 0.5, "green": 0.5 },
+      "expected_selection": 31,
+      "expected_score": 0.02,
+      "expected_excluded_ids": [30]
+    },
+    {
+      "id": "all-candidates-excluded-cell-unmatched",
+      "kind": "exclusion",
+      "description": "No candidate carries the required white measurement, so every candidate is excluded and the cell stays unmatched.",
+      "weights": { "white": 1.0 },
+      "candidates": [
+        { "id": 40, "hex": "#000000", "responses": {} },
+        { "id": 41, "hex": "#ff0000", "responses": { "red": 0.9 } }
+      ],
+      "target": { "white": 0.5 },
+      "expected_selection": null,
+      "expected_excluded_ids": [40, 41]
+    },
+    {
+      "id": "zero-weight-channels-are-not-required",
+      "kind": "weights",
+      "description": "Candidates lack red/green/blue/lps entirely, but only white has positive weight, so nothing is excluded and the white-nearest candidate wins.",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "candidates": [
+        { "id": 50, "hex": "#101010", "responses": { "white": 0.4 } },
+        { "id": 51, "hex": "#202020", "responses": { "white": 0.45 } }
+      ],
+      "target": { "white": 0.5, "red": 0.9 },
+      "expected_selection": 51,
+      "expected_score": 0.0025,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "weight-emphasis-white-selects-white-closest",
+      "kind": "weights",
+      "description": "With white weighted 5x over red, the white-closest candidate (id 60, score 0.063) beats the red-closest one (0.123).",
+      "weights": { "white": 1.0, "red": 0.2 },
+      "candidates": [
+        { "id": 60, "hex": "#aa33cc", "responses": { "white": 0.7, "red": 0.9 } },
+        { "id": 61, "hex": "#33ccaa", "responses": { "white": 0.4, "red": 0.3 } }
+      ],
+      "target": { "white": 0.75, "red": 0.35 },
+      "expected_selection": 60,
+      "expected_score": 0.063,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "weight-emphasis-red-selects-red-closest",
+      "kind": "weights",
+      "description": "Same candidates and target as the white-emphasis case, but red now carries the weight: the selection flips to the red-closest candidate (id 61, score 0.027 vs 0.303).",
+      "weights": { "white": 0.2, "red": 1.0 },
+      "candidates": [
+        { "id": 60, "hex": "#aa33cc", "responses": { "white": 0.7, "red": 0.9 } },
+        { "id": 61, "hex": "#33ccaa", "responses": { "white": 0.4, "red": 0.3 } }
+      ],
+      "target": { "white": 0.75, "red": 0.35 },
+      "expected_selection": 61,
+      "expected_score": 0.027,
+      "expected_excluded_ids": []
+    },
+    {
+      "id": "panchromatic-five-channel-with-exclusion",
+      "kind": "selection",
+      "description": "All five channels active with distinct weights; the uniformly-near candidate (0.013125) beats the green/blue-swapped one (0.0175), while candidate 82 is excluded for missing the required blue measurement.",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.5, "blue": 0.25, "lps": 2.0 },
+      "candidates": [
+        { "id": 80, "hex": "#404040", "responses": { "white": 0.45, "red": 0.45, "green": 0.45, "blue": 0.45, "lps": 0.45 } },
+        { "id": 81, "hex": "#804080", "responses": { "white": 0.5, "red": 0.5, "green": 0.4, "blue": 0.6, "lps": 0.5 } },
+        { "id": 82, "hex": "#204080", "responses": { "white": 0.5, "red": 0.5, "green": 0.5, "lps": 0.5 } }
+      ],
+      "target": { "white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.5 },
+      "expected_selection": 80,
+      "expected_score": 0.013125,
+      "expected_excluded_ids": [82]
+    }
+  ]
+}
