@@ -1,0 +1,67 @@
+{
+  "status": "not_run",
+  "summary": "Tests-writing phase for #39 complete: committed solver parity corpus + parity suite (exact selections incl. bitwise ties, exclusions, weight handling, and solver fast-path agreement) and /api/v1 wire-contract tests pinning the generated-OpenAPI-client migration surface, plus corpus documentation. No Swift toolchain exists in this container, so `swift test` could not be executed here; every corpus expectation was independently re-verified by an external Python re-implementation of the documented policy (11/11 cases OK) and lint (bin/lint) passes. Implementation deliverables (swift-openapi-generator wiring in Package.swift, PaletteAPIClient migration, README link-up) are deferred to the post-approved implementation run by phase rules.",
+  "blocked_by": "No Swift toolchain in container (swift/swiftc absent); implementation-phase restrictions on non-test paths.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore and migrate PaletteAPIClient to the generated client (or wrap it).",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift", "result": "committed; not executed (no Swift toolchain in container)" }
+        ],
+        "reason": "Package.swift dependency wiring and the migration are implementation work, not permitted in this tests-only phase. The contract suite pins every observable behavior the migration must preserve (endpoints, printer_profile_id query, Accept/Authorization headers incl. token omission, snake_case envelope decoding incl. response-less colors, 401/badStatus/malformedResponse mapping) so the implementation run is verified by these staying green."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback.",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift:testFetchedColorDTOsRoundTripThroughTheOfflineDiskCache", "result": "committed; not executed (no Swift toolchain)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "pre-existing permanent suite covering disk cache, server-scoping, stale markers, fallback entries" }
+        ],
+        "reason": "Cache/offline behavior itself is unchanged in this phase (no implementation edits). The new contract test pins the client-DTO -> CachedProfileColors -> domain-colors round-trip so the migration cannot break the offline-stale path; execution blocked on missing Swift toolchain."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target in ColorComposerCore tests loading the committed corpus; WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases.",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift", "result": "committed; not executed (no Swift toolchain in container)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_corpus.json", "result": "committed; 11 cases independently re-verified against a Python re-implementation of the documented policy (11/11 OK, ties genuine and bitwise)" }
+        ],
+        "reason": "Artifacts complete and inspectable; `swift test` cannot run in this container. Expected values are hand-derived from the documented ColorMatching.WeightedSquaredError semantics (doctest case 0.205 pinned) and machine cross-checked. Suite covers: exact selections + scores (1e-9), earliest-wins ties, exclusion sets (candidate- and target-side), zero-weight channel handling, corpus integrity bar, and end-to-end CompositionSolver fast-path agreement."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it).",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/parity-corpus.md", "result": "committed; contains corpus location, schema, semantics, and refresh procedure" }
+        ],
+        "reason": "README.md is outside the test-phase commit allowlist; docs/parity-corpus.md is the committed documentation source and explicitly tasks the implementation run with surfacing it in README's Palette data section."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape findings, parity test results.",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [],
+        "reason": "Belongs to the implementation PR; this tests-only draft supplies the evidence (contract suite, corpus results, parity-corpus.md) the description must cite."
+      }
+    }
+  ]
+}
