@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed corpus-replay test added; Swift is unavailable in the container, so it could not be compiled or executed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Generated OpenAPI client migration is implementation-phase work and was not exercised in this tests-only run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Cache and offline-fallback behavior was not executed because the Swift toolchain is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift",
+            "result": "Committed test replays the upstream v1 corpus, but swift test could not run: swift executable is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed copy of viamin/color_matching priv/parity/v1/corpus.json."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "README update is prohibited in this tests-only phase because it is outside the LID documentation allowlist."
+          }
+        ]
+      }
+    }
+  ]
+}
