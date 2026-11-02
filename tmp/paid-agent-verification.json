@@ -1,0 +1,90 @@
+{
+  "status": "partial",
+  "summary": "Test-writing run for issue #39 (commit 7bbcf69). Parity corpus fixture committed from viamin/color_matching (priv/parity/v1/corpus.json, algorithm_version 1) with a permanent solver-parity test target (6/6 green: exact scores, earliest-wins ties, exclusions, weight handling, solver fast-path replay). PaletteAPIClient wire contract pinned by 7 new tests (9/9 green) and the disk cache re-verified (69/69 green). Three structural tests for the generated OpenAPI client adoption fail as expected (red-phase evidence that swift-openapi-generator/runtime, the committed OpenAPI document, and the migrated client are not in place yet). Verified on a Swift 6.4.2 linux toolchain via the repo's bin/lint portable-subset harness plus a second harness including PaletteAPIClient and its tests; BrightnessGridSampler.swift (CoreGraphics) cannot compile off-Apple. Fixed a pre-existing compile error in PaletteAPIClientTests.swift:32 (implicit self in an escaping closure; no CI compiles tests today). Full swift test on macOS remains the authoritative gate.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore; generate a typed client from the committed OpenAPI document; migrate PaletteAPIClient onto it",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:27", "result": "failed (expected red: no ColorComposerCore/OpenAPI/openapi.{yaml,yml,json} committed yet)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:49", "result": "failed (expected red: Package.swift declares neither swift-openapi-generator nor swift-openapi-runtime)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:62", "result": "failed (expected red: OpenAPIRuntime not linkable - #if canImport(OpenAPIRuntime) is false)" },
+          { "locator": "docs/openapi-client-migration.md", "result": "documents the test-enforced committed layout and behavior-preservation contract for the implementation run" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "passed (69/69 tests green at commit 7bbcf69: per-server namespacing, profile-scoped entries, normalization, ownership markers, clear-cache)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:90", "result": "passed (GET /api/v1/colors?printer_profile_id=N, Accept header, envelope decode feeding CachedProfileColors DTOs)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:111", "result": "passed (401 -> .unauthorized drives the re-auth path used by ColorCatalog offline handling)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:121", "result": "passed (non-2xx -> .badStatus; offline fallback only triggers on transport errors)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:131", "result": "passed (undecodable 2xx body -> .malformedResponse, never silently cached)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:141", "result": "passed (nil token omits Authorization header)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:154", "result": "passed (testConnection 2xx/503 semantics pinned)" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target in ColorComposerCore tests that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/ParityCorpus/corpus.json", "result": "committed verbatim from viamin/color_matching priv/parity/v1/corpus.json (sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604, algorithm_version 1, 12 scenarios)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:244", "result": "passed (per-candidate scores match corpus exactly incl. excluded entries; 1e-12 tolerance is bit-exact for the corpus's binary-fraction values)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:274", "result": "passed (earliest-wins selection, selected hex/error, tied_indices and tie_broke recomputed and matched: symmetric, duplicate-vector, and three-way tie scenarios)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:336", "result": "passed (CompositionSolver fast-path 1x1 replay: selected index, recorded error, infinite error when all excluded, excluded-candidate count; missing-target-excluded scenario correctly skips)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:322", "result": "passed (unknown weight key 'ultraviolet' ignored; zero-weight channels neither exclude nor contribute)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:222", "result": "passed (algorithm_version/scorer/selection/missing_policy/light_sources metadata contract)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:232", "result": "passed (12 scenario ids pinned against silent corpus drift)" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption in the README (where the corpus lives, how to refresh it)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "passed (full corpus-consumption doc: fixture location, asserted semantics, refresh workflow via mix parity.generate and PARITY_CORPUS_PATH)" },
+          { "locator": "README.md", "result": "skipped (README.md is outside the test-writing run's commit allowlist; the implementation run must link docs/solver-parity-corpus.md from the README)" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-migration.md", "result": "not_run (migration notes captured for the implementation run; the PR description itself is authored when the implementation PR opens)" }
+        ]
+      }
+    },
+    {
+      "id": "AC-6",
+      "description": "Exit criterion: swift test green with the parity corpus test and generated client in place",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests (portable subset harness, Swift 6.4.2 linux)", "result": "215 tests, 4 failures - all 4 are the intended red-phase failures of OpenAPIClientMigrationTests; SolverParityCorpusTests 6/6, ProfileColorCacheTests 69/69, SolverTests 10/10 green" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests (harness including PaletteAPIClient + tests)", "result": "173 tests, same 4 intended failures; PaletteAPIClientTests 9/9 green" },
+          { "locator": "ColorComposerCore/Sources/ColorComposerCore/BrightnessGridSampler.swift", "result": "skipped off-Apple (requires CoreGraphics; excluded by the repo's own bin/lint portable harness) - macOS swift test remains the authoritative full-suite gate" }
+        ]
+      }
+    }
+  ]
+}
