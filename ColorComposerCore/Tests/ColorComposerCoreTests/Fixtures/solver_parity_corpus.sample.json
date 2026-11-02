@@ -1,0 +1,52 @@
+{
+  "description": "Local harness fixture for SolverParityCorpusTests — NOT the vendored viamin/color_matching#111 corpus. Exercises the loader + CompositionSolver/WeightedSquaredErrorScorer wiring with hand-derived cases (one mirrors the Elixir WeightedSquaredError doctest already pinned in ScorerTests) until the real corpus is published and vendored as solver_parity_corpus.json.",
+  "cases": [
+    {
+      "name": "doctest-example-two-candidates",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 2, "responses": { "white": 0.0, "red": 0.9, "green": 0.0, "blue": 0.9, "lps": 0.0 } }
+      ],
+      "expected_selected_id": 1,
+      "expected_score": 0.205,
+      "tags": []
+    },
+    {
+      "name": "tie-earliest-candidate-wins",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 5, "responses": { "red": 0.5 } },
+        { "id": 9, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_id": 5,
+      "expected_score": 0.0,
+      "tags": ["tie"]
+    },
+    {
+      "name": "candidate-missing-required-channel-is-excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 11, "responses": { "red": 0.4, "green": 0.4 } }
+      ],
+      "expected_selected_id": 11,
+      "expected_score": 0.02,
+      "tags": ["exclusion"]
+    },
+    {
+      "name": "all-candidates-excluded-leaves-cell-unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_id": null,
+      "expected_score": null,
+      "tags": ["exclusion", "no-selection"]
+    }
+  ]
+}
