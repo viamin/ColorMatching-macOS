@@ -1,0 +1,226 @@
+{
+  "corpus": "weighted_squared_error",
+  "version": 1,
+  "generator": "color_matching solver parity suite (viamin/color_matching#111); hand-seeded snapshot pending upstream export",
+  "notes": "Each case pins the palette-color the Elixir ColorMatching.WeightedSquaredError solver must select: lowest sum of weight * (candidate - target)^2 over channels with weight > 0, earliest candidate wins on ties, candidates or targets missing a required (weight > 0) measurement are excluded — never treated as zero brightness. Keys are the canonical light_source strings: white, red, green, blue, lps. Absent keys mean 'no measurement'; explicit 0.0 means 'measured as zero'.",
+  "cases": [
+    {
+      "id": "elixir_doctest_score",
+      "category": "nearest",
+      "description": "The Elixir WeightedSquaredError doctest: candidate vs target with weights white=0.5 red=1 green=1 blue=0 lps=1.5 must score exactly 0.205 (blue is weighted 0 and contributes nothing).",
+      "weights": {"white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5},
+      "target": {"white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5},
+      "palette": [
+        {"index": 0, "id": 101, "name": "Doctest Amber", "hex": "#C64A35", "rgb": {"r": 198, "g": 74, "b": 53},
+         "responses": {"white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3}},
+        {"index": 1, "id": 102, "name": "Bright Cream", "hex": "#F5E6D3", "rgb": {"r": 245, "g": 230, "b": 211},
+         "responses": {"white": 0.9, "red": 0.9, "green": 0.9, "blue": 0.9, "lps": 0.9}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 101, "score": 0.205, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "exact_match_mid_palette",
+      "category": "exact_match",
+      "description": "An exact response-vector match mid-palette beats both neighbors and scores exactly zero.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.55, "green": 0.25},
+      "palette": [
+        {"index": 0, "id": 111, "name": "Dark Rust", "hex": "#5A2A1E", "rgb": {"r": 90, "g": 42, "b": 30},
+         "responses": {"red": 0.1, "green": 0.9}},
+        {"index": 1, "id": 112, "name": "Mid Rust", "hex": "#8C5540", "rgb": {"r": 140, "g": 85, "b": 64},
+         "responses": {"red": 0.55, "green": 0.25}},
+        {"index": 2, "id": 113, "name": "Pale Rust", "hex": "#C99B84", "rgb": {"r": 201, "g": 155, "b": 132},
+         "responses": {"red": 0.6, "green": 0.2}}
+      ],
+      "expected": {"selected_index": 1, "selected_id": 112, "score": 0.0, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "identical_candidates_tie_earliest_wins",
+      "category": "tie",
+      "description": "Two candidates share an identical response vector and the best score; the earlier palette entry must win, mirroring Elixir IlluminantMatching.best_match/4.",
+      "weights": {"white": 1.0, "red": 1.0},
+      "target": {"white": 0.35, "red": 0.5},
+      "palette": [
+        {"index": 0, "id": 201, "name": "Twin A", "hex": "#334455", "rgb": {"r": 51, "g": 68, "b": 85},
+         "responses": {"white": 0.4, "red": 0.6}},
+        {"index": 1, "id": 202, "name": "Twin B", "hex": "#445566", "rgb": {"r": 68, "g": 85, "b": 102},
+         "responses": {"white": 0.4, "red": 0.6}},
+        {"index": 2, "id": 203, "name": "Outsider", "hex": "#778899", "rgb": {"r": 119, "g": 136, "b": 153},
+         "responses": {"white": 0.5, "red": 0.5}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 201, "score": 0.0125, "excluded_ids": [], "tied_ids": [201, 202]}
+    },
+    {
+      "id": "tie_at_zero_exact_duplicates",
+      "category": "tie",
+      "description": "Duplicate exact matches tie at score zero; the earliest duplicate is selected even under non-uniform weights (green=2, lps=1).",
+      "weights": {"green": 2.0, "lps": 1.0},
+      "target": {"green": 0.5, "lps": 0.25},
+      "palette": [
+        {"index": 0, "id": 210, "name": "Sodium Twin A", "hex": "#B8A03C", "rgb": {"r": 184, "g": 160, "b": 60},
+         "responses": {"green": 0.5, "lps": 0.25}},
+        {"index": 1, "id": 211, "name": "Sodium Twin B", "hex": "#C2AC48", "rgb": {"r": 194, "g": 172, "b": 72},
+         "responses": {"green": 0.5, "lps": 0.25}},
+        {"index": 2, "id": 212, "name": "Dim Sodium", "hex": "#6E6024", "rgb": {"r": 110, "g": 96, "b": 36},
+         "responses": {"green": 0.4, "lps": 0.25}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 210, "score": 0.0, "excluded_ids": [], "tied_ids": [210, 211]}
+    },
+    {
+      "id": "equal_weight_symmetric_tie",
+      "category": "tie",
+      "description": "Symmetric candidates mirror each other around the target and tie at 0.5 under equal weights; the first palette entry wins.",
+      "weights": {"white": 1.0, "red": 1.0},
+      "target": {"white": 0.5, "red": 0.5},
+      "palette": [
+        {"index": 0, "id": 230, "name": "Paper White", "hex": "#F0F0F0", "rgb": {"r": 240, "g": 240, "b": 240},
+         "responses": {"white": 1.0, "red": 0.0}},
+        {"index": 1, "id": 231, "name": "Signal Red", "hex": "#D92020", "rgb": {"r": 217, "g": 32, "b": 32},
+         "responses": {"white": 0.0, "red": 1.0}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 230, "score": 0.5, "excluded_ids": [], "tied_ids": [230, 231]}
+    },
+    {
+      "id": "candidate_missing_required_channel_excluded",
+      "category": "exclusion",
+      "description": "Candidates missing any weight>0 measurement (partial red-only, partial green-only, fully unmeasured) are excluded; the complete candidate is selected.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.5, "green": 0.5},
+      "palette": [
+        {"index": 0, "id": 301, "name": "Red Only", "hex": "#802020", "rgb": {"r": 128, "g": 32, "b": 32},
+         "responses": {"red": 0.5}},
+        {"index": 1, "id": 302, "name": "Complete", "hex": "#406040", "rgb": {"r": 64, "g": 96, "b": 64},
+         "responses": {"red": 0.5, "green": 0.5}},
+        {"index": 2, "id": 303, "name": "Green Only", "hex": "#208020", "rgb": {"r": 32, "g": 128, "b": 32},
+         "responses": {"green": 0.5}},
+        {"index": 3, "id": 304, "name": "Unmeasured", "hex": "#505050", "rgb": {"r": 80, "g": 80, "b": 80},
+         "responses": {}}
+      ],
+      "expected": {"selected_index": 1, "selected_id": 302, "score": 0.0, "excluded_ids": [301, 303, 304], "tied_ids": []}
+    },
+    {
+      "id": "missing_measurement_is_not_zero_brightness",
+      "category": "exclusion",
+      "description": "A candidate perfect on every measured channel but missing lps must be excluded even though the only complete candidate scores far worse (2.43). Treating the missing lps measurement as 0 would wrongly select it (it would score 0.81).",
+      "weights": {"red": 1.0, "green": 1.0, "lps": 1.0},
+      "target": {"red": 0.9, "green": 0.9, "lps": 0.9},
+      "palette": [
+        {"index": 0, "id": 311, "name": "Perfect But Unmeasured LPS", "hex": "#9A7A2C", "rgb": {"r": 154, "g": 122, "b": 44},
+         "responses": {"red": 0.9, "green": 0.9}},
+        {"index": 1, "id": 312, "name": "Complete Black", "hex": "#0A0A0A", "rgb": {"r": 10, "g": 10, "b": 10},
+         "responses": {"red": 0.0, "green": 0.0, "lps": 0.0}}
+      ],
+      "expected": {"selected_index": 1, "selected_id": 312, "score": 2.43, "excluded_ids": [311], "tied_ids": []}
+    },
+    {
+      "id": "target_missing_required_channel_no_selection",
+      "category": "exclusion",
+      "description": "When the target itself lacks a required (weight>0) channel, every candidate is excluded and no color may be selected.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.5},
+      "palette": [
+        {"index": 0, "id": 321, "name": "Complete A", "hex": "#604040", "rgb": {"r": 96, "g": 64, "b": 64},
+         "responses": {"red": 0.5, "green": 0.5}},
+        {"index": 1, "id": 322, "name": "Complete B", "hex": "#404060", "rgb": {"r": 64, "g": 64, "b": 96},
+         "responses": {"red": 0.4, "green": 0.6}}
+      ],
+      "expected": {"no_selection": true, "excluded_ids": [321, 322], "tied_ids": []}
+    },
+    {
+      "id": "zero_weight_channel_is_not_required",
+      "category": "zero_weight_channel",
+      "description": "A candidate measured on white alone is NOT excluded when only white carries weight>0; the other channels' weight of 0 makes them neither required nor contributing.",
+      "weights": {"white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0},
+      "target": {"white": 0.25},
+      "palette": [
+        {"index": 0, "id": 401, "name": "White Measured Only", "hex": "#707070", "rgb": {"r": 112, "g": 112, "b": 112},
+         "responses": {"white": 0.2}},
+        {"index": 1, "id": 402, "name": "Fully Measured", "hex": "#E8E8E8", "rgb": {"r": 232, "g": 232, "b": 232},
+         "responses": {"white": 0.9, "red": 0.1, "green": 0.1, "blue": 0.1, "lps": 0.1}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 401, "score": 0.0025, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "zero_weight_channel_does_not_contribute",
+      "category": "zero_weight_channel",
+      "description": "Blue carries weight 0: its (large) deviation must not contribute. If blue were wrongly scored, selection would flip to the blue-accurate candidate.",
+      "weights": {"red": 1.0, "blue": 0.0},
+      "target": {"red": 0.5, "blue": 0.9},
+      "palette": [
+        {"index": 0, "id": 411, "name": "Red Accurate", "hex": "#8C3030", "rgb": {"r": 140, "g": 48, "b": 48},
+         "responses": {"red": 0.6, "blue": 0.0}},
+        {"index": 1, "id": 412, "name": "Blue Accurate", "hex": "#30308C", "rgb": {"r": 48, "g": 48, "b": 140},
+         "responses": {"red": 0.3, "blue": 1.0}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 411, "score": 0.01, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "white_heavy_weights_prefer_white_accurate_candidate",
+      "category": "weight_scaling",
+      "description": "With white weighted 4 and red 1, the white-accurate candidate (score 1.0) beats the red-accurate one (score 4.0).",
+      "weights": {"white": 4.0, "red": 1.0},
+      "target": {"white": 1.0, "red": 0.0},
+      "palette": [
+        {"index": 0, "id": 501, "name": "White Accurate", "hex": "#FAFAFA", "rgb": {"r": 250, "g": 250, "b": 250},
+         "responses": {"white": 1.0, "red": 1.0}},
+        {"index": 1, "id": 502, "name": "Red Accurate", "hex": "#141414", "rgb": {"r": 20, "g": 20, "b": 20},
+         "responses": {"white": 0.0, "red": 0.0}}
+      ],
+      "expected": {"selected_index": 0, "selected_id": 501, "score": 1.0, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "red_heavy_weights_prefer_red_accurate_candidate",
+      "category": "weight_scaling",
+      "description": "Same target and mirrored palette as the white-heavy case, but red weighted 4 flips the selection to the red-accurate candidate (score 1.0 vs 4.0).",
+      "weights": {"white": 1.0, "red": 4.0},
+      "target": {"white": 1.0, "red": 0.0},
+      "palette": [
+        {"index": 0, "id": 503, "name": "White Accurate", "hex": "#FAFAFA", "rgb": {"r": 250, "g": 250, "b": 250},
+         "responses": {"white": 1.0, "red": 1.0}},
+        {"index": 1, "id": 504, "name": "Red Accurate", "hex": "#141414", "rgb": {"r": 20, "g": 20, "b": 20},
+         "responses": {"white": 0.0, "red": 0.0}}
+      ],
+      "expected": {"selected_index": 1, "selected_id": 504, "score": 1.0, "excluded_ids": [], "tied_ids": []}
+    },
+    {
+      "id": "multi_channel_fractional_weights",
+      "category": "multi_channel",
+      "description": "All five channels active with fractional weights; the near-exact candidate wins with only its lps offset (0.05 * 0.05 * 2.0 = 0.005), and the lps-less candidate is excluded despite otherwise-plausible values.",
+      "weights": {"white": 0.5, "red": 1.0, "green": 1.5, "blue": 0.25, "lps": 2.0},
+      "target": {"white": 0.4, "red": 0.3, "green": 0.6, "blue": 0.2, "lps": 0.5},
+      "palette": [
+        {"index": 0, "id": 601, "name": "Contrary", "hex": "#2C4864", "rgb": {"r": 44, "g": 72, "b": 100},
+         "responses": {"white": 0.1, "red": 0.9, "green": 0.0, "blue": 0.8, "lps": 0.1}},
+        {"index": 1, "id": 602, "name": "Near Miss", "hex": "#7C9464", "rgb": {"r": 124, "g": 148, "b": 100},
+         "responses": {"white": 0.5, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.4}},
+        {"index": 2, "id": 603, "name": "Almost Exact", "hex": "#6E8C58", "rgb": {"r": 110, "g": 140, "b": 88},
+         "responses": {"white": 0.4, "red": 0.3, "green": 0.6, "blue": 0.2, "lps": 0.55}},
+        {"index": 3, "id": 604, "name": "No LPS", "hex": "#58647C", "rgb": {"r": 88, "g": 100, "b": 124},
+         "responses": {"white": 0.6, "red": 0.1, "green": 0.5, "blue": 0.4}}
+      ],
+      "expected": {"selected_index": 2, "selected_id": 603, "score": 0.005, "excluded_ids": [604], "tied_ids": []}
+    },
+    {
+      "id": "single_channel_graded_palette",
+      "category": "nearest",
+      "description": "A six-color palette graded only on lps: nearest to 0.42 is 0.4 (score 0.0004). Only lps carries weight, so the single measurement suffices.",
+      "weights": {"lps": 1.0},
+      "target": {"lps": 0.42},
+      "palette": [
+        {"index": 0, "id": 701, "name": "Step 0.0", "hex": "#0A0A0A", "rgb": {"r": 10, "g": 10, "b": 10},
+         "responses": {"lps": 0.0}},
+        {"index": 1, "id": 702, "name": "Step 0.2", "hex": "#3A3418", "rgb": {"r": 58, "g": 52, "b": 24},
+         "responses": {"lps": 0.2}},
+        {"index": 2, "id": 703, "name": "Step 0.4", "hex": "#6E6024", "rgb": {"r": 110, "g": 96, "b": 36},
+         "responses": {"lps": 0.4}},
+        {"index": 3, "id": 704, "name": "Step 0.6", "hex": "#A28C34", "rgb": {"r": 162, "g": 140, "b": 52},
+         "responses": {"lps": 0.6}},
+        {"index": 4, "id": 705, "name": "Step 0.8", "hex": "#D2B848", "rgb": {"r": 210, "g": 184, "b": 72},
+         "responses": {"lps": 0.8}},
+        {"index": 5, "id": 706, "name": "Step 1.0", "hex": "#F5E664", "rgb": {"r": 245, "g": 230, "b": 100},
+         "responses": {"lps": 1.0}}
+      ],
+      "expected": {"selected_index": 2, "selected_id": 703, "score": 0.0004, "excluded_ids": [], "tied_ids": []}
+    }
+  ]
+}
