@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "algorithm": "ColorMatching.WeightedSquaredError",
+  "source": {
+    "repo": "viamin/color_matching",
+    "pull": 111,
+    "note": "Seed corpus derived from the Elixir WeightedSquaredError semantics (including its published doctest, expected score 0.205). Replace this file with the upstream corpus once viamin/color_matching#111 merges; see docs/solver-parity-corpus.md."
+  },
+  "cases": [
+    {
+      "id": "elixir-doctest-weighted-squared-error",
+      "description": "Mirrors the Elixir WeightedSquaredError doctest: expected score 0.205 with weights white 0.5, red 1.0, green 1.0, blue 0.0, lps 1.5. Blue has weight zero, so its value never contributes. The candidate missing the active lps measurement is excluded.",
+      "tags": ["doctest", "exclusion", "zero-weight"],
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "palette": [
+        { "id": 101, "name": "Doctest Candidate", "hex": "#C64A35", "rgb": { "r": 198, "g": 74, "b": 53 },
+          "responses": { "white": { "brightness": 0.5 }, "red": { "brightness": 0.1 }, "green": { "brightness": 0.4 }, "blue": { "brightness": 0.0 }, "lps": { "brightness": 0.3 } } },
+        { "id": 102, "name": "Far Gray", "hex": "#888888",
+          "responses": { "white": { "brightness": 0.1 }, "red": { "brightness": 0.9 }, "green": { "brightness": 0.1 }, "blue": { "brightness": 0.5 }, "lps": { "brightness": 0.9 } } },
+        { "id": 103, "name": "Missing LPS", "hex": "#FF0000",
+          "responses": { "white": { "brightness": 0.4 }, "red": { "brightness": 0.15 }, "green": { "brightness": 0.35 }, "blue": { "brightness": 0.1 } } }
+      ],
+      "targets": [ { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 } ],
+      "expected_selections": [101],
+      "expected_scores": [0.205],
+      "expected_excluded_count": 1
+    },
+    {
+      "id": "tie-earliest-candidate-wins-exact-duplicates",
+      "description": "Candidates 201 and 202 carry identical measurements; both score 0.0 against the target. The earliest candidate in palette order must win, matching IlluminantMatching.best_match/4.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0 },
+      "palette": [
+        { "id": 201, "name": "Tie A", "hex": "#AAAAAA", "responses": { "red": { "brightness": 0.5 } } },
+        { "id": 202, "name": "Tie B", "hex": "#BBBBBB", "responses": { "red": { "brightness": 0.5 } } },
+        { "id": 203, "name": "Far", "hex": "#FF0000", "responses": { "red": { "brightness": 0.9 } } }
+      ],
+      "targets": [ { "red": 0.5 } ],
+      "expected_selections": [201],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "tie-earliest-candidate-wins-distinct-vectors",
+      "description": "Two distinct response vectors (red .2/green .8 vs red .8/green .2) tie at 0.18 against target (.5, .5). Earliest candidate wins.",
+      "tags": ["tie"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 211, "name": "Green Leaning", "hex": "#001100", "responses": { "red": { "brightness": 0.2 }, "green": { "brightness": 0.8 } } },
+        { "id": 212, "name": "Red Leaning", "hex": "#110000", "responses": { "red": { "brightness": 0.8 }, "green": { "brightness": 0.2 } } }
+      ],
+      "targets": [ { "red": 0.5, "green": 0.5 } ],
+      "expected_selections": [211],
+      "expected_scores": [0.18],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "tie-between-symmetric-extremes",
+      "description": "Symmetric extremes (0.0 and 1.0) both score 0.25 against a 0.5 target. Earliest candidate (the measured zero) wins.",
+      "tags": ["tie", "measured-zero"],
+      "weights": { "red": 1.0 },
+      "palette": [
+        { "id": 221, "name": "Black", "hex": "#000000", "responses": { "red": { "brightness": 0.0 } } },
+        { "id": 222, "name": "White", "hex": "#FFFFFF", "responses": { "red": { "brightness": 1.0 } } }
+      ],
+      "targets": [ { "red": 0.5 } ],
+      "expected_selections": [221],
+      "expected_scores": [0.25],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "excluded-best-loses-to-complete-worse",
+      "description": "Candidate 231 would be a perfect match but is missing the required green measurement, so it is excluded and the worse-but-complete 232 wins with score 0.02.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 231, "name": "Perfect But Incomplete", "hex": "#00FF00", "responses": { "red": { "brightness": 0.5 } } },
+        { "id": 232, "name": "Complete But Worse", "hex": "#666666", "responses": { "red": { "brightness": 0.6 }, "green": { "brightness": 0.6 } } }
+      ],
+      "targets": [ { "red": 0.5, "green": 0.5 } ],
+      "expected_selections": [232],
+      "expected_scores": [0.02],
+      "expected_excluded_count": 1
+    },
+    {
+      "id": "zero-weight-missing-measurement-does-not-exclude",
+      "description": "Green has weight zero. Candidate 241 lacks a green measurement yet must stay eligible (and win with score 0) - a missing measurement on an inactive channel neither excludes nor contributes. A wrong exclusion would hand the win to 242 (score 0.01).",
+      "tags": ["zero-weight", "exclusion"],
+      "weights": { "red": 1.0, "green": 0.0 },
+      "palette": [
+        { "id": 241, "name": "Red Only", "hex": "#AA00AA", "responses": { "red": { "brightness": 0.5 } } },
+        { "id": 242, "name": "Complete", "hex": "#606060", "responses": { "red": { "brightness": 0.6 }, "green": { "brightness": 0.9 } } }
+      ],
+      "targets": [ { "red": 0.5, "green": 0.9 } ],
+      "expected_selections": [241],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "all-candidates-excluded-cell-unmatched",
+      "description": "The only candidate is missing the required green measurement, so no candidate is rankable: the cell is unmatched and its error is infinite.",
+      "tags": ["exclusion"],
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 251, "name": "Red Only", "hex": "#FFAA00", "responses": { "red": { "brightness": 0.5 } } }
+      ],
+      "targets": [ { "red": 0.3, "green": 0.4 } ],
+      "expected_selections": [null],
+      "expected_scores": [null],
+      "expected_excluded_count": 1
+    },
+    {
+      "id": "weights-flip-selection-toward-heavy-channel",
+      "description": "With weights white 4 / red 1, candidate 261 scores 0.17 vs 262's 0.20, so 261 wins even though unweighted errors would favor 262 (0.05 vs 0.08). Pins that weights scale each squared difference.",
+      "tags": ["weights"],
+      "weights": { "white": 4.0, "red": 1.0 },
+      "palette": [
+        { "id": 261, "name": "Near On Heavy Channel", "hex": "#5590AA", "responses": { "white": { "brightness": 0.55 }, "red": { "brightness": 0.9 } } },
+        { "id": 262, "name": "Evenly Off", "hex": "#703030", "responses": { "white": { "brightness": 0.7 }, "red": { "brightness": 0.3 } } }
+      ],
+      "targets": [ { "white": 0.5, "red": 0.5 } ],
+      "expected_selections": [261],
+      "expected_scores": [0.17],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "measured-zero-beats-missing",
+      "description": "Candidate 271 has an explicit measured 0.0 for lps. Measured zero is a real value, not a missing one: 271 stays eligible and beats 272 with score 0. Treating 0.0 as missing would wrongly select 272 (score 0.25).",
+      "tags": ["measured-zero", "exclusion"],
+      "weights": { "red": 1.0, "lps": 1.0 },
+      "palette": [
+        { "id": 271, "name": "Measured Zero LPS", "hex": "#550055", "responses": { "red": { "brightness": 0.5 }, "lps": { "brightness": 0.0 } } },
+        { "id": 272, "name": "Lps Half", "hex": "#555500", "responses": { "red": { "brightness": 0.5 }, "lps": { "brightness": 0.5 } } }
+      ],
+      "targets": [ { "red": 0.5, "lps": 0.0 } ],
+      "expected_selections": [271],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "multi-cell-grid-with-per-cell-winners",
+      "description": "2x2 grid, three eligible colors plus one excluded (missing lps while lps weight is 0.5). Each cell selects a different winner; the final cell ties 301 vs 303 at 0.34 and the earliest (301) wins.",
+      "tags": ["tie", "exclusion", "multi-cell"],
+      "weights": { "red": 1.0, "green": 1.0, "lps": 0.5 },
+      "palette": [
+        { "id": 301, "name": "Dark", "hex": "#111111", "responses": { "red": { "brightness": 0.1 }, "green": { "brightness": 0.1 }, "lps": { "brightness": 0.1 } } },
+        { "id": 302, "name": "Bright", "hex": "#EEEEEE", "responses": { "red": { "brightness": 0.9 }, "green": { "brightness": 0.9 }, "lps": { "brightness": 0.9 } } },
+        { "id": 303, "name": "Red Green Split", "hex": "#AA5500", "responses": { "red": { "brightness": 0.9 }, "green": { "brightness": 0.1 }, "lps": { "brightness": 0.5 } } },
+        { "id": 304, "name": "Mid Gray No Lps", "hex": "#888888", "responses": { "red": { "brightness": 0.5 }, "green": { "brightness": 0.5 } } }
+      ],
+      "width": 2,
+      "targets": [
+        { "red": 0.1, "green": 0.1, "lps": 0.1 },
+        { "red": 0.9, "green": 0.9, "lps": 0.9 },
+        { "red": 0.5, "green": 0.5, "lps": 0.5 },
+        { "red": 0.5, "green": 0.5, "lps": 0.3 }
+      ],
+      "expected_selections": [301, 302, 303, 301],
+      "expected_scores": [0.0, 0.0, 0.32, 0.34],
+      "expected_excluded_count": 1
+    },
+    {
+      "id": "nearest-under-small-difference",
+      "description": "Candidates 0.001 apart: the strictly nearer one wins with score 0, guarding the strict less-than comparison.",
+      "tags": ["precision"],
+      "weights": { "red": 1.0 },
+      "palette": [
+        { "id": 281, "name": "Exact", "hex": "#7F7F7F", "responses": { "red": { "brightness": 0.5 } } },
+        { "id": 282, "name": "Off By One Thousandth", "hex": "#808080", "responses": { "red": { "brightness": 0.501 } } }
+      ],
+      "targets": [ { "red": 0.5 } ],
+      "expected_selections": [281],
+      "expected_scores": [0.0],
+      "expected_excluded_count": 0
+    },
+    {
+      "id": "blue-active-channel-scaled-weight",
+      "description": "Only blue is active with weight 2.0; the winner's 0.05 difference scales to 0.005.",
+      "tags": ["weights"],
+      "weights": { "blue": 2.0 },
+      "palette": [
+        { "id": 291, "name": "Bright Blue", "hex": "#0000FF", "responses": { "blue": { "brightness": 0.8 } } },
+        { "id": 292, "name": "Dim Blue", "hex": "#001122", "responses": { "blue": { "brightness": 0.1 } } }
+      ],
+      "targets": [ { "blue": 0.75 } ],
+      "expected_selections": [291],
+      "expected_scores": [0.005],
+      "expected_excluded_count": 0
+    }
+  ]
+}
