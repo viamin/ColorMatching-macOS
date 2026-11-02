@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "source": "seed-corpus",
+  "description": "Solver parity corpus for WeightedSquaredErrorScorer. Expected outputs are hand-computed from the documented WeightedSquaredError semantics that mirror ColorMatching.WeightedSquaredError in the Elixir color_matching service. To be replaced in place by the generated corpus from viamin/color_matching#111 (see docs/solver-parity-corpus.md).",
+  "tolerance": 1e-09,
+  "cases": [
+    {
+      "id": "exact-match-single-candidate",
+      "category": "exact_match",
+      "description": "The only candidate equals the target vector, so the weighted squared error is exactly zero and the candidate is selected.",
+      "scope": "selection",
+      "weights": { "white": 2.0, "red": 1.0 },
+      "target": { "white": 0.3, "red": 0.7 },
+      "palette": [
+        { "id": 101, "hex": "#4d4d4d", "name": "Mid gray", "responses": { "white": 0.3, "red": 0.7 } }
+      ],
+      "expected": {
+        "selected_color_id": 101,
+        "score": 0.0,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "elixir-doctest-example",
+      "category": "weighting",
+      "description": "The WeightedSquaredError doctest example from the Elixir service: sum of squared per-channel differences times weight = 0.045 + 0.01 + 0.09 + 0.06 = 0.205. Blue has weight 0 and is absent from every candidate without excluding them.",
+      "scope": "selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "palette": [
+        { "id": 201, "hex": "#808080", "name": "Doctest gray", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 202, "hex": "#000000", "name": "Black", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "lps": 0.0 } }
+      ],
+      "expected": {
+        "selected_color_id": 201,
+        "score": 0.205,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "weight-asymmetry-equal-weights",
+      "category": "weighting",
+      "description": "With equal weights the uniform-near candidate (0.02) beats the white-closer candidate (0.025).",
+      "scope": "selection",
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.4, "red": 0.6 },
+      "palette": [
+        { "id": 210, "hex": "#7d7d7d", "name": "Uniform near", "responses": { "white": 0.5, "red": 0.5 } },
+        { "id": 211, "hex": "#736fb3", "name": "White closer", "responses": { "white": 0.45, "red": 0.75 } }
+      ],
+      "expected": {
+        "selected_color_id": 210,
+        "score": 0.02,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "weight-asymmetry-white-heavy",
+      "category": "weighting",
+      "description": "Same palette and target as weight-asymmetry-equal-weights, but weight 10 on white flips the selection: 0.0025*10 + 0.0225 = 0.0475 beats 0.01*10 + 0.01 = 0.11.",
+      "scope": "selection",
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.4, "red": 0.6 },
+      "palette": [
+        { "id": 210, "hex": "#7d7d7d", "name": "Uniform near", "responses": { "white": 0.5, "red": 0.5 } },
+        { "id": 211, "hex": "#736fb3", "name": "White closer", "responses": { "white": 0.45, "red": 0.75 } }
+      ],
+      "expected": {
+        "selected_color_id": 211,
+        "score": 0.0475,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "tie-identical-vectors-earliest-palette-order",
+      "category": "tie",
+      "description": "Three identical response vectors all score 0. The first entry in palette order must win even though its id is not the smallest, mirroring IlluminantMatching.best_match/4 earliest-candidate policy.",
+      "scope": "selection",
+      "weights": { "white": 1.0 },
+      "target": { "white": 0.5 },
+      "palette": [
+        { "id": 305, "hex": "#7f7f7f", "name": "Tie first", "responses": { "white": 0.5 } },
+        { "id": 204, "hex": "#808080", "name": "Tie second", "responses": { "white": 0.5 } },
+        { "id": 999, "hex": "#818181", "name": "Tie third", "responses": { "white": 0.5 } }
+      ],
+      "expected": {
+        "selected_color_id": 305,
+        "score": 0.0,
+        "excluded_color_ids": [],
+        "tie": true,
+        "tied_color_ids": [305, 204, 999]
+      }
+    },
+    {
+      "id": "tie-symmetric-distinct-vectors",
+      "category": "tie",
+      "description": "Two distinct vectors symmetric around the target (0.4 and 0.6 vs target 0.5) tie at 0.01. The earlier palette entry wins.",
+      "scope": "selection",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 410, "hex": "#661f1f", "name": "Below target", "responses": { "red": 0.4 } },
+        { "id": 305, "hex": "#a02c2c", "name": "Above target", "responses": { "red": 0.6 } }
+      ],
+      "expected": {
+        "selected_color_id": 410,
+        "score": 0.01,
+        "excluded_color_ids": [],
+        "tie": true,
+        "tied_color_ids": [410, 305]
+      }
+    },
+    {
+      "id": "exclusion-candidate-missing-required-channel",
+      "category": "exclusion_candidate_missing",
+      "description": "Green is required. The candidate missing green (501) is excluded, while the candidate with a measured green of 0.0 (502) participates with error 0.25 — missing is not zero. The exact match (503) wins with 0.",
+      "scope": "selection",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "hex": "#7f0000", "name": "Red only", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#7f7f00", "name": "Measured zero green", "responses": { "red": 0.5, "green": 0.0 } },
+        { "id": 503, "hex": "#7f7f3f", "name": "Exact match", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": {
+        "selected_color_id": 503,
+        "score": 0.0,
+        "excluded_color_ids": [501],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "exclusion-all-candidates-excluded",
+      "category": "exclusion_all",
+      "description": "Every candidate lacks the required green measurement, so no color is selectable and the cell stays unmatched.",
+      "scope": "selection",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 601, "hex": "#7f0000", "name": "Red only dark", "responses": { "red": 0.5 } },
+        { "id": 602, "hex": "#e60000", "name": "Red only bright", "responses": { "red": 0.9 } }
+      ],
+      "expected": {
+        "selected_color_id": null,
+        "score": null,
+        "excluded_color_ids": [601, 602],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "exclusion-target-missing-required-channel",
+      "category": "exclusion_target_missing",
+      "description": "Scorer-level parity: when the target itself lacks a required condition (no green value), every candidate is excluded regardless of its measurements. Selection scope cannot express this because solver grids always provide active conditions.",
+      "scope": "scorer_only",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 701, "hex": "#7f7f7f", "name": "Fully measured", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": {
+        "selected_color_id": null,
+        "score": null,
+        "excluded_color_ids": [701],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "zero-weight-channel-is-optional",
+      "category": "zero_weight_optional",
+      "description": "Only white is weighted, so a candidate measuring nothing but white is still eligible: (0.5 - 0.8)^2 = 0.09.",
+      "scope": "selection",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.8 },
+      "palette": [
+        { "id": 801, "hex": "#7f7f7f", "name": "White only", "responses": { "white": 0.5 } }
+      ],
+      "expected": {
+        "selected_color_id": 801,
+        "score": 0.09,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "multi-channel-fractional-weights",
+      "category": "multi_channel",
+      "description": "Three active channels with fractional weights: 0.0025*1 + 0.05^2*2 + 0.1^2*0.25 = 0.01 beats the uniform 0.01*(1 + 2 + 0.25) = 0.0325.",
+      "scope": "selection",
+      "weights": { "white": 1.0, "green": 2.0, "lps": 0.25 },
+      "target": { "white": 0.5, "green": 0.5, "lps": 0.5 },
+      "palette": [
+        { "id": 901, "hex": "#666640", "name": "Uniform low", "responses": { "white": 0.4, "green": 0.4, "lps": 0.4 } },
+        { "id": 902, "hex": "#8c7366", "name": "Weighted best", "responses": { "white": 0.55, "green": 0.45, "lps": 0.6 } }
+      ],
+      "expected": {
+        "selected_color_id": 902,
+        "score": 0.01,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    },
+    {
+      "id": "lps-heavy-selection",
+      "category": "multi_channel",
+      "description": "Sodium-heavy weighting (lps 3, red 0.5): 0.05^2*3 + 0.1^2*0.5 = 0.0125 beats 0.1^2*3 + 0.1^2*0.5 = 0.035.",
+      "scope": "selection",
+      "weights": { "lps": 3.0, "red": 0.5 },
+      "target": { "lps": 0.65, "red": 0.3 },
+      "palette": [
+        { "id": 121, "hex": "#b3813d", "name": "LPS near", "responses": { "lps": 0.6, "red": 0.4 } },
+        { "id": 122, "hex": "#d4a94f", "name": "LPS far", "responses": { "lps": 0.75, "red": 0.2 } }
+      ],
+      "expected": {
+        "selected_color_id": 121,
+        "score": 0.0125,
+        "excluded_color_ids": [],
+        "tie": false,
+        "tied_color_ids": []
+      }
+    }
+  ]
+}
