@@ -1,0 +1,82 @@
+{
+  "status": "skipped",
+  "summary": "Tests-writing (red-phase) run for issue #39. Committed: (1) byte-identical copy of the upstream solver parity corpus (viamin/color_matching priv/parity/v1/corpus.json, sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604) at ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json; (2) SolverParityCorpusTests — corpus-contract stamping, intentional-tie/no-selection presence, and exact per-scenario replay of scores and earliest-wins selection through WeightedSquaredErrorScorer; (3) GeneratedClientAdoptionTests — red-phase structural gate asserting Package.swift declares swift-openapi-generator + swift-openapi-runtime and that an OpenAPI document describing /api/v1/printer_profiles and /api/v1/colors is committed under Sources/ColorComposerCore; (4) five PaletteAPIClientTests migration-contract tests pinning /api/v1 paths, printer_profile_id query, Accept/Authorization headers, 401/5xx/undecodable error mapping, and envelope decoding across the coming generated-client migration; (5) docs/solver-parity-corpus.md documenting corpus location, schema, consumption, refresh command, and the README section queued for the implementation run. Environment block: this container has NO Swift toolchain ('swift' not on PATH), so no Swift test executed here; bin/lint self-reports 'Swift toolchain not available; skipping build and tests' and exits 0. All new/modified Swift files were grammar-verified with tree-sitter-swift (parse-clean). Semantics were verified by an exact Python re-implementation of the Swift scorer's canonical-order weighted squared error with positive-weight-missing exclusion and unknown-key dropping: all 12 corpus scenarios reproduced 12/12 with 0 mismatches (scores exact, selections exact, tie sets exact), so SolverParityCorpusTests is expected green on a Swift host against the current scorer. GeneratedClientAdoptionTests is intentionally red until the implementation run lands swift-openapi-generator/runtime, the OpenAPI document, and the PaletteAPIClient migration; Package.swift at this head verifiably contains neither dependency and no openapi.{json,yaml,yml} exists under Sources/ColorComposerCore. Parity findings for the PR description: 12 scenarios (5 exact-tie cases incl. symmetric offsets, duplicate vectors, three-way lps tie, zero-weight-channel tie, mixed 8-color palette; 2 no-selection all-excluded cases; missing-candidate/missing-target exclusions confirmed 'never zero brightness'; unknown weight key 'ultraviolet' ignored; all values dyadic so client/server doubles are bit-identical and equality is exact). README.md and Package.swift are outside the test-writing allowlist and were deliberately not touched.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "title": "swift-openapi-generator + swift-openapi-runtime in ColorComposerCore; typed client generated from OpenAPI document; PaletteAPIClient migrated (cache/offline-stale behavior intact)",
+      "status": "failed",
+      "reason": "Red-phase tests-writing run: implementation intentionally deferred to the post-approval implementation run. Package.swift at this head contains neither swift-openapi dependency and no OpenAPI document is committed under Sources/ColorComposerCore, so the structural gate tests fail by design until then. No Swift toolchain in this container, so the tests were not executed; the missing-dependency state is directly inspectable.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedClientAdoptionTests.swift:21", "result": "red_expected_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedClientAdoptionTests.swift:37", "result": "red_expected_not_executed" },
+          { "locator": "ColorComposerCore/Package.swift:1-23", "result": "inspected: no swift-openapi-generator/runtime dependency declared" },
+          { "locator": "ColorComposerCore/Sources/ColorComposerCore/", "result": "inspected: no openapi.{json,yaml,yml} committed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "title": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "reason": "Coverage exists as permanent unit tests (existing ProfileColorCacheTests suite plus five new PaletteAPIClient migration-contract tests), and no behavior changed in this run. Execution is blocked: no Swift toolchain in this container; run `swift test` on a Swift host during the implementation run.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71", "result": "existing_permanent_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:131", "result": "existing_permanent_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:139", "result": "existing_permanent_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:160", "result": "existing_permanent_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:48", "result": "new_contract_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:71", "result": "new_contract_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:81", "result": "new_contract_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:91", "result": "new_contract_test_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:107", "result": "new_contract_test_not_executed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "title": "Solver parity test target in ColorComposerCore tests loading the committed corpus; WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "skipped",
+      "reason": "Deliverable committed at PR head (byte-identical corpus fixture + replay tests). Swift execution blocked by missing toolchain; however an exact Python oracle re-implementing the scorer's semantics (canonical white/red/green/blue/lps order, positive-weight-missing exclusion, unknown-key drop, earliest-wins) reproduced all 12 scenarios with 0 mismatches, so the tests are expected green on a Swift host. Verify with `swift test` in ColorComposerCore/ during the implementation run.",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:31", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:41", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:56", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:81", "result": "committed_not_executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "committed; sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604 matches upstream viamin/color_matching@main priv/parity/v1/corpus.json; python oracle replay 12/12 scenarios, 0 mismatches" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "title": "Document corpus consumption in the README (where it lives, how to refresh)",
+      "status": "skipped",
+      "reason": "README.md is outside the test-writing-phase commit allowlist. Corpus consumption is fully documented in the allowed LID doc docs/solver-parity-corpus.md (location table, schema, consumption walkthrough, refresh curl command) including the exact README section to land in the implementation run.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "committed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "title": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "not_run",
+      "reason": "PR body is authored when the implementation run opens the PR. Parity findings material (12 scenarios; 5 tie cases; 2 all-excluded no-selection cases; missing-candidate/missing-target exclusion; unknown weight key ignored; exact dyadic equality) is recorded in docs/solver-parity-corpus.md and this file for lift-and-shift. Upstream /api/v1 shape check: current hand-rolled client contract (/api/v1/printer_profiles envelope, /api/v1/colors?printer_profile_id= with nested printer_profile) is pinned by PaletteAPIClientTests:14-114; upstream exposes an OpenAPI 3 spec via OpenApiSpex (lib/color_matching_web/api_spec.ex) that the implementation run must diff against.",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "committed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40-114", "result": "committed contract pin of current /api/v1 shapes" }
+        ]
+      }
+    }
+  ]
+}
