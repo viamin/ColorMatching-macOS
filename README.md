@@ -90,6 +90,17 @@ Colors and their measured illuminant responses are fetched from `color_matching`
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
 
+The server publishes an OpenAPI 3 description of these endpoints at `GET /api/v1/openapi.json`. The document is vendored into this repository so the typed client is generated from the published contract, and `OpenAPIContractTests` keeps the vendored copy in step with the shapes the app decodes.
+
+## Solver parity corpus
+
+`WeightedSquaredErrorScorer` deliberately mirrors the server's `WeightedSquaredError` solver, and the app's earliest-wins selection mirrors `IlluminantMatching`. Both sides replay the same golden-vector corpus, so a divergence in tie-breaking, missing-measurement exclusion, or channel weighting fails `swift test` instead of silently changing which color every cell resolves to.
+
+- **Corpus** — `ColorComposerCore/Tests/Fixtures/parity/v1/corpus.json`, a byte-for-byte copy of `priv/parity/v1/corpus.json` in [`color_matching`](https://github.com/viamin/color_matching).
+- **Replay test** — `ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift` asserts every scenario's per-candidate scores, selection, error and tie indices against the server's recorded expectations.
+- **Refresh it** — when the server regenerates its corpus (`mix parity.generate`), copy `priv/parity/v1/corpus.json` over the committed file and update the expected digest in `ParityCorpusLoader.upstreamDigest`. The corpus carries an `algorithm_version`; when it changes, every expectation moved and must be reviewed.
+- **Details** — [`docs/solver-parity-corpus.md`](docs/solver-parity-corpus.md).
+
 ## Development
 
 ```bash
