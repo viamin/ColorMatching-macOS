@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "tie_break": "earliest_palette_index",
+  "generator": "Hand-derived from ColorMatching.WeightedSquaredError semantics (viamin/color_matching). To be replaced by the generated parity corpus from viamin/color_matching#111.",
+  "cases": [
+    {
+      "name": "exact match wins with zero error",
+      "notes": "Baseline: an exactly reproducible target vector must be selected with error 0.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 101, "hex": "#1A2B3C", "responses": { "red": 0.25, "green": 0.75 } },
+        { "id": 102, "hex": "#6E6E6E", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 },
+        { "red": 0.25, "green": 0.75 }
+      ],
+      "expected_selections": [
+        { "color_id": 102, "error": 0.0 },
+        { "color_id": 101, "error": 0.0 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "equidistant tie resolves to the earliest palette entry",
+      "notes": "Both candidates sit exactly 0.5 away (0.25 + 0.25). The Elixir best_match policy keeps the first candidate in palette order; the client must agree.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 201, "hex": "#000000", "responses": { "red": 0.0, "green": 0.0 } },
+        { "id": 202, "hex": "#FFFFFF", "responses": { "red": 1.0, "green": 1.0 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected_selections": [
+        { "color_id": 201, "error": 0.5 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "red-heavy weight flips the winner to the red-matching color",
+      "notes": "Same palette and target as the green-heavy case; only the weights differ. Weights scale each squared channel difference.",
+      "weights": { "white": 0, "red": 4, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 301, "hex": "#C0392B", "responses": { "red": 1.0, "green": 0.0 } },
+        { "id": 302, "hex": "#27AE60", "responses": { "red": 0.0, "green": 1.0 } }
+      ],
+      "targets": [
+        { "red": 1.0, "green": 1.0 }
+      ],
+      "expected_selections": [
+        { "color_id": 301, "error": 1.0 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "green-heavy weight flips the winner to the green-matching color",
+      "notes": "Mirror of the red-heavy case: with green weighted 4x the green-matching color wins.",
+      "weights": { "white": 0, "red": 1, "green": 4, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 301, "hex": "#C0392B", "responses": { "red": 1.0, "green": 0.0 } },
+        { "id": 302, "hex": "#27AE60", "responses": { "red": 0.0, "green": 1.0 } }
+      ],
+      "targets": [
+        { "red": 1.0, "green": 1.0 }
+      ],
+      "expected_selections": [
+        { "color_id": 302, "error": 1.0 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "candidate missing an active-channel measurement is excluded, never zero-filled",
+      "notes": "If color 401's missing green measurement were treated as 0 it would win with error 0.01; exclusion semantics require 402 (error 0.25) to win instead.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 401, "hex": "#7F7F7F", "responses": { "red": 0.6 } },
+        { "id": 402, "hex": "#808080", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.0 }
+      ],
+      "expected_selections": [
+        { "color_id": 402, "error": 0.25 }
+      ],
+      "expected_excluded_count": 1
+    },
+    {
+      "name": "all candidates excluded leaves the cell unmatched",
+      "notes": "Every palette color is missing one active-channel measurement, so no cell can be matched: selection null, error infinite.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 501, "hex": "#FF0000", "responses": { "red": 1.0 } },
+        { "id": 502, "hex": "#00FF00", "responses": { "green": 1.0 } }
+      ],
+      "targets": [
+        { "red": 0.5, "green": 0.5 }
+      ],
+      "expected_selections": [
+        { "color_id": null, "error": null }
+      ],
+      "expected_excluded_count": 2
+    },
+    {
+      "name": "zero-weight channel does not require a measurement",
+      "notes": "Only red is active; a candidate with no other measurements stays eligible (mirrors the exclusion-only-for-active-channels rule).",
+      "weights": { "white": 0, "red": 1, "green": 0, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 601, "hex": "#808080", "responses": { "red": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.8 }
+      ],
+      "expected_selections": [
+        { "color_id": 601, "error": 0.09 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "elixir doctest weights across four channels",
+      "notes": "The ColorMatching.WeightedSquaredError doctest: candidate 701 scores 0.205 against the target and must beat the far candidate 702 (0.7). Blue is weighted 0 so its absence is irrelevant.",
+      "weights": { "white": 0.5, "red": 1, "green": 1, "blue": 0, "lps": 1.5 },
+      "palette": [
+        { "id": 701, "hex": "#C64A35", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 702, "hex": "#101010", "responses": { "white": 0.0, "red": 0.0, "green": 0.0, "lps": 0.0 } }
+      ],
+      "targets": [
+        { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 }
+      ],
+      "expected_selections": [
+        { "color_id": 701, "error": 0.205 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "identical response vectors tie to the earliest occurrence",
+      "notes": "Colors 802 and 803 are measurement-identical; both score 0. The earlier palette entry (802) must be selected.",
+      "weights": { "white": 0, "red": 1, "green": 0, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 801, "hex": "#000000", "responses": { "red": 0.0 } },
+        { "id": 802, "hex": "#800000", "responses": { "red": 0.5 } },
+        { "id": 803, "hex": "#8B0000", "responses": { "red": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.5 }
+      ],
+      "expected_selections": [
+        { "color_id": 802, "error": 0.0 }
+      ],
+      "expected_excluded_count": 0
+    },
+    {
+      "name": "selections follow row-major target order across the grid",
+      "notes": "Four targets in one 4x1 grid: exact matches at each corner color, a decisive midtone match, and the per-cell error values.",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "palette": [
+        { "id": 901, "hex": "#000000", "responses": { "red": 0.0, "green": 0.0 } },
+        { "id": 902, "hex": "#FFFFFF", "responses": { "red": 1.0, "green": 1.0 } },
+        { "id": 903, "hex": "#808080", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "targets": [
+        { "red": 0.0, "green": 0.0 },
+        { "red": 1.0, "green": 1.0 },
+        { "red": 0.5, "green": 0.5 },
+        { "red": 0.75, "green": 0.25 }
+      ],
+      "expected_selections": [
+        { "color_id": 901, "error": 0.0 },
+        { "color_id": 902, "error": 0.0 },
+        { "color_id": 903, "error": 0.0 },
+        { "color_id": 903, "error": 0.125 }
+      ],
+      "expected_excluded_count": 0
+    }
+  ]
+}
