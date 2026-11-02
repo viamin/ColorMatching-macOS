@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Permanent parity-corpus coverage was added, but Swift is unavailable in this container; generated-client migration is intentionally outside this tests-only phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "Generated-client request/response contract test requires the implementation-phase OpenAPI fixture."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache unit tests require rerun after migration; offline-stale badge needs app-level inspection."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "Permanent corpus replay test added; not executed because the swift executable is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/Parity/v1/corpus.json",
+            "result": "Byte-for-byte upstream corpus fixture committed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "README edit is reserved for implementation phase by the test-writing allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "PR description is external evidence to be completed after implementation."
+          }
+        ]
+      }
+    }
+  ]
+}
