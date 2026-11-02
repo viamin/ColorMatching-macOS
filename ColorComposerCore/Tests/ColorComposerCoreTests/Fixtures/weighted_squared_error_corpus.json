@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "source": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "generator": "WeightedSquaredError solver parity corpus",
+    "note": "Committed mirror consumed by ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift; see docs/parity-corpus.md for the schema and refresh procedure."
+  },
+  "cases": [
+    {
+      "id": "single-channel-nearest",
+      "kind": "selection",
+      "description": "Single active channel: the candidate whose measured brightness is nearest the target wins.",
+      "weights": {"red": 1.0},
+      "target": {"red": 1.0},
+      "palette": [
+        {"id": 101, "hex": "#111111", "responses": {"red": {"brightness": 0.1}}},
+        {"id": 102, "hex": "#EEEEEE", "responses": {"red": {"brightness": 0.9}}}
+      ],
+      "expected": {"selected_color_id": 102, "score": 0.01}
+    },
+    {
+      "id": "exact-match-scores-zero",
+      "kind": "selection",
+      "description": "A candidate matching the target on every active channel scores exactly 0 and wins over near misses on either channel.",
+      "weights": {"red": 1.0, "green": 2.0},
+      "target": {"red": 0.3, "green": 0.7},
+      "palette": [
+        {"id": 201, "hex": "#303030", "responses": {"red": {"brightness": 0.3}, "green": {"brightness": 0.7}}},
+        {"id": 202, "hex": "#404040", "responses": {"red": {"brightness": 0.4}, "green": {"brightness": 0.7}}},
+        {"id": 203, "hex": "#505050", "responses": {"red": {"brightness": 0.3}, "green": {"brightness": 0.6}}}
+      ],
+      "expected": {"selected_color_id": 201, "score": 0.0}
+    },
+    {
+      "id": "elixir-doctest-weights",
+      "kind": "selection",
+      "description": "The ColorMatching.WeightedSquaredError doctest vector: fractional weights across four active channels; expected score 0.205.",
+      "weights": {"white": 0.5, "red": 1.0, "green": 1.0, "lps": 1.5},
+      "target": {"white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5},
+      "palette": [
+        {"id": 301, "hex": "#646464", "responses": {"white": {"brightness": 0.0}, "red": {"brightness": 1.0}, "green": {"brightness": 0.0}, "lps": {"brightness": 1.0}}},
+        {"id": 302, "hex": "#5A294D", "responses": {"white": {"brightness": 0.5}, "red": {"brightness": 0.1}, "green": {"brightness": 0.4}, "lps": {"brightness": 0.3}}},
+        {"id": 303, "hex": "#B4B4B4", "responses": {"white": {"brightness": 0.8}, "red": {"brightness": 0.8}, "green": {"brightness": 0.7}, "lps": {"brightness": 0.5}}}
+      ],
+      "expected": {"selected_color_id": 302, "score": 0.205}
+    },
+    {
+      "id": "weights-flip-winner-white-heavy",
+      "kind": "selection",
+      "description": "Weight handling: identical palette and target as the red-heavy case; emphasizing white flips the selection.",
+      "weights": {"white": 10.0, "red": 1.0},
+      "target": {"white": 0.0, "red": 0.0},
+      "palette": [
+        {"id": 401, "hex": "#1A0F0F", "responses": {"white": {"brightness": 0.1}, "red": {"brightness": 0.5}}},
+        {"id": 402, "hex": "#0F1A1A", "responses": {"white": {"brightness": 0.5}, "red": {"brightness": 0.1}}}
+      ],
+      "expected": {"selected_color_id": 401, "score": 0.35}
+    },
+    {
+      "id": "weights-flip-winner-red-heavy",
+      "kind": "selection",
+      "description": "Weight handling: same palette and target as the white-heavy case; emphasizing red flips the selection to the other candidate.",
+      "weights": {"white": 1.0, "red": 10.0},
+      "target": {"white": 0.0, "red": 0.0},
+      "palette": [
+        {"id": 401, "hex": "#1A0F0F", "responses": {"white": {"brightness": 0.1}, "red": {"brightness": 0.5}}},
+        {"id": 402, "hex": "#0F1A1A", "responses": {"white": {"brightness": 0.5}, "red": {"brightness": 0.1}}}
+      ],
+      "expected": {"selected_color_id": 402, "score": 0.35}
+    },
+    {
+      "id": "zero-weight-channel-not-required",
+      "kind": "weighting",
+      "description": "Weight handling: a candidate missing green is still eligible when green's weight is 0; a zero-weight channel never contributes to the score.",
+      "weights": {"red": 1.0},
+      "target": {"red": 0.5, "green": 0.9},
+      "palette": [
+        {"id": 501, "hex": "#323232", "responses": {"red": {"brightness": 0.5}}},
+        {"id": 502, "hex": "#5A5A5A", "responses": {"red": {"brightness": 0.4}, "green": {"brightness": 0.9}}}
+      ],
+      "expected": {"selected_color_id": 501, "score": 0.0}
+    },
+    {
+      "id": "identical-candidates-earliest-wins",
+      "kind": "tie",
+      "description": "Tie: three candidates with identical responses tie at score 0; the earliest in palette order must win (IlluminantMatching.best_match/4 policy).",
+      "weights": {"red": 1.0},
+      "target": {"red": 0.5},
+      "palette": [
+        {"id": 601, "hex": "#AAAAAA", "responses": {"red": {"brightness": 0.5}}},
+        {"id": 602, "hex": "#BBBBBB", "responses": {"red": {"brightness": 0.5}}},
+        {"id": 603, "hex": "#CCCCCC", "responses": {"red": {"brightness": 0.5}}}
+      ],
+      "expected": {"selected_color_id": 601, "score": 0.0}
+    },
+    {
+      "id": "symmetric-offsets-tie-earliest-wins",
+      "kind": "tie",
+      "description": "Tie: 0.4 and 0.6 sit symmetrically around the 0.5 target and their errors tie bitwise in IEEE-754; the earlier candidate (0.4) must win.",
+      "weights": {"green": 1.0},
+      "target": {"green": 0.5},
+      "palette": [
+        {"id": 701, "hex": "#00AA00", "responses": {"green": {"brightness": 0.4}}},
+        {"id": 702, "hex": "#00BB00", "responses": {"green": {"brightness": 0.7}}},
+        {"id": 703, "hex": "#00CC00", "responses": {"green": {"brightness": 0.6}}}
+      ],
+      "expected": {"selected_color_id": 701, "score": 0.01}
+    },
+    {
+      "id": "closest-candidate-missing-channel-excluded",
+      "kind": "exclusion",
+      "description": "Exclusion: candidate 801 is numerically perfect on red but lacks the required green measurement; it must be excluded, never scored as if green were zero.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.5, "green": 0.5},
+      "palette": [
+        {"id": 801, "hex": "#FF0000", "responses": {"red": {"brightness": 0.5}}},
+        {"id": 802, "hex": "#888888", "responses": {"red": {"brightness": 0.6}, "green": {"brightness": 0.6}}}
+      ],
+      "expected": {"selected_color_id": 802, "score": 0.02, "excluded_color_ids": [801]}
+    },
+    {
+      "id": "target-missing-channel-excludes-all",
+      "kind": "exclusion",
+      "description": "Exclusion: the target itself lacks a measurement for a required channel, so every candidate is excluded and no selection is made.",
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.5},
+      "palette": [
+        {"id": 901, "hex": "#FF5500", "responses": {"red": {"brightness": 0.5}, "green": {"brightness": 0.5}}},
+        {"id": 902, "hex": "#AA5500", "responses": {"red": {"brightness": 0.4}, "green": {"brightness": 0.4}}}
+      ],
+      "expected": {"selected_color_id": null, "excluded_color_ids": [901, 902]}
+    },
+    {
+      "id": "all-five-channels-required",
+      "kind": "selection",
+      "description": "Every lighting condition active: a candidate missing even one measurement (blue) is excluded; the exact match wins with score 0.",
+      "weights": {"white": 1.0, "red": 1.0, "green": 1.0, "blue": 1.0, "lps": 1.0},
+      "target": {"white": 0.5, "red": 0.5, "green": 0.5, "blue": 0.5, "lps": 0.5},
+      "palette": [
+        {"id": 1001, "hex": "#808080", "responses": {"white": {"brightness": 0.5}, "red": {"brightness": 0.5}, "green": {"brightness": 0.5}, "blue": {"brightness": 0.5}, "lps": {"brightness": 0.5}}},
+        {"id": 1002, "hex": "#804040", "responses": {"white": {"brightness": 0.5}, "red": {"brightness": 0.5}, "green": {"brightness": 0.5}, "lps": {"brightness": 0.5}}},
+        {"id": 1003, "hex": "#999999", "responses": {"white": {"brightness": 0.6}, "red": {"brightness": 0.6}, "green": {"brightness": 0.6}, "blue": {"brightness": 0.6}, "lps": {"brightness": 0.6}}}
+      ],
+      "expected": {"selected_color_id": 1001, "score": 0.0, "excluded_color_ids": [1002]}
+    }
+  ]
+}
