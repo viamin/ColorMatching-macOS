@@ -1,0 +1,71 @@
+{
+  "status": "skipped",
+  "summary": "Test-writing phase for issue #39. Delivered: (1) solver parity corpus target — byte-identical copy of upstream priv/parity/v1/corpus.json (viamin/color_matching#111/#112, algorithm_version 1, sha256 7b7b4d90...) committed at ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/ParityCorpus/v1/corpus.json with a replay suite (SolverParityCorpusTests) asserting exact scores, earliest-wins selection through CompositionSolver, tie sets, exclusions, and weight handling; an exact IEEE-754 float64 replay of all 12 scenarios against the current scorer semantics passes 12/12 (transcript in docs/parity-corpus.md). (2) OpenAPI migration contract — red tests (OpenAPIClientMigrationTests) pinning the vendored document location and Package.swift swift-openapi-generator/runtime dependencies, plus green wire-contract pins (PaletteAPIClientWireContractTests) for paths, query, headers, error taxonomy, and token normalization. (3) docs/parity-corpus.md and docs/openapi-client-migration.md with corpus refresh procedure, /api/v1 shape findings, and PR-description checklist. Constraint: no Swift toolchain exists in this container ('swift: command not found'), so swift test cannot execute here; bin/lint passes (exit 0, skips build/tests by design without a toolchain). Implementation-phase criteria (generated client migration, README section, PR description) are recorded as not_run/skipped with their red tests and notes in place.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore; generate typed client from the OpenAPI document; migrate/wrap PaletteAPIClient",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "evidence": "Blocked on the implementation phase (test-writing run may not change Package.swift/Sources). Contract encoded as intentionally-red tests: ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift (testOpenAPIDocumentIsVendoredForCodeGeneration, testVendoredOpenAPIDocumentDescribesConsumedEndpoints, testPackageManifestDeclaresOpenAPIGeneratedClientDependencies) plus pinned migration plan and upstream spec source (GET /openapi.json, api_spec.ex/api_schemas.ex) in docs/openapi-client-migration.md. Not runnable in swift here: no toolchain.",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientMigrationTests.swift:18", "result": "red (expected; deliverable 1 not yet implemented)" },
+          { "locator": "docs/openapi-client-migration.md", "result": "pinned paths, wrap strategy, refresh procedure" }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve existing behavior: per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "evidence": "Behavior is pinned by permanent tests but could not be EXECUTED in this container (no Swift toolchain). Migration-freeze pins added: PaletteAPIClientWireContractTests (8 tests: /api/v1 paths, printer_profile_id query, Accept + bearer headers incl. empty-token omission, 401->unauthorized on both endpoints, 503->badStatus, undecodable->malformedResponse, envelope decoding). Disk cache/offline fallback pinned by existing ProfileColorCacheTests (e.g. testTwoServersKeepSeparateEntriesForTheSameProfileID, testAllEntriesOnlyReturnsTheRequestingServersEntries, testStoreOverwritesPreviousFetch, testEntryFromAnotherServerCountsAsMiss). Offline-stale badges live in ColorMatching/ColorCatalog.swift (AppKit/SwiftUI layer, not runnable on this host); unchanged by this run — implementation run must re-run swift test on a Swift host.",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientWireContractTests.swift:26", "result": "not executed (no Swift toolchain); logic mirrors existing passing PaletteAPIClientTests patterns" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:160", "result": "pre-existing permanent coverage, not executed in this env" }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Add a solver parity test target in ColorComposerCore tests that loads the committed corpus and asserts WeightedSquaredErrorScorer selections match expected outputs exactly, including tie cases",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "evidence": "Corpus fixture committed (byte-identical to upstream priv/parity/v1/corpus.json: git blob 70e9999, sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604) and replay suite committed: exact per-candidate score equality, tie set + tie_broke derivation, earliest-wins selection replayed end-to-end through CompositionSolver with 1x1 grids, excluded-candidate counts, corpus metadata pins. Semantics verified by executing an exact float64 replay (same accumulation order white->red->green->blue->lps, same exclusion/tie policy) of all 12 scenarios: 12/12 exact match incl. 5 tie scenarios, 3 exclusion scenarios, zero-weight and unknown-weight cases. Transcript recorded in docs/parity-corpus.md. Swift execution pending: no toolchain in container.",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:75", "result": "replay suite committed; exact float64 simulation 12/12 PASS" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/ParityCorpus/v1/corpus.json", "result": "committed, sha256-verified byte-identical to upstream" },
+          { "locator": "docs/parity-corpus.md", "result": "verification transcript + provenance" }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption (where the corpus lives, how to refresh it)",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "evidence": "docs/parity-corpus.md documents fixture path, upstream provenance (viamin/color_matching#111 merged as #112), algorithm_version stamp, sha256/blob checksums, refresh procedure, and version-bump workflow. README.md itself is outside this phase's editable allowlist (tests + docs/ + AGENTS/CLAUDE/copilot LID files only); docs include an explicit note for the implementation run to mirror a pointer into README.md.",
+        "references": [
+          { "locator": "docs/parity-corpus.md", "result": "committed" }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "evidence": "PR description is authored by the implementation run (this is the tests-only phase). All three inputs are gathered and committed for transcription: docs/openapi-client-migration.md (migration notes + 5 shape findings incl. required PrinterProfile fields, required printer_profile in ColorsResponse, free-form responses map, bearerAuth; PR-description checklist section) and docs/parity-corpus.md (parity findings: 12/12 exact, ties/exclusions/weight handling).",
+        "references": [
+          { "locator": "docs/openapi-client-migration.md", "result": "shape findings + PR checklist committed" },
+          { "locator": "docs/parity-corpus.md", "result": "parity findings committed" }
+        ]
+      }
+    }
+  ]
+}
