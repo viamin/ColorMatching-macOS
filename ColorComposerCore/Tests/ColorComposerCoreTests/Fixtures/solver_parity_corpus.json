@@ -1,0 +1,523 @@
+{
+  "version": 1,
+  "scorer": "weighted_squared_error",
+  "source": "Placeholder parity corpus authored for ColorMatching-macOS issue #39. To be replaced by (or merged with) the generated corpus from viamin/color_matching#111. Semantics mirror ColorMatching.WeightedSquaredError: sum over channels with weight > 0 of weight * (candidate - target)^2, accumulated in canonical channel order (white, red, green, blue, lps); a candidate or target missing a measurement for any required channel is excluded \u2014 missing is never zero; ties resolve to the earliest palette entry.",
+  "channel_order": [
+    "white",
+    "red",
+    "green",
+    "blue",
+    "lps"
+  ],
+  "tie_policy": "earliest_palette_entry_wins",
+  "cases": [
+    {
+      "id": "exact_match_zero_score",
+      "description": "A candidate identical to the target scores exactly zero and wins.",
+      "palette": [
+        {
+          "id": 1,
+          "responses": {
+            "white": 0.4,
+            "red": 0.9
+          }
+        },
+        {
+          "id": 2,
+          "responses": {
+            "white": 0.5,
+            "red": 0.8
+          }
+        },
+        {
+          "id": 3,
+          "responses": {
+            "white": 0.0,
+            "red": 0.0
+          }
+        }
+      ],
+      "target": {
+        "white": 0.4,
+        "red": 0.9
+      },
+      "weights": {
+        "white": 1.0,
+        "red": 1.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 1,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.0
+      }
+    },
+    {
+      "id": "elixir_doctest_0_205",
+      "description": "The ColorMatching.WeightedSquaredError doctest inputs: winning candidate scores 0.205. Blue has zero weight, so candidates without a blue measurement are still eligible.",
+      "palette": [
+        {
+          "id": 101,
+          "responses": {
+            "white": 0.5,
+            "red": 0.1,
+            "green": 0.4,
+            "lps": 0.3
+          }
+        },
+        {
+          "id": 102,
+          "responses": {
+            "white": 0.9,
+            "red": 0.6,
+            "green": 0.9,
+            "blue": 0.2,
+            "lps": 0.8
+          }
+        },
+        {
+          "id": 103,
+          "responses": {
+            "white": 0.0,
+            "red": 0.0,
+            "green": 0.0,
+            "lps": 0.0
+          }
+        }
+      ],
+      "target": {
+        "white": 0.8,
+        "red": 0.2,
+        "green": 0.7,
+        "blue": 0.1,
+        "lps": 0.5
+      },
+      "weights": {
+        "white": 0.5,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 1.5
+      },
+      "expected": {
+        "selected_id": 101,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.20499999999999996
+      }
+    },
+    {
+      "id": "tie_identical_vectors_earliest_wins",
+      "description": "Two palette entries carry identical measured response vectors: their scores tie exactly and the earlier palette entry (id 11) must win.",
+      "palette": [
+        {
+          "id": 11,
+          "responses": {
+            "red": 0.3,
+            "green": 0.6
+          }
+        },
+        {
+          "id": 12,
+          "responses": {
+            "red": 0.3,
+            "green": 0.6
+          }
+        },
+        {
+          "id": 13,
+          "responses": {
+            "red": 0.9,
+            "green": 0.1
+          }
+        }
+      ],
+      "target": {
+        "red": 0.4,
+        "green": 0.5
+      },
+      "weights": {
+        "white": 0.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 11,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.020000000000000004,
+        "tie_ids": [
+          11,
+          12
+        ]
+      }
+    },
+    {
+      "id": "tie_symmetric_mirror_earliest_wins",
+      "description": "Candidates mirrored around the target on two equally-weighted channels: equal sums, exact floating-point tie, earliest entry (id 21) wins.",
+      "palette": [
+        {
+          "id": 21,
+          "responses": {
+            "white": 0.2,
+            "red": 0.8
+          }
+        },
+        {
+          "id": 22,
+          "responses": {
+            "white": 0.8,
+            "red": 0.2
+          }
+        }
+      ],
+      "target": {
+        "white": 0.5,
+        "red": 0.5
+      },
+      "weights": {
+        "white": 1.0,
+        "red": 1.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 21,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.18000000000000002,
+        "tie_ids": [
+          21,
+          22
+        ]
+      }
+    },
+    {
+      "id": "exclusion_missing_required_channel",
+      "description": "The numerically perfect candidate (id 31) lacks the required lps measurement, so it is excluded \u2014 never scored as zero brightness \u2014 and the best complete candidate wins.",
+      "palette": [
+        {
+          "id": 31,
+          "responses": {
+            "red": 0.5,
+            "green": 0.5
+          }
+        },
+        {
+          "id": 32,
+          "responses": {
+            "red": 0.55,
+            "green": 0.45,
+            "lps": 0.5
+          }
+        },
+        {
+          "id": 33,
+          "responses": {
+            "red": 1.0,
+            "green": 1.0,
+            "lps": 1.0
+          }
+        }
+      ],
+      "target": {
+        "red": 0.5,
+        "green": 0.5,
+        "lps": 0.5
+      },
+      "weights": {
+        "white": 0.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 1.0
+      },
+      "expected": {
+        "selected_id": 32,
+        "selected_index": 1,
+        "excluded_ids": [
+          31
+        ],
+        "score": 0.005000000000000003
+      }
+    },
+    {
+      "id": "zero_weight_channel_missing_does_not_exclude",
+      "description": "Blue has weight zero, so a candidate with no blue measurement (id 41) stays eligible and wins on the active channel; the extra blue reading on id 42 is ignored.",
+      "palette": [
+        {
+          "id": 41,
+          "responses": {
+            "red": 0.7
+          }
+        },
+        {
+          "id": 42,
+          "responses": {
+            "red": 0.2,
+            "blue": 0.9
+          }
+        }
+      ],
+      "target": {
+        "red": 0.7,
+        "blue": 0.1
+      },
+      "weights": {
+        "white": 0.0,
+        "red": 1.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 41,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.0
+      }
+    },
+    {
+      "id": "weight_scales_channel_white_heavy",
+      "description": "With white weighted 10x, the candidate closest on white (id 52) wins despite being far on red.",
+      "palette": [
+        {
+          "id": 51,
+          "responses": {
+            "white": 0.0,
+            "red": 1.0
+          }
+        },
+        {
+          "id": 52,
+          "responses": {
+            "white": 1.0,
+            "red": 0.0
+          }
+        }
+      ],
+      "target": {
+        "white": 1.0,
+        "red": 1.0
+      },
+      "weights": {
+        "white": 10.0,
+        "red": 1.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 52,
+        "selected_index": 1,
+        "excluded_ids": [],
+        "score": 1.0
+      }
+    },
+    {
+      "id": "weight_scales_channel_red_heavy",
+      "description": "Same palette and target as the white-heavy case, but red weighted 10x flips the selection to id 51 \u2014 weights must scale each channel's squared contribution.",
+      "palette": [
+        {
+          "id": 51,
+          "responses": {
+            "white": 0.0,
+            "red": 1.0
+          }
+        },
+        {
+          "id": 52,
+          "responses": {
+            "white": 1.0,
+            "red": 0.0
+          }
+        }
+      ],
+      "target": {
+        "white": 1.0,
+        "red": 1.0
+      },
+      "weights": {
+        "white": 1.0,
+        "red": 10.0,
+        "green": 0.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 51,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 1.0
+      }
+    },
+    {
+      "id": "target_missing_required_channel_all_excluded",
+      "description": "The target itself lacks a measurement on a required channel (green), so every candidate is excluded and no selection exists.",
+      "palette": [
+        {
+          "id": 61,
+          "responses": {
+            "red": 0.5,
+            "green": 0.5
+          }
+        },
+        {
+          "id": 62,
+          "responses": {
+            "red": 0.2,
+            "green": 0.8
+          }
+        }
+      ],
+      "target": {
+        "red": 0.5
+      },
+      "weights": {
+        "white": 0.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": null,
+        "selected_index": null,
+        "excluded_ids": [
+          61,
+          62
+        ],
+        "score": null
+      }
+    },
+    {
+      "id": "zero_brightness_is_measured_not_missing",
+      "description": "Measured brightness of exactly 0.0 is a valid measurement, not a missing one: candidate 71 stays eligible and matches an all-zero target exactly.",
+      "palette": [
+        {
+          "id": 71,
+          "responses": {
+            "red": 0.0,
+            "green": 0.0
+          }
+        },
+        {
+          "id": 72,
+          "responses": {
+            "red": 0.9,
+            "green": 0.9
+          }
+        }
+      ],
+      "target": {
+        "red": 0.0,
+        "green": 0.0
+      },
+      "weights": {
+        "white": 0.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 0.0,
+        "lps": 0.0
+      },
+      "expected": {
+        "selected_id": 71,
+        "selected_index": 0,
+        "excluded_ids": [],
+        "score": 0.0
+      }
+    },
+    {
+      "id": "five_channel_full_vectors",
+      "description": "Full five-channel vectors with fractional weights across a six-color palette: a representative non-trivial selection.",
+      "palette": [
+        {
+          "id": 81,
+          "responses": {
+            "white": 0.25,
+            "red": 0.55,
+            "green": 0.15,
+            "blue": 0.85,
+            "lps": 0.35
+          }
+        },
+        {
+          "id": 82,
+          "responses": {
+            "white": 0.4,
+            "red": 0.7,
+            "green": 0.3,
+            "blue": 0.7,
+            "lps": 0.5
+          }
+        },
+        {
+          "id": 83,
+          "responses": {
+            "white": 0.1,
+            "red": 0.2,
+            "green": 0.05,
+            "blue": 0.95,
+            "lps": 0.1
+          }
+        },
+        {
+          "id": 84,
+          "responses": {
+            "white": 0.35,
+            "red": 0.65,
+            "green": 0.25,
+            "blue": 0.75,
+            "lps": 0.45
+          }
+        },
+        {
+          "id": 85,
+          "responses": {
+            "white": 0.9,
+            "red": 0.95,
+            "green": 0.85,
+            "blue": 0.1,
+            "lps": 0.9
+          }
+        },
+        {
+          "id": 86,
+          "responses": {
+            "white": 0.3,
+            "red": 0.6,
+            "green": 0.2,
+            "blue": 0.8,
+            "lps": 0.4
+          }
+        }
+      ],
+      "target": {
+        "white": 0.33,
+        "red": 0.58,
+        "green": 0.24,
+        "blue": 0.76,
+        "lps": 0.44
+      },
+      "weights": {
+        "white": 1.25,
+        "red": 0.75,
+        "green": 2.0,
+        "blue": 0.5,
+        "lps": 1.0
+      },
+      "expected": {
+        "selected_id": 84,
+        "selected_index": 3,
+        "excluded_ids": [],
+        "score": 0.004525000000000005
+      }
+    }
+  ]
+}
