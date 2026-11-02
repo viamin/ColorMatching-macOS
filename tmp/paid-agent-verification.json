@@ -1,0 +1,56 @@
+{
+  "status": "failed",
+  "summary": "Test-writing run for issue #39. Added a solver parity test target (SolverParityCorpusTests) with a sample fixture that exercises CompositionSolver/WeightedSquaredErrorScorer selection including tie and exclusion cases, plus a test asserting the real viamin/color_matching#111 corpus is vendored — it fails by design because that corpus has not been published upstream yet. Added ColorCatalogOfflineBehaviorTests, previously-missing regression coverage pinning per-server/profile disk caching, the offline-stale badge, and cached-profile-list fallback that PaletteAPIClient's OpenAPI-client migration must preserve. The OpenAPI client adoption itself (Package.swift dependency + generated client + PaletteAPIClient migration) and the README update are implementation-scope changes out of bounds for this test-writing run and are not started. No Swift toolchain is available in this sandbox (Linux container, no `swift`/`xcodebuild`), so none of these tests could be executed here; correctness was verified by careful manual tracing against the existing source and the already-compiling sibling test files (PaletteAPIClientTests, ScorerTests, SolverTests, ProfileColorCacheTests) they were modeled on.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-migration",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift (unchanged)",
+            "result": "not_started"
+          }
+        ]
+      },
+      "note": "Adding swift-openapi-generator/runtime and migrating PaletteAPIClient requires editing Package.swift and Sources/, which are implementation files out of scope for this test-writing run (TDD boundary: test paths and docs/ only). Also blocked on viamin/color_matching#110 (OpenAPI spec) not yet published as of this PR. Deferred to the implementation run."
+    },
+    {
+      "id": "AC-2-preserve-existing-cache-offline-behavior",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorMatchingTests/ColorCatalogOfflineBehaviorTests.swift:43 testSuccessfulFetchPersistsPerServerProfileColorCacheToDisk", "result": "not_run" },
+          { "locator": "ColorMatchingTests/ColorCatalogOfflineBehaviorTests.swift:64 testUnreachableServerFallsBackToCachedProfilesAndColorsBadgedAsStale", "result": "not_run" },
+          { "locator": "ColorMatchingTests/ColorCatalogOfflineBehaviorTests.swift:96 testUnreachableServerWithNoCacheReportsFailureWithoutStaleBadge", "result": "not_run" }
+        ]
+      },
+      "note": "ColorCatalog (the client+cache integration point) had zero prior test coverage. These three new tests pin today's per-server/profile disk-cache write, the offline-stale badge + message, and the cached-profile-list fallback, so the upcoming OpenAPI client migration can be checked against them. Could not execute: this sandbox has no Swift toolchain (no swift/xcodebuild binary), and ColorMatchingTests additionally requires Xcode (xcodegen-generated project, TEST_HOST app bundle) which is unavailable on Linux. A maintainer/CI must run `xcodebuild test -scheme ColorMatching` (or equivalent) to get a real pass/fail. Existing ProfileColorCacheTests.swift (69 tests) and PaletteAPIClientTests.swift already cover the lower-level disk-cache and HTTP-client contracts and are unaffected by this run."
+    },
+    {
+      "id": "AC-3-solver-parity-test-target",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:38 testHarnessMatchesLocalSampleCorpus", "result": "not_run" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:44 testVendoredCorpusMatchesScorerSelectionsExactly", "result": "failed" }
+        ]
+      },
+      "note": "testVendoredCorpusMatchesScorerSelectionsExactly is the intended red-phase failure: it XCTFails with an explicit diagnostic because the committed corpus from viamin/color_matching#111 does not exist in this repo yet (upstream had not published it as of this PR). testHarnessMatchesLocalSampleCorpus proves the loader + CompositionSolver/WeightedSquaredErrorScorer wiring itself is correct against a committed sample fixture covering a normal selection, an earliest-candidate tie, a single-candidate exclusion, and an all-candidates-excluded case — by inspection it should pass once run, but could not be executed here (no Swift toolchain in this sandbox). Neither test changes CompositionScorer/WeightedSquaredErrorScorer semantics, consistent with the issue's non-goals."
+    },
+    {
+      "id": "AC-4-readme-corpus-documentation",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "interim" }
+        ]
+      },
+      "note": "The root README.md is not in this run's permitted-edit paths (test paths or docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md). Wrote docs/solver-parity-corpus.md now with the corpus location, schema, and refresh steps; its content should be folded into the README's existing 'Palette data' section during the implementation run."
+    }
+  ]
+}
