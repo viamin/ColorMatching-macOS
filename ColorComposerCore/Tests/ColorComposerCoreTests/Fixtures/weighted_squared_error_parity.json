@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "solver": "WeightedSquaredError"
+  },
+  "cases": [
+    {
+      "name": "selects the lowest weighted squared error across active channels",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "hex": "#111111", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 102, "hex": "#222222", "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 } }
+      ],
+      "expected_selected_color_id": 102
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "hex": "#111111", "responses": { "red": 0.4 } },
+        { "id": 202, "hex": "#222222", "responses": { "red": 0.6 } }
+      ],
+      "expected_selected_color_id": 201
+    },
+    {
+      "name": "candidates missing an active response are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "hex": "#111111", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#222222", "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_selected_color_id": 302
+    },
+    {
+      "name": "zero-weight channels do not exclude a candidate",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 0.9 },
+      "candidates": [
+        { "id": 401, "hex": "#111111", "responses": { "red": 0.5 } },
+        { "id": 402, "hex": "#222222", "responses": { "red": 0.4, "blue": 0.9 } }
+      ],
+      "expected_selected_color_id": 401
+    },
+    {
+      "name": "channel weights influence selection",
+      "weights": { "red": 4.0, "green": 1.0 },
+      "target": { "red": 0.6, "green": 0.6 },
+      "candidates": [
+        { "id": 501, "hex": "#111111", "responses": { "red": 0.6, "green": 0.0 } },
+        { "id": 502, "hex": "#222222", "responses": { "red": 0.0, "green": 0.6 } }
+      ],
+      "expected_selected_color_id": 501
+    }
+  ]
+}
