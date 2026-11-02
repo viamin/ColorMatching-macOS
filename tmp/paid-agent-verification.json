@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-authoring phase: added the committed v1 solver parity corpus and its permanent data-driven test. Swift is unavailable in this container, so the test suite could not be executed. Generated-client migration, cache behavior verification, README update, and PR description belong to the subsequent implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "existing behavioral client contract; generated-client migration not implemented in this tests-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "existing cache/offline-fallback coverage requires execution in a Swift-enabled environment"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "permanent corpus replay test added; not run because swift is not installed"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/color_matching_solver_parity_v1.json:1",
+            "result": "fixture SHA-1 matches upstream viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh instructions recorded in allowed docs path; README modification is prohibited in this tests-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json:1",
+            "result": "no pull request is opened during this tests-only, no-push run"
+          }
+        ]
+      }
+    }
+  ]
+}
