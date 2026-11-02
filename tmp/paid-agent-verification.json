@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: added the permanent parity-corpus harness and corpus-consumption documentation. Swift is unavailable in this container, so no Swift test result can be recorded.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "not_run: Swift executable unavailable; generated-client implementation is deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:64",
+            "result": "not_run: Swift executable unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: Swift executable unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "committed parity fixture includes ties, exclusions, and zero-weight cases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:93",
+            "result": "Documents corpus location, upstream source, and refresh procedure."
+          }
+        ]
+      }
+    }
+  ]
+}
