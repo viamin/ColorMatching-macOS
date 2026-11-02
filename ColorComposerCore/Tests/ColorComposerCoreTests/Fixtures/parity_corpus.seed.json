@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "source": "seed — hand-derived harness validation (includes the WeightedSquaredError doctest); NOT the upstream parity corpus from viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "doctest weights produce expected score",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "hex": "#808080", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } }
+      ],
+      "expected_selection": 101,
+      "expected_score": 0.205,
+      "expected_excluded_ids": []
+    },
+    {
+      "name": "nearest by weighted error wins",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 1, "hex": "#e6e6e6", "responses": { "red": 0.9 } },
+        { "id": 2, "hex": "#737373", "responses": { "red": 0.45 } },
+        { "id": 3, "hex": "#cccccc", "responses": { "red": 0.8 } }
+      ],
+      "expected_selection": 2,
+      "expected_score": 0.0025,
+      "expected_excluded_ids": []
+    },
+    {
+      "name": "tie resolves to earliest candidate",
+      "weights": { "green": 1.0 },
+      "target": { "green": 0.5 },
+      "candidates": [
+        { "id": 11, "hex": "#99f299", "responses": { "green": 0.6 } },
+        { "id": 12, "hex": "#669966", "responses": { "green": 0.4 } },
+        { "id": 13, "hex": "#000000", "responses": { "green": 0.0 } }
+      ],
+      "expected_selection": 11,
+      "expected_score": 0.01,
+      "expected_excluded_ids": []
+    },
+    {
+      "name": "candidate missing required channel is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 21, "hex": "#7f7f7f", "responses": { "red": 0.5, "green": 0.5 } },
+        { "id": 22, "hex": "#7f0000", "responses": { "red": 0.5 } },
+        { "id": 23, "hex": "#667f99", "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected_selection": 21,
+      "expected_score": 0.0,
+      "expected_excluded_ids": [22]
+    },
+    {
+      "name": "target missing required channel excludes every candidate",
+      "weights": { "lps": 1.0 },
+      "target": {},
+      "candidates": [
+        { "id": 31, "hex": "#cc7f00", "responses": { "lps": 0.2 } },
+        { "id": 32, "hex": "#000000", "responses": {} }
+      ],
+      "expected_selection": null,
+      "expected_excluded_ids": [31, 32]
+    },
+    {
+      "name": "zero-weight channels do not exclude",
+      "weights": { "white": 1.0 },
+      "target": { "white": 0.8 },
+      "candidates": [
+        { "id": 41, "hex": "#7f7f7f", "responses": { "white": 0.5 } },
+        { "id": 42, "hex": "#b2b2b2", "responses": { "white": 0.7 } }
+      ],
+      "expected_selection": 42,
+      "expected_score": 0.01,
+      "expected_excluded_ids": []
+    }
+  ]
+}

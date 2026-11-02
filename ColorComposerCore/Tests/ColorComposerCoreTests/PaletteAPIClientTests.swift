@@ -37,6 +37,70 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    // MARK: - Wire contract pinned for the generated-client migration (issue #39)
+
+    /// These tests restate the exact `/api/v1` wire behavior `PaletteAPIClient`
+    /// has today so the swift-openapi-generator migration must keep it: the
+    /// `printer_profile_id` query parameter, the snake_case envelopes, and the
+    /// error mapping (401 → unauthorized, other non-2xx → badStatus,
+    /// undecodable 2xx body → malformedResponse).
+
+    func testFetchColorsSendsPrinterProfileIDQueryAndDecodesEnvelope() async throws {
+        let lock = NSLock()
+        var queryItems: [URLQueryItem] = []
+        let client = makeClient { request in
+            lock.lock()
+            queryItems = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            lock.unlock()
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 3)
+
+        XCTAssertEqual(queryItems, [URLQueryItem(name: "printer_profile_id", value: "3")])
+        XCTAssertEqual(fetched.colors.map(\.id), [123])
+        XCTAssertEqual(fetched.colors.first?.responses["red"]?.brightness, 0.87)
+        XCTAssertEqual(fetched.profile?.id, 1)
+    }
+
+    func testFetchColorsThrowsBadStatusForServerErrorsOtherThan401() async {
+        let client = makeClient { request in
+            (.init(statusCode: 500, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchColors(printerProfileID: 3)) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(500))
+        }
+    }
+
+    func testFetchPrinterProfilesThrowsMalformedResponseForUndecodableBody() async {
+        let client = makeClient { request in
+            (.init(statusCode: 200, url: request.url!), Data("{\"unexpected\":true}".utf8))
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.fetchPrinterProfiles()) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .malformedResponse)
+        }
+    }
+
+    func testTestConnectionSucceedsOnAny2xx() async throws {
+        let client = makeClient { request in
+            (.init(statusCode: 204, url: request.url!), Data())
+        }
+
+        _ = try await client.testConnection()
+    }
+
+    func testTestConnectionThrowsBadStatusOnNon2xx() async {
+        let client = makeClient { request in
+            (.init(statusCode: 503, url: request.url!), Data())
+        }
+
+        await XCTAssertThrowsErrorAsync(try await client.testConnection()) { error in
+            XCTAssertEqual(error as? PaletteAPIError, .badStatus(503))
+        }
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +120,30 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 1,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 123,
+              "name": "Red 12",
+              "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement"}
+              }
             }
           ]
         }
