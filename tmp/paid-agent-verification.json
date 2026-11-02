@@ -1,0 +1,73 @@
+{
+  "status": "skipped",
+  "summary": "Tests-only run for issue #39. Delivered: solver parity corpus committed as a fixture (byte-identical to viamin/color_matching priv/parity/v1/corpus.json, sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604), a WeightedSquaredErrorScorer+CompositionSolver parity suite replaying all 12 scenarios (scores, exclusions, earliest-wins ties, winner hex/error), /api/v1 OpenAPI wire-shape contract tests pinning the published response schemas, and docs/solver-parity-corpus.md (corpus location, refresh procedure, shape-audit findings). Corpus expectations were independently replayed in Python: all 12 scenarios exact. swift test could NOT be executed: this container has no Swift toolchain and none is installable; lint/test commands are not configured for this repo. The generated-client migration (swift-openapi-generator) is implementation-phase work outside this run's test-only allowlist.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "description": "Add swift-openapi-generator + swift-openapi-runtime to ColorComposerCore, generate typed client, migrate PaletteAPIClient",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/APIv1OpenAPIContractTests.swift", "result": "blocked: swift test cannot run (no Swift toolchain in container); tests pin the /api/v1 wire shapes the migrated client must keep decoding" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/TestSupport.swift", "result": "blocked: shared MockURLProtocol extracted for client tests; not executed (no Swift toolchain)" }
+        ],
+        "reason": "Implementation-phase: requires Package.swift + Sources changes, outside the test-only allowlist of this run. Upstream spec confirmed published at GET /api/v1/openapi.json (router.ex + OpenApiController on color_matching main)."
+      }
+    },
+    {
+      "id": "AC-2",
+      "description": "Preserve per-server/profile color caching, offline-stale badges, cached profile fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Sources/ColorComposerCore/ProfileColorCache.swift", "result": "not modified in this run (no production code touched)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "blocked: existing permanent coverage unchanged but not executable in this container (no Swift toolchain)" }
+        ],
+        "reason": "No production code changed, so behavior is unchanged by construction; the existing suite must be executed in an environment with a Swift toolchain (CI/implementation run)."
+      }
+    },
+    {
+      "id": "AC-3",
+      "description": "Solver parity test target loading the committed corpus; selections match exactly, including ties",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:46", "result": "blocked: written and reviewed; not executed (no Swift toolchain in container)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:71", "result": "blocked: solver-level 1x1 replay incl. all-excluded; not executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ParityCorpus.swift", "result": "blocked: fixture decoder/loader; not executed" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "passed: byte-identical to upstream priv/parity/v1/corpus.json (sha256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)" },
+          { "locator": "external: independent Python replay of the corpus (12/12 scenarios exact: scores, exclusions, earliest-wins ties, selected hex/error)", "result": "passed" }
+        ],
+        "reason": "Test artifacts complete; swift test execution requires a Swift toolchain absent from this container. Independent replay verifies the corpus expectations against the documented semantics; Swift-side pass/fail must be confirmed by CI or the implementation run."
+      }
+    },
+    {
+      "id": "AC-4",
+      "description": "Document corpus consumption (where it lives, how to refresh)",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "passed: documents upstream source, local fixture path, refresh commands (curl / mix parity.generate), algorithm-version bump policy, and the /api/v1 shape audit" }
+        ],
+        "reason": "README.md is outside this run's allowlist (docs/ is the permitted LID location); the implementation run should link this doc from README.md's Palette data section."
+      }
+    },
+    {
+      "id": "AC-5",
+      "description": "PR description records generated-client migration notes, /api/v1 shape changes found, parity test results",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md#shape-audit-2026-11-spec-at-main", "result": "passed: shape audit recorded — no breaking /api/v1 changes; spec requires printer_profile and color fields name/palette_id/sort_order that the client already decodes leniently; responses typed free-form by spec, documented shape decoded" },
+          { "locator": "commit 7888a1f", "result": "parity findings: 12/12 scenarios replay exactly in independent verification — 5 tie scenarios (earliest index wins), 2 exclusion scenarios (missing positive-weight channel on candidate/target), unknown weight keys ignored, zero-weight channels neither exclude nor contribute" }
+        ],
+        "reason": "The PR body is published by Paid after this run; the migration notes for the generated client itself land with the implementation run."
+      }
+    }
+  ]
+}
