@@ -152,7 +152,13 @@ struct OpenAPIDocument {
     private static func vendoredDocumentURL() throws -> URL {
         let roots = searchRoots()
         let matches = roots.flatMap(matchingDocuments(under:))
-        guard let url = matches.sorted(by: { $0.path < $1.path }).first else {
+        // Prefer the canonical name when several documents are vendored.
+        let ordered = matches.sorted { lhs, rhs in
+            let lhsRank = lhs.lastPathComponent.lowercased() == "openapi.json" ? 0 : 1
+            let rhsRank = rhs.lastPathComponent.lowercased() == "openapi.json" ? 0 : 1
+            return lhsRank == rhsRank ? lhs.path < rhs.path : lhsRank < rhsRank
+        }
+        guard let url = ordered.first else {
             throw LoaderError.documentNotFound(roots.map(\.path))
         }
         return url
