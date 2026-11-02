@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "summary": "Test-writing run for issue #39. Added a solver parity test target (ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift + ParityCorpus.swift) that vendors the real viamin/color_matching#111 corpus (12 scenarios, including three tie cases and two all-excluded cases) and replays WeightedSquaredErrorScorer against it with earliest-index-wins selection. The OpenAPI client migration and README documentation are implementation-phase work out of scope for this TDD-boundary (tests/docs-only) run and are recorded as not_run below.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-migration",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift",
+            "result": "unchanged - swift-openapi-generator/runtime dependency and generated client are implementation-phase work; this run is restricted to test paths and the LID doc allowlist (docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md) per the TDD boundary, so PaletteAPIClient was not touched"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-preserve-cache-offline-fallback-behavior",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "pre-existing coverage left untouched; no code changed this run that could affect cache/offline/fallback behavior. Re-verification is implementation-phase work for the follow-up run that performs the client migration"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-solver-parity-test-target",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:23 (testEveryScenarioMatchesExpectedScoresAndSelection)",
+            "result": "written; asserts per-candidate scores/exclusions, selected index, selected hex, selected error, and tied-index score agreement for all 12 corpus scenarios"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:17 (testCorpusDeclaresExpectedScorerAndSelectionPolicy)",
+            "result": "written; pins the corpus's declared scorer (ColorMatching.WeightedSquaredError) and selection policy (earliest-index-wins) so a future corpus refresh with a different policy fails loudly"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json",
+            "result": "vendored verbatim from https://raw.githubusercontent.com/viamin/color_matching/main/priv/parity/v1/corpus.json (algorithm_version 1, 12 scenarios) after confirming issue viamin/color_matching#111 is closed upstream"
+          },
+          {
+            "locator": "manual verification (no Swift toolchain in this sandbox; bin/lint confirms and no-ops: 'Swift toolchain not available; skipping build and tests')",
+            "result": "re-implemented the WeightedSquaredErrorScorer algorithm and earliest-index-wins selection in Python and replayed it against the vendored corpus.json directly: 12/12 scenarios match expected scores, exclusions, selected index/hex/error, and tied-index sets exactly. Swift source was reviewed line-by-line against existing call sites (ScorerTests.swift, ChannelWeights.swift, CompositionScorer.swift, CompositionSolver.swift.bestCandidate) for API/type correctness, but `swift test` itself could not be executed in this environment and must still be run in CI/on a host with the Swift toolchain before merge"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-document-corpus-in-readme",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "not modified - README.md is outside this run's permitted paths (test paths and docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md only); deferred to the implementation run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-pr-description-parity-findings",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "N/A - tests-only draft PR",
+            "result": "this run produces a tests-only draft PR per the TDD-boundary workflow; parity findings (ties: tie-symmetric-around-target, tie-duplicate-vectors, tie-three-way-on-lps, zero-weight-channel-missing, mixed-large-palette; exclusions: missing-candidate-excluded, missing-target-excluded, all-excluded; unknown weight key ignored: unknown-weight-ignored) are captured here for the implementation PR description to carry forward once paid-tests-approved unlocks that run"
+          }
+        ]
+      }
+    }
+  ]
+}
