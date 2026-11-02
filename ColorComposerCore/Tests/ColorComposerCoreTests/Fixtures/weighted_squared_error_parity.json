@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "exact_match",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 101, "hex": "#111111", "responses": { "red": 0.5 } },
+        { "id": 102, "hex": "#eeeeee", "responses": { "red": 0.9 } }
+      ],
+      "expected": { "selected_color_id": 101, "score": 0.0 }
+    },
+    {
+      "name": "weighted_channels_choose_the_lower_weighted_error",
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.5 },
+      "palette": [
+        { "id": 201, "hex": "#551111", "responses": { "white": 0.49, "red": 0.0 } },
+        { "id": 202, "hex": "#115511", "responses": { "white": 0.0, "red": 0.49 } }
+      ],
+      "expected": { "selected_color_id": 201, "score": 0.251 }
+    },
+    {
+      "name": "zero_weight_missing_response_is_ignored",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.4, "blue": 1.0 },
+      "palette": [
+        { "id": 301, "hex": "#333333", "responses": { "red": 0.4 } }
+      ],
+      "expected": { "selected_color_id": 301, "score": 0.0 }
+    },
+    {
+      "name": "candidate_missing_an_active_response_is_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 401, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 402, "hex": "#888888", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "selected_color_id": 402, "score": 0.0 }
+    },
+    {
+      "name": "all_candidates_missing_an_active_response_are_unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "hex": "#ff0000", "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selected_color_id": null }
+    },
+    {
+      "name": "equal_scores_choose_the_first_palette_entry",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 601, "hex": "#aaaaaa", "responses": { "red": 0.4 } },
+        { "id": 602, "hex": "#bbbbbb", "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_color_id": 601, "score": 0.01 }
+    }
+  ]
+}
