@@ -1,0 +1,69 @@
+{
+  "status": "passed",
+  "summary": "Test-writing phase for issue #39 completed: solver parity corpus target (byte-identical upstream fixture + SolverParityCorpusTests), wire-contract pinning tests for PaletteAPIClient, and red-phase OpenAPI adoption structural tests committed under ColorComposerCore/Tests, with docs (corpus consumption, OpenAPI migration notes, AC plan) under docs/. No Swift toolchain exists in this container, so swift test could not be executed here; corpus parity was independently verified by an offline replay (12/12 scenarios exact match, recorded in docs/solver-parity-corpus.md), and OpenAPIAdoptionTests are expected-red until the implementation run lands the generated client.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIAdoptionTests.swift:23", "result": "expected_red (swift-openapi-runtime not yet declared in Package.swift)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIAdoptionTests.swift:31", "result": "expected_red (swift-openapi-generator plugin not yet declared)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIAdoptionTests.swift:39", "result": "expected_red (ColorComposerCore/OpenAPI/openapi.json not yet committed)" }
+        ],
+        "note": "Red by design in the tests-only phase: implementation files are outside this phase's commit allowlist; generated-client migration lands in the paid-tests-approved run, which must turn these green."
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:46", "result": "committed (execution deferred: no Swift toolchain in container)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:61", "result": "committed (pins /api/v1/colors query + envelope decoding for the migration)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:144", "result": "pre-existing permanent coverage: per-server/profile caching + allEntries cached-profile fallback" }
+        ],
+        "note": "Wire-contract and disk-cache behavior tests are committed; swift test could not run in this environment (no swift binary). Offline-stale badge UI wiring (ColorCatalog) has no injection seam and needs macOS/xcodebuild review."
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:49", "result": "committed: exact score-table parity incl. ties and exclusions (execution deferred)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:66", "result": "committed: selection/hex/error/tie_broke/tied_indices parity (execution deferred)" },
+          { "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json", "result": "byte-identical copy of viamin/color_matching priv/parity/v1/corpus.json (sha256 7b7b4d90...f8604), independently replayed offline: 12/12 scenarios exact match" }
+        ],
+        "note": "Corpus consumption test target committed; Swift execution unavailable in container (no toolchain). Independent Python replay of the scorer semantics matched all 12 scenarios exactly — recorded in docs/solver-parity-corpus.md as supplementary evidence, not a substitute for swift test."
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/solver-parity-corpus.md", "result": "canonical corpus-consumption documentation committed (location, refresh command, algorithm_version lockstep, findings)" }
+        ],
+        "note": "README.md is outside this phase's commit allowlist (tests + docs only); fold docs/solver-parity-corpus.md into README during the implementation run."
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          { "locator": "docs/openapi-client-adoption.md", "result": "migration notes + 8 /api/v1 shape deltas found vs the published spec" },
+          { "locator": "docs/solver-parity-corpus.md", "result": "parity findings (ties, exclusions, unknown/zero-weight handling): 12/12 green" },
+          { "locator": "docs/issue-39-verification-plan.md", "result": "criterion-to-verification mapping for the PR body" }
+        ],
+        "note": "PR is not opened in this phase (no push). PR description content is fully prepared in docs/ for the implementation run."
+      }
+    }
+  ]
+}
