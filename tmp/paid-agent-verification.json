@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: added a committed solver parity corpus and replay test. The container has no Swift executable, so swift test could not run. Implementation and README edits are prohibited in this phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift",
+            "result": "Generated-client dependency and migration are implementation-phase work; not changed during this tests-only run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing disk-cache and fallback coverage could not run because swift is unavailable in the container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "Permanent fixture-replay test added; it could not run because swift is unavailable in the container."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "Committed upstream parity corpus, copied from color_matching commit 7d07b92."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Refresh instructions are documented here; README modification is prohibited by the test-writing boundary and remains for the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "GitHub pull request description",
+            "result": "No pull request was opened in this tests-only, do-not-push run."
+          }
+        ]
+      }
+    }
+  ]
+}
