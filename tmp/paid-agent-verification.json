@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "summary": "Test-writing (red) phase for #39: added a scorer-level solver parity corpus test and a package-manifest test pinning the OpenAPI generator adoption; both fail today for the expected reason (corpus not yet vendored, OpenAPI deps not yet added) and no implementation files were touched. Existing cache/offline-fallback coverage is unchanged and untouched this run. No Swift toolchain is available in this container, so no test was executed here; failures below are expected/derived from code inspection, not an actual `swift test` run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-openapi-client-adopted",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:23",
+            "result": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-palette-api-client-migrated",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Sources/ColorComposerCore/PaletteAPIClient.swift:30",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-cache-and-offline-stale-behavior-preserved",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "not_run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:1",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-solver-parity-corpus-test",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:20",
+            "result": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-corpus-documented-in-readme",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "not_run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-6-swift-test-green",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift:1",
+            "result": "not_run"
+          }
+        ]
+      }
+    }
+  ]
+}
