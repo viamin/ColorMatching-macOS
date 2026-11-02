@@ -37,6 +37,29 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    /// Guards the transport contract that the generated OpenAPI client adapter
+    /// must preserve: the versioned colors path, profile query, auth header,
+    /// and response envelope used by the disk-cache caller.
+    func testFetchColorsUsesVersionedContractAndDecodesProfileEnvelope() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(
+                URLComponents(url: try XCTUnwrap(request.url), resolvingAgainstBaseURL: false)?
+                    .queryItems?.first(where: { $0.name == "printer_profile_id" })?.value,
+                "42"
+            )
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let fetched = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertEqual(fetched.colors.map(\.id), [7])
+        XCTAssertEqual(fetched.profile?.id, 42)
+        XCTAssertEqual(fetched.colors.first?.responses["red"]?.brightness, 0.75)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -58,6 +81,20 @@ final class PaletteAPIClientTests: XCTestCase {
               "ink_type": "Pigment"
             }
           ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {"id": 42, "printer_make_model": "Example Printer"},
+          "colors": [{
+            "id": 7,
+            "hex": "#123456",
+            "rgb": {"r": 18, "g": 52, "b": 86},
+            "responses": {"red": {"brightness": 0.75}}
+          }]
         }
         """.data(using: .utf8)!
     }
