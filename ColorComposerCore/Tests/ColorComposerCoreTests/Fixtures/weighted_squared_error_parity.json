@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "name": "weighted channels select the lower total error",
+      "weights": { "red": 4, "green": 1 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "candidates": [
+        { "id": 101, "hex": "#112233", "responses": { "red": 0.7, "green": 0.2 } },
+        { "id": 102, "hex": "#445566", "responses": { "red": 0.8, "green": 0.5 } }
+      ],
+      "expected": { "selectedCandidateID": 101, "excludedCandidateCount": 0, "error": 0.04 }
+    },
+    {
+      "name": "ties retain the first palette candidate",
+      "weights": { "red": 1 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "hex": "#112233", "responses": { "red": 0.4 } },
+        { "id": 202, "hex": "#445566", "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selectedCandidateID": 201, "excludedCandidateCount": 0, "error": 0.01 }
+    },
+    {
+      "name": "missing active response excludes only that candidate",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "hex": "#112233", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#445566", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "selectedCandidateID": 302, "excludedCandidateCount": 1, "error": 0 }
+    },
+    {
+      "name": "zero-weight channels do not exclude an otherwise eligible candidate",
+      "weights": { "red": 1, "blue": 0 },
+      "target": { "red": 0.2 },
+      "candidates": [
+        { "id": 401, "hex": "#112233", "responses": { "red": 0.2 } }
+      ],
+      "expected": { "selectedCandidateID": 401, "excludedCandidateCount": 0, "error": 0 }
+    },
+    {
+      "name": "all candidates missing an active response leave the cell unmatched",
+      "weights": { "lps": 1 },
+      "target": { "lps": 0.4 },
+      "candidates": [
+        { "id": 501, "hex": "#112233", "responses": { "red": 0.4 } }
+      ],
+      "expected": { "selectedCandidateID": null, "excludedCandidateCount": 1, "error": null }
+    }
+  ]
+}
