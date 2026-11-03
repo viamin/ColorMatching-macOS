@@ -37,6 +37,37 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    func testEndpointsUseAPIv1Shapes() async throws {
+        let lock = NSLock()
+        var requests: [URLRequest] = []
+        let client = makeClient { request in
+            lock.lock()
+            requests.append(request)
+            lock.unlock()
+
+            if request.url?.path.hasSuffix("/colors") == true {
+                return (.init(statusCode: 200, url: request.url!), colorsResponse())
+            }
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+        _ = try await client.fetchColors(printerProfileID: 42)
+        try await client.testConnection()
+
+        XCTAssertEqual(requests.map { $0.url?.path }, [
+            "/api/v1/printer_profiles",
+            "/api/v1/colors",
+            "/api/v1/printer_profiles"
+        ])
+        XCTAssertEqual(
+            URLComponents(url: requests[1].url!, resolvingAgainstBaseURL: false)?.queryItems,
+            [URLQueryItem(name: "printer_profile_id", value: "42")]
+        )
+        XCTAssertTrue(requests.allSatisfy { $0.value(forHTTPHeaderField: "Accept") == "application/json" })
+        XCTAssertTrue(requests.allSatisfy { $0.value(forHTTPHeaderField: "Authorization") == "Bearer stale-token" })
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -60,6 +91,25 @@ final class PaletteAPIClientTests: XCTestCase {
           ]
         }
         """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        #"""
+        {
+          "printer_profile": {
+            "id": 42,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [{
+            "id": 9,
+            "hex": "#112233",
+            "rgb": {"r": 17, "g": 34, "b": 51},
+            "responses": {}
+          }]
+        }
+        """#.data(using: .utf8)!
     }
 }
 
