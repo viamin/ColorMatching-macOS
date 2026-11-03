@@ -35,6 +35,25 @@ final class ProfileColorCacheTests: XCTestCase {
         return try decoder.decode(PaletteColorDTO.self, from: Data(json.utf8))
     }
 
+    /// The server's `ColorsResponse` envelope, exactly as the API delivers it.
+    private static let serverColorsResponse = """
+        {
+          "printer_profile": {
+            "id": 1, "printer_make_model": "Epson", "paper_type": "Matte", "ink_type": "Dye"
+          },
+          "colors": [
+            {
+              "id": 123, "name": "Red 12", "hex": "#C64A35",
+              "rgb": {"r": 198, "g": 74, "b": 53},
+              "palette_id": 5, "palette_name": "Default", "sort_order": 12,
+              "responses": {
+                "red": {"brightness": 0.87, "source": "measurement"}
+              }
+            }
+          ]
+        }
+        """
+
     private func makeEntry(
         profileID: Int,
         colorIDs: [Int] = [1],
@@ -834,6 +853,35 @@ final class ProfileColorCacheTests: XCTestCase {
         )
 
         XCTAssertTrue(entry.domainColors.isEmpty)
+    }
+
+    // MARK: Offline fallback
+
+    /// The offline path starts with what the API client decoded: caching that
+    /// fetch keeps the colors servable offline and preserves the fetch date
+    /// the UI badges the palette as stale with.
+    func testCachedServerFetchStaysServableOfflineWithItsFetchDate() throws {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let envelope = try decoder.decode(ColorsResponse.self, from: Data(Self.serverColorsResponse.utf8))
+        let fetchedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let cache = ProfileColorCache(directory: directory)
+
+        try cache.store(CachedProfileColors(
+            serverBaseUrl: defaultServer,
+            profileId: 1,
+            profile: envelope.printerProfile,
+            colors: envelope.colors,
+            fetchedAt: fetchedAt
+        ))
+
+        let entry = try XCTUnwrap(cache.entry(for: 1, serverBaseUrl: defaultServer))
+
+        XCTAssertTrue(entry.hasServableColors)
+        XCTAssertEqual(entry.domainColors.map(\.hex), ["#C64A35"])
+        XCTAssertEqual(entry.domainColors.first?.brightness(for: .red), 0.87)
+        XCTAssertNil(entry.domainColors.first?.brightness(for: .green))
+        XCTAssertEqual(entry.fetchedAt, fetchedAt)
     }
 
     // MARK: On-disk format
