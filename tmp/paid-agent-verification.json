@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Tests-only phase added the committed v1 solver parity corpus, its focused XCTest, and allowed refresh documentation. Swift is not installed in this container, so XCTest could not run. Generated-client migration, cache verification, README editing, and PR description are reserved for the implementation/PR phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift",
+            "result": "Generated-client dependency and migration cannot be added during this tests-only phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline-fallback coverage could not run because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:7",
+            "result": "Added permanent corpus test; swift test could not start because the swift executable is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed upstream v1 corpus with 12 scenarios, including ties and exclusions."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "failed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Corpus source and refresh process documented in an allowlisted LID doc; README editing is prohibited in this tests-only phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "GitHub pull request description",
+            "result": "No pull request was opened in this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
