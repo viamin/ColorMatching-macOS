@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Tests and corpus fixture were added in the test-writing phase. Swift is unavailable in this container, so compilation and test execution could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API client contract coverage; generated-client migration is deferred by this tests-only phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing per-server/profile disk-cache coverage; Swift test execution unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "Permanent corpus replay asserts all scores, exclusions, selections, and earliest-wins ties; Swift test execution unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Resources/ParityCorpus/v1/corpus.json",
+            "result": "Committed upstream corpus v1 fixture."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Documents upstream corpus location and refresh procedure; root README update is deferred by the tests-only allowlist."
+          }
+        ]
+      }
+    }
+  ]
+}
