@@ -1,0 +1,58 @@
+{
+  "status": "not_run",
+  "summary": "The red-phase PR adds parity and API-contract tests, but Swift is unavailable in this container so the suite could not execute.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: Swift toolchain unavailable; generated-client implementation is deferred to the implementation phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "not_run: existing cache round-trip and server-scoping coverage could not execute without Swift"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:20",
+            "result": "not_run: permanent parity fixture copied from viamin/color_matching commit 47057af; Swift toolchain unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "not_run: test-writing phase prohibits root README edits; implementation phase must move this guidance into README"
+          }
+        ]
+      }
+    }
+  ]
+}
