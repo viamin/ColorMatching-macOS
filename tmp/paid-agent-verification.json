@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase: added the committed color_matching v1 weighted-squared-error corpus and its permanent replay test. The Swift toolchain is unavailable in this container, so execution is not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:9",
+            "result": "Existing API behavior coverage; generated-client migration requires the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "Existing cache/offline fallback coverage was not executable because Swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "Permanent corpus replay test added; not run because Swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed upstream corpus copied from viamin/color_matching priv/parity/v1/corpus.json (SHA-1 a4e14fa5f57c651aefb8982a546ece2df2d8e624)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "README update is deferred by this tests-only phase, which permits only test paths and LID documentation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "Git commit to be created in this run",
+            "result": "No PR is opened in this run; PR description is deferred to the implementation/PR phase."
+          }
+        ]
+      }
+    }
+  ]
+}
