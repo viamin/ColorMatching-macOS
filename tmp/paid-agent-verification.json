@@ -1,0 +1,71 @@
+{
+  "status": "failed",
+  "summary": "Tests-only phase added the permanent solver-parity harness. The authoritative upstream corpus and Swift toolchain are unavailable in this environment, so no passing suite result can be recorded.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing request/auth coverage; generated-client migration is not implemented in this tests-only phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache scoping coverage was not runnable because swift is not installed; app-level offline fallback verification remains for implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:10",
+            "result": "Red-phase harness requires Fixtures/weighted_squared_error_parity.json from viamin/color_matching#111; the upstream PR returned 404 through both available access paths."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README corpus-consumption documentation is deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR description is not created during this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
