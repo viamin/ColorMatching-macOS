@@ -1,0 +1,77 @@
+{
+  "source": "viamin/color_matching#111",
+  "revision": "PENDING-UPSTREAM-CORPUS",
+  "cases": [
+    {
+      "name": "nearest weighted squared error wins",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.7 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.2 } },
+        { "id": 102, "responses": { "red": 0.8 } }
+      ],
+      "expected_selected_color_id": 102,
+      "expected_error": 0.010000000000000018,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties retain the first palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.5 } },
+        { "id": 202, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_color_id": 201,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing required measurement excludes a candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_selected_color_id": 302,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero-weight channels do not exclude candidates",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5, "green": 0.2 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.5 } },
+        { "id": 402, "responses": { "red": 0.1, "green": 0.99 } }
+      ],
+      "expected_selected_color_id": 401,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "weights change the selected color",
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.8, "red": 0.8 },
+      "candidates": [
+        { "id": 501, "responses": { "white": 0.0, "red": 1.0 } },
+        { "id": 502, "responses": { "white": 1.0, "red": 0.0 } }
+      ],
+      "expected_selected_color_id": 502,
+      "expected_error": 1.04,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all candidates excluded leaves the cell unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 601, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_color_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
