@@ -1,0 +1,66 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added focused API-shape and solver corpus coverage, but this container has no Swift toolchain, so swift test could not run. Implementation changes are forbidden in this phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: swift executable unavailable; generated-client implementation is deferred to the implementation phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:160",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:547",
+            "result": "offline stale and profile-fallback behavior requires implementation-phase app-target evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:20",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "committed server corpus v1 fixture present"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:14",
+            "result": "refresh procedure is documented here during the test-only phase; README change is deferred because README is outside the permitted documentation allowlist"
+          }
+        ]
+      }
+    }
+  ]
+}
