@@ -1,0 +1,153 @@
+{
+  "status": "passed",
+  "summary": "Tests-only (red-phase) run for issue #39. Added the committed solver parity corpus (upstream viamin/color_matching PR #112) plus a permanent replay test that asserts WeightedSquaredErrorScorer scores, selection, error and tie evidence match the corpus exactly; added an OpenAPI contract test that pins the document the typed client is generated from and the documented endpoint/response shapes; extended the API client tests with documented-path and disk-cache/offline-fallback coverage; documented corpus and OpenAPI consumption under docs/. The Swift toolchain is not available in this container, so no Swift test could be executed here: the corpus replay equivalence was instead verified with an independent IEEE-754 double implementation of the mirrored rules (all 12 scenarios match exactly). The OpenAPI contract tests are expected to fail until the implementation lands (no OpenAPI document, no swift-openapi-runtime dependency, no generated client yet).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "title": "OpenAPI document committed, typed client generated from it, swift-openapi-runtime adopted, PaletteAPIClient migrated",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:27",
+            "result": "failed (red phase: no openapi.json is committed in the package yet)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:52",
+            "result": "failed (red phase: ColorComposerCore/Package.swift does not depend on swift-openapi-runtime yet)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:63",
+            "result": "failed (red phase: the endpoints are not documented in a committed document yet)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:87",
+            "result": "failed (red phase: the documented response shapes cannot be checked yet)"
+          }
+        ],
+        "notes": "Expected red phase: this run may only add tests and LID docs, so the dependency, the committed document, the generated client and the PaletteAPIClient migration are the implementation run's work."
+      }
+    },
+    {
+      "id": "AC-2",
+      "title": "Existing behavior preserved: per-server/profile color caching and cached fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "not executed: no Swift toolchain in this container"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:82",
+            "result": "not executed: no Swift toolchain in this container (new test: fetch -> disk cache -> server unreachable -> cached palette still servable)"
+          }
+        ],
+        "notes": "No production code was touched in this run, so the existing disk-cache behavior is unchanged by construction; the new client-level test pins that the migrated client keeps feeding the disk cache."
+      }
+    },
+    {
+      "id": "AC-3",
+      "title": "Offline-stale badge and cached-profile picker fallback",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:609",
+            "result": "not covered by an automated test: ColorCatalog constructs PaletteAPIClient internally, so it has no injection seam, and the app target needs Xcode/macOS, which this container does not provide"
+          }
+        ],
+        "notes": "The app-level badge/fallback behavior must be re-verified on a macOS host after the client migration; the core-level cache behavior it delegates to is covered by ProfileColorCacheTests."
+      }
+    },
+    {
+      "id": "AC-4",
+      "title": "Solver parity test loads the committed corpus and asserts exact selections, including tie cases",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:56",
+            "result": "not executed: no Swift toolchain in this container (full replay of every scenario: scores, selection, error, tie evidence)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:67",
+            "result": "not executed: no Swift toolchain in this container (the app's CompositionSolver must select the same candidate as the server)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:110",
+            "result": "not executed: no Swift toolchain in this container (tie scenarios select the earliest tied candidate)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:133",
+            "result": "not executed: no Swift toolchain in this container (missing weighted measurement excludes, never scores as zero)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:160",
+            "result": "not executed: no Swift toolchain in this container (zero-weight channels neither exclude nor contribute)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:175",
+            "result": "not executed: no Swift toolchain in this container (unknown light-source weights are ignored)"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:27",
+            "result": "not executed: no Swift toolchain in this container (fixture pinned to the upstream corpus bytes)"
+          }
+        ],
+        "notes": "The corpus fixture is byte-identical to upstream priv/parity/v1/corpus.json (md5 c4c86f514a12d965e78fee4a297d84c2, FNV-1a 0xd29f7eebb0aa8010). The replay was cross-checked with an independent IEEE-754 double implementation of the mirrored rules (known light sources only, exclusion when a positive-weight channel is missing on candidate or target, sum of weight*(candidate-target)^2 in canonical channel order, earliest-index-wins selection): all 12 scenarios reproduce the recorded score table, selection, error, tied_indices and tie_broke exactly."
+      }
+    },
+    {
+      "id": "AC-5",
+      "title": "Corpus consumption documented: where the corpus lives and how to refresh it",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "passed (documents the upstream location priv/parity/v1/corpus.json, the committed copy path, the checksum pin, the refresh procedure and the parity findings)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-6",
+      "title": "README documents corpus consumption",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:20",
+            "result": "interim location: README.md is outside this run's writable paths (test paths plus the LID doc allowlist docs/, AGENTS.md, CLAUDE.md, .github/copilot-instructions.md), so the README section is deferred to the implementation run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-7",
+      "title": "PR description records generated-client migration notes, /api/v1 shape changes and parity results",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/openapi-client.md:1",
+            "result": "content staged: document location/refresh procedure, the two endpoints the app uses, and the /api/v1 shape differences found while adopting the document"
+          },
+          {
+            "locator": "docs/solver-parity-corpus.md:78",
+            "result": "content staged: parity findings (earliest-index tie-breaking, missing-measurement exclusion, zero-weight handling, unknown light-source weights)"
+          }
+        ],
+        "notes": "The pull request itself is published by the platform from this branch; the PR body must carry these notes plus the migration details."
+      }
+    }
+  ]
+}
