@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase test and documentation changes prepared. The required Swift executable is unavailable in this container, so XCTest execution is not_run; fixture provenance and JSON structure were verified.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift:1",
+            "result": "Generated-client dependency and migration are deferred to the implementation phase by the test-writing boundary."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:175",
+            "result": "Existing cache namespace coverage must be rerun after the client migration; Swift is unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:5",
+            "result": "Permanent corpus replay added; not run because `swift` is not installed."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity-v1-corpus.json:1",
+            "result": "Byte-for-byte verified against viamin/color_matching main; 12 scenarios include ties and exclusions."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "Documents upstream location, local fixture location, refresh workflow, and version/missing-data policy."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json:1",
+            "result": "No PR is opened in this tests-only, no-push run; the implementation PR must record generated-client migration and parity results."
+          }
+        ]
+      }
+    }
+  ]
+}
