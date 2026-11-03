@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: parity corpus test and acceptance plan added. Swift is unavailable in this container, so the Swift test target could not be compiled or executed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-acceptance-plan.md",
+            "result": "Generated-client contract tests are reserved for the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache tests were not run because Swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "Permanent corpus-driven solver selection test added but not run because Swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Resources/weighted_squared_error_parity.json",
+            "result": "Committed corpus fixture with ties, exclusions, and weight cases added."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-acceptance-plan.md",
+            "result": "README and PR-description evidence is explicitly deferred to the implementation phase."
+          }
+        ]
+      }
+    }
+  ]
+}
