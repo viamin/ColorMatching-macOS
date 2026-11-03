@@ -1,0 +1,101 @@
+{
+  "status": "failed",
+  "summary": "Test-writing phase: vendored the authoritative v1 parity corpus and added red generated-client adoption coverage. Swift is unavailable in this container, so XCTest execution could not run.",
+  "plan": [
+    {
+      "criterion": "Generated OpenAPI client migration",
+      "verification": "Focused XCTest asserts the package declares swift-openapi-generator and swift-openapi-runtime; implementation phase will run the typed-client endpoint/cache tests."
+    },
+    {
+      "criterion": "Disk cache and offline fallbacks preserved",
+      "verification": "Existing ProfileColorCacheTests and PaletteAPIClientTests are the focused regression coverage; execute on a Swift host after migration."
+    },
+    {
+      "criterion": "Solver parity corpus",
+      "verification": "Permanent fixture-driven XCTest replays every committed server scenario, candidate score, exclusion, selection, error, and tie."
+    },
+    {
+      "criterion": "Corpus documentation",
+      "verification": "Permitted LID documentation records authoritative location and refresh steps; implementation phase must add the required README link."
+    },
+    {
+      "criterion": "PR description",
+      "verification": "Human/external evidence: include migration notes, API shape findings, and executed parity results when a PR is opened."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientAdoptionTests.swift:5",
+            "result": "red: Package.swift does not yet declare swift-openapi-generator or swift-openapi-runtime"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "not run: Swift toolchain unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:11",
+            "result": "not run: Swift toolchain unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not run: Swift toolchain unavailable; fixture manually verified as 12 scenarios from color_matching main commit 47057afd58f7d46b4d4b740ca7d2d08947774471"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "vendored v1 corpus SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "failed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh instructions added in permitted test-writing documentation; README update remains for implementation phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "no PR is authorized in this test-writing run; description requirements remain pending"
+          }
+        ]
+      }
+    }
+  ]
+}
