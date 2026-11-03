@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase for #39: committed backend parity fixture and permanent Swift replay test are prepared; Swift is unavailable in this container, and implementation/docs changes are prohibited until the approved implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "Existing focused API-client coverage; generated-client migration is intentionally not implemented in this test-writing phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "Existing durable cache namespace and disk round-trip tests must be rerun in the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:5",
+            "result": "Permanent corpus replay test added; execution blocked because the Swift executable is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/SolverParity/v1/corpus.json",
+            "result": "Byte-identical committed copy of color_matching priv/parity/v1/corpus.json (SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "Corpus consumption and refresh procedure documented; required README edit is deferred by test-writing path restrictions."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "GitHub PR description",
+            "result": "No pull request was opened in this run; record generated-client migration notes and parity results after implementation and test execution."
+          }
+        ]
+      }
+    }
+  ]
+}
