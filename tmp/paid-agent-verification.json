@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: added the committed solver parity corpus and its permanent data-driven unit test. Swift is unavailable in this container, so the test could not run here.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API behavior coverage retained; generated-client migration is implementation-phase work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache and offline-fallback coverage retained; not executable because Swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "Permanent data-driven parity test added; not executable because Swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json",
+            "result": "Committed corpus fixture includes weighted, tie, exclusion, and zero-weight vectors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "README update is deferred by the tests-only allowlist, which excludes README.md."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "GitHub pull request description",
+            "result": "A PR description is external evidence and cannot be created in this tests-only, no-push run."
+          }
+        ]
+      }
+    }
+  ]
+}
