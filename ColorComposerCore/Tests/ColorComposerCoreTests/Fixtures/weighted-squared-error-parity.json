@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "ties select the earliest palette entry",
+      "weights": { "red": 1 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 20, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": 10
+    },
+    {
+      "name": "candidates missing an active channel are excluded",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.25 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 40, "responses": { "red": 0.5, "green": 0.25 } }
+      ],
+      "expected_color_id": 40
+    },
+    {
+      "name": "zero-weight channels do not exclude a candidate",
+      "weights": { "red": 1, "green": 0 },
+      "target": { "red": 0.4, "green": 0.7 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.4 } },
+        { "id": 60, "responses": { "red": 0.5, "green": 0.7 } }
+      ],
+      "expected_color_id": 50
+    },
+    {
+      "name": "positive channel weights affect selection",
+      "weights": { "red": 4, "green": 1 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "candidates": [
+        { "id": 70, "responses": { "red": 0, "green": 1 } },
+        { "id": 80, "responses": { "red": 1, "green": 0 } }
+      ],
+      "expected_color_id": 80
+    },
+    {
+      "name": "all incomplete candidates leave a cell unmatched",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 90, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null
+    }
+  ]
+}
