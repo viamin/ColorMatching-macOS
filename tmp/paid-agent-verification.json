@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run: permanent parity coverage and criterion plan added. Swift is unavailable in this container, and the committed upstream corpus is intentionally absent until the implementation phase imports it.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "Generated-client transport test is specified for the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:114",
+            "result": "Existing server/profile cache namespace coverage identified; client/cache fallback test remains pending."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:10",
+            "result": "Permanent corpus replay test added; it is red until the committed corpus fixture is imported."
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md:11",
+            "result": "Upstream corpus blob and refresh procedure are recorded."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:11",
+            "result": "README update is deferred by the test-writing-only file allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:12",
+            "result": "PR description inspection is a human/external criterion."
+          }
+        ]
+      }
+    }
+  ]
+}
