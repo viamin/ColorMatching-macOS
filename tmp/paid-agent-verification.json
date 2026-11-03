@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase test coverage is prepared. The Swift toolchain is unavailable in this container, so the new corpus test and existing cache tests could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "Existing transport-contract test identified; generated-client migration is intentionally deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:129",
+            "result": "Existing per-server/profile cache tests identified; Swift test execution unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "New permanent v1 corpus runner added; execution blocked because swift is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/WeightedSquaredError/v1/corpus.json:1",
+            "result": "Committed upstream v1 corpus fixture with 12 scenarios."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:1",
+            "result": "README edits are outside the mandated tests-only red-phase allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "https://github.com/viamin/color_matching/issues/111",
+            "result": "The corpus source was inspected; PR-description authoring is not part of this tests-only, no-push run."
+          }
+        ]
+      }
+    }
+  ]
+}
