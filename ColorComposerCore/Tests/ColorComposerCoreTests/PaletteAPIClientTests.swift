@@ -37,6 +37,25 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    /// The published v1 contract scopes the compositor's working set beneath
+    /// its printer profile. Keep this boundary test so a generated-client
+    /// refresh cannot silently restore the legacy query-string endpoint.
+    func testFetchColorsUsesProfileScopedOpenAPIEndpointAndDecodesProfileShape() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles/42/colors")
+            XCTAssertNil(request.url?.query)
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+            return (.init(statusCode: 200, url: request.url!), profileColorsResponse())
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertEqual(response.profile?.id, 42)
+        XCTAssertEqual(response.colors.map(\.name), ["Warm gray"])
+        XCTAssertEqual(response.colors.first?.hex, "#AABBCC")
+        XCTAssertEqual(response.colors.first?.responses["lps"]?.brightness, 0.5)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +75,32 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    /// Fixture copied from the `ProfileColorsResponse` shape in the server's
+    /// OpenAPI contract. Profile-scoped colors intentionally have no palette
+    /// metadata or server color ID.
+    private func profileColorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 42,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "name": "Warm gray",
+              "hex": "#AABBCC",
+              "rgb": {"r": 170, "g": 187, "b": 204},
+              "responses": {
+                "lps": {"brightness": 0.5}
+              }
             }
           ]
         }
