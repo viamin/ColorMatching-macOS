@@ -1,0 +1,80 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: committed the upstream solver parity corpus and replay test. This container has no Swift executable, so swift test could not run.",
+  "verification_plan": [
+    {
+      "id": "AC-1",
+      "smallest_credible_verification": "Focused URLProtocol client tests for the generated-client adapter's request paths, response conversion, authorization, and errors."
+    },
+    {
+      "id": "AC-2",
+      "smallest_credible_verification": "Focused cache tests plus an injected failing transport that proves per-server/profile stale colors and cached profiles are returned."
+    },
+    {
+      "id": "AC-3",
+      "smallest_credible_verification": "Permanent corpus replay test asserting each candidate score, exclusion, tie set, earliest winner, and composition selection."
+    },
+    {
+      "id": "AC-4",
+      "smallest_credible_verification": "Inspect the README refresh instructions and fixture path at the PR head."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:8",
+            "result": "Existing client test inspected; generated-client migration is implementation-phase work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:6",
+            "result": "Existing cache regression suite identified; swift test unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "Added replay test; not run because swift is not installed."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Semantically matches viamin/color_matching priv/parity/v1/corpus.json at upstream HEAD 47057afd58f7d46b4d4b740ca7d2d08947774471."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "Consumption and refresh instructions added to permitted LID documentation; README is outside the tests-only write allowlist."
+          }
+        ]
+      }
+    }
+  ]
+}
