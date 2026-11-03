@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "nearest candidate by weighted squared error",
+      "weights": { "red": 1.0 },
+      "target": { "red": 1.0 },
+      "palette": [
+        { "id": 1, "responses": { "red": 0.1 } },
+        { "id": 2, "responses": { "red": 0.9 } }
+      ],
+      "expected_palette_id": 2,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 11, "responses": { "red": 0.4 } },
+        { "id": 12, "responses": { "red": 0.6 } }
+      ],
+      "expected_palette_id": 11,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing active measurement excludes a candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 21, "responses": { "red": 0.5 } },
+        { "id": 22, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_palette_id": 22,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero-weight channels do not exclude candidates",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.4, "green": 1.0 },
+      "palette": [
+        { "id": 31, "responses": { "red": 0.4 } }
+      ],
+      "expected_palette_id": 31,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "channel weights change the selected candidate",
+      "weights": { "red": 10.0, "green": 1.0 },
+      "target": { "red": 0.0, "green": 1.0 },
+      "palette": [
+        { "id": 41, "responses": { "red": 0.1, "green": 0.0 } },
+        { "id": 42, "responses": { "red": 0.8, "green": 1.0 } }
+      ],
+      "expected_palette_id": 41,
+      "expected_error": 1.1,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all candidates missing active data leaves the target unmatched",
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "palette": [
+        { "id": 51, "responses": { "red": 0.5 } }
+      ],
+      "expected_palette_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
