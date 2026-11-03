@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Issue #39 red-phase tests and verification plan were added. The Swift toolchain is unavailable in this container, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsUsesProfileScopedOpenAPIEndpointAndDecodesProfileShape",
+            "result": "not run: swift executable is unavailable; test is intentionally red against the legacy endpoint and response shape"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testWeightedSquaredErrorMatchesParityCorpusExactly",
+            "result": "not run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity-v1-corpus.json",
+            "result": "byte-for-byte match with viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README update is deferred by the test-writing file allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR description is deferred to the implementation/PR run"
+          }
+        ]
+      }
+    }
+  ]
+}
