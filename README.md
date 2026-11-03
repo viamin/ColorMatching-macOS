@@ -90,6 +90,12 @@ Colors and their measured illuminant responses are fetched from `color_matching`
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
 
+## Solver parity corpus
+
+`ColorComposerCore` replays the committed server corpus at [`ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json`](ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json). Its source of truth is [`viamin/color_matching`'s `priv/parity/v1/corpus.json`](https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json), generated there with `mix parity.generate` and checked with `mix parity.generate --check`.
+
+When the server changes the parity algorithm version, refresh the fixture from that repository, review its scenario and expectation changes, then run `cd ColorComposerCore && swift test`. The corpus test replays every candidate score and the one-cell solver selection, including exclusions, zero-weight channels, and earliest-index tie-breaking.
+
 ## Development
 
 ```bash
