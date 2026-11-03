@@ -1,0 +1,87 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase contract, cache-fallback, and solver-corpus tests plus documentation are present. This container has no swift executable, so XCTest execution is not runnable here; production implementation is intentionally deferred to the approved implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientContractTests.swift",
+            "result": "not_run: no Swift toolchain in this environment"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientContractTests.swift",
+            "result": "not_run: no Swift toolchain in this environment"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "permanent_system_test",
+        "references": [
+          {
+            "locator": "ColorMatchingTests/ColorCatalogOfflineCacheTests.swift",
+            "result": "not_run: no Swift toolchain in this environment"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: no Swift toolchain in this environment"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift",
+            "result": "not_run: no Swift toolchain in this environment"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/Fixtures/parity/v1/corpus.json",
+            "result": "SHA-256 verified as 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "documents corpus location and refresh procedure; README update is deferred because this tests-only phase disallows README changes"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/Fixtures/parity/README.md",
+            "result": "records upstream provenance and refresh procedure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "implementation PR body is deferred until the approved implementation phase"
+          }
+        ]
+      }
+    }
+  ]
+}
