@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "upstream_issue": "https://github.com/viamin/color_matching/issues/111",
+  "cases": [
+    {
+      "id": "nearest-single-channel",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.8 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.2 } },
+        { "id": 102, "responses": { "red": 0.7 } }
+      ],
+      "expected_selected_candidate_id": 102
+    },
+    {
+      "id": "weights-change-the-winner",
+      "weights": { "red": 4.0, "green": 1.0 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.8, "green": 0.0 } },
+        { "id": 202, "responses": { "red": 0.6, "green": 0.2 } }
+      ],
+      "expected_selected_candidate_id": 201
+    },
+    {
+      "id": "equal-score-tie-keeps-earliest-candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_candidate_id": 301
+    },
+    {
+      "id": "missing-active-response-is-excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.5 } },
+        { "id": 402, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_selected_candidate_id": 402
+    },
+    {
+      "id": "all-missing-active-response-is-unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.5 } },
+        { "id": 502, "responses": { "green": 0.5 } }
+      ],
+      "expected_selected_candidate_id": null
+    },
+    {
+      "id": "zero-weight-response-is-not-required",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5, "green": 1.0 },
+      "candidates": [
+        { "id": 601, "responses": { "red": 0.5 } },
+        { "id": 602, "responses": { "red": 0.4, "green": 1.0 } }
+      ],
+      "expected_selected_candidate_id": 601
+    }
+  ]
+}
