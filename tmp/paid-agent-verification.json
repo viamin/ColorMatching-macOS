@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run: committed the server parity corpus and its replay test. Swift is unavailable in this container, so suite execution remains not_run; generated-client, cache integration, and README work belong to the follow-up implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Baseline request/auth behavior exists; generated-client migration is pending implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing scoped disk-cache coverage was identified; catalog offline-stale integration evidence is pending implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:10",
+            "result": "Added corpus replay test; not executed because swift is not installed in the container."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed backend v1 parity corpus fixture."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "Refresh contract is recorded for the implementation run; README update is deliberately deferred by test-writing constraints."
+          }
+        ]
+      }
+    }
+  ]
+}
