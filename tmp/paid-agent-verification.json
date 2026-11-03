@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Added the committed v1 solver parity corpus and permanent replay test. Swift is not installed in this environment, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "not_run: generated OpenAPI client migration is implementation-phase work and Swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: existing disk-cache coverage could not execute because Swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "not_run: permanent replay test loads Fixtures/solver-parity-v1.json; Swift is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "validated: upstream v1 fixture has algorithm_version 1 and 12 scenarios"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "not_run: README update is reserved for implementation phase under test-writing file restrictions"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "not_run: PR description requires implementation and human review evidence"
+          }
+        ]
+      }
+    }
+  ]
+}
