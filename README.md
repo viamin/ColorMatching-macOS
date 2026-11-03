@@ -90,6 +90,22 @@ Colors and their measured illuminant responses are fetched from `color_matching`
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
 
+### Solver parity corpus
+
+`ColorComposerCoreTests` replays the backend's committed weighted-squared-error
+corpus at `ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json`.
+It is copied unchanged from
+[`viamin/color_matching` `priv/parity/v1/corpus.json`](https://github.com/viamin/color_matching/tree/main/priv/parity/v1)
+(issue [#111](https://github.com/viamin/color_matching/issues/111)). The test
+checks each candidate score and exclusion, the selected candidate, error, and
+earliest-index tie behavior.
+
+When the backend intentionally changes the solver contract, regenerate its
+fixture with `mix parity.generate`, review the algorithm-version bump, then
+copy the resulting `corpus.json` here under the matching versioned filename.
+Run `cd ColorComposerCore && swift test --filter WeightedSquaredErrorParityTests`
+before updating the fixture in this repository.
+
 ## Development
 
 ```bash
