@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Test-writing phase added a permanent fixture-driven solver parity harness, but the upstream corpus is unavailable (GitHub returned 404) and this container has no Swift toolchain. The required generated-client, README, and PR-description work is deferred to the implementation phase by the phase boundary.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "viamin/color_matching#110",
+            "result": "not accessible from this environment; generated-client migration is not permitted in the tests-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:43",
+            "result": "existing cache coverage not run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "permanent parity harness added; its provenance check is intentionally red until the immutable corpus from #111 replaces the pending fixture"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "fixture exercises ties, exclusions, zero-weight handling, weighted selection, and unmatched output, but has pending upstream revision metadata"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh instructions documented in the permitted docs allowlist; README modification is deferred by the tests-only phase boundary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json:1",
+            "result": "no pull request may be opened in this run because the instruction prohibits pushing"
+          }
+        ]
+      }
+    }
+  ]
+}
