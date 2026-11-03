@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Tests and documentation prepared for the red-phase PR. The container has no Swift toolchain, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientPackageContractTests.swift:5",
+            "result": "Prepared red contract: requires swift-openapi-generator and swift-openapi-runtime in Package.swift; not run because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "Existing cache/offline fallback coverage was retained; not run because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:9",
+            "result": "Prepared replay of all 12 committed v1 scenarios, including scores, exclusions, ties, and selections; not run because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json:1",
+            "result": "Vendored upstream corpus from viamin/color_matching commit a82aec5441d2a7b0100e8c8ab81d573e11ace9b0."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:93",
+            "result": "Documents the vendored corpus location, upstream source, offline consumption, and refresh procedure."
+          }
+        ]
+      }
+    }
+  ]
+}
