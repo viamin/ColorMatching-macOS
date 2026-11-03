@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weights_choose_the_lowest_weighted_squared_error",
+      "weights": { "red": 1.0, "green": 4.0 },
+      "target": { "red": 0.5, "green": 0.2 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.6, "green": 0.2 } },
+        { "id": 102, "responses": { "red": 0.5, "green": 0.4 } }
+      ],
+      "expected_candidate_id": 101,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties_choose_the_first_palette_candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 201,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "zero_weight_channels_do_not_require_measurements",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.8, "blue": 0.1 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.8 } },
+        { "id": 302, "responses": { "red": 0.6, "blue": 0.1 } }
+      ],
+      "expected_candidate_id": 301,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing_active_measurements_are_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.5 } },
+        { "id": 402, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 402,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "all_candidates_missing_an_active_measurement_remain_unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.5 } }
+      ],
+      "expected_candidate_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
