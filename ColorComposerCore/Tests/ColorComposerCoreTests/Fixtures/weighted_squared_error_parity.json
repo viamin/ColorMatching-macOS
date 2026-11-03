@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "solver": "weighted_squared_error",
+  "cases": [
+    {
+      "name": "weighted_multi_channel_selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "palette": [
+        { "id": 101, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 102, "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 } }
+      ],
+      "expected_color_id": 102,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "earliest_palette_entry_wins_an_exact_tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_color_id": 201,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing_active_measurement_is_excluded",
+      "weights": { "red": 2.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.25 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.25 } }
+      ],
+      "expected_color_id": 302,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero_weight_measurement_is_not_required",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.9 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.9 } },
+        { "id": 402, "responses": { "red": 0.8, "blue": 0.9 } }
+      ],
+      "expected_color_id": 401,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all_candidates_missing_an_active_measurement",
+      "weights": { "green": 1.0 },
+      "target": { "green": 0.5 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
