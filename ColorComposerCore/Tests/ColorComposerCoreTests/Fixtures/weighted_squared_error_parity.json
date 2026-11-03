@@ -1,0 +1,54 @@
+{
+  "source": "Temporary local contract fixture; replace with the committed viamin/color_matching parity corpus from #111 when that private dependency is available.",
+  "cases": [
+    {
+      "name": "weighted channels select the lowest total squared error",
+      "target": {"red": 0.8, "green": 0.2},
+      "weights": {"red": 2.0, "green": 0.5},
+      "candidates": [
+        {"id": 1, "hex": "#110000", "responses": {"red": 0.7, "green": 0.6}},
+        {"id": 2, "hex": "#220000", "responses": {"red": 0.8, "green": 0.6}}
+      ],
+      "expected_candidate_id": 2
+    },
+    {
+      "name": "ties retain the earliest palette candidate",
+      "target": {"red": 0.5},
+      "weights": {"red": 1.0},
+      "candidates": [
+        {"id": 10, "hex": "#101010", "responses": {"red": 0.4}},
+        {"id": 11, "hex": "#111111", "responses": {"red": 0.6}}
+      ],
+      "expected_candidate_id": 10
+    },
+    {
+      "name": "missing positive-weight response excludes a closer candidate",
+      "target": {"red": 0.5, "green": 0.5},
+      "weights": {"red": 1.0, "green": 1.0},
+      "candidates": [
+        {"id": 20, "hex": "#202020", "responses": {"red": 0.5}},
+        {"id": 21, "hex": "#212121", "responses": {"red": 0.6, "green": 0.5}}
+      ],
+      "expected_candidate_id": 21
+    },
+    {
+      "name": "zero-weight missing response does not exclude a candidate",
+      "target": {"red": 0.5, "blue": 1.0},
+      "weights": {"red": 1.0, "blue": 0.0},
+      "candidates": [
+        {"id": 30, "hex": "#303030", "responses": {"red": 0.5}},
+        {"id": 31, "hex": "#313131", "responses": {"red": 0.6, "blue": 1.0}}
+      ],
+      "expected_candidate_id": 30
+    },
+    {
+      "name": "all candidates excluded leaves the target unmatched",
+      "target": {"red": 0.5, "green": 0.5},
+      "weights": {"red": 1.0, "green": 1.0},
+      "candidates": [
+        {"id": 40, "hex": "#404040", "responses": {"red": 0.5}}
+      ],
+      "expected_candidate_id": null
+    }
+  ]
+}
