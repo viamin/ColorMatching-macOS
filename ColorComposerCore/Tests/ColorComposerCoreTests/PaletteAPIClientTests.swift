@@ -1,3 +1,6 @@
+// `PaletteAPIClient` is excluded from the portable Foundation subset the Linux
+// lint harness builds, so these tests only compile where the client does.
+#if canImport(Darwin)
 import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -112,3 +115,4 @@ private func XCTAssertThrowsErrorAsync<T>(
         assertions(error)
     }
 }
+#endif
