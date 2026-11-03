@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Tests-only red phase committed. Swift is unavailable in the container, so Swift tests could not execute; the OpenAPI manifest contract is intentionally red until the implementation phase adds the generator/runtime.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientPackageTests.swift:5",
+            "result": "committed red contract; Package.swift currently lacks swift-openapi-generator, swift-openapi-runtime, and OpenAPIGenerator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:94",
+            "result": "existing server/profile cache coverage not run because swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "committed corpus replay coverage not run because swift is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json:1",
+            "result": "upstream parity v1 fixture committed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh procedure documented in permitted LID docs; README edit is deferred by the tests-only phase boundary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "fe9e001",
+            "result": "no pull request is opened in this no-push tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
