@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Issue 39 test-writing phase added the pinned parity corpus and permanent replay coverage. Swift is unavailable in this container, so tests could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Implementation-phase generated-client request-contract cases planned; no Swift toolchain available in this run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline-fallback coverage identified; no Swift toolchain available in this run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift",
+            "result": "Pinned corpus replay added; unable to execute because `swift` is not installed."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Pinned from viamin/color_matching commit a82aec5441d2a7b0100e8c8ab81d573e11ace9b0."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "Documents corpus source, pinned revision, replay scope, and refresh procedure for implementation-phase README incorporation."
+          }
+        ]
+      }
+    }
+  ]
+}
