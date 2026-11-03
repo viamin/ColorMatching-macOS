@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: focused regression tests and a committed parity fixture were added, but Swift is unavailable in the container and the upstream corpus PR is not anonymously accessible.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientTests.swift:5",
+            "result": "not run: swift executable is unavailable; test is intentionally red until the runtime, generator, and plugin are declared"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not run: preserves the /api/v1/colors request contract and profile query"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "not run: existing cache isolation and fallback coverage requires a Swift toolchain"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "not run: exact-selection harness added; fixture import from viamin/color_matching#111 remains blocked by upstream 404/403 access"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "committed provisional corpus schema covering ties, exclusions, and weights"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "not changed: the test-writing phase permits only tests and allowlisted docs; README update belongs to implementation phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "git commit",
+            "result": "no pull request is opened in this tests-only, no-push run"
+          }
+        ]
+      }
+    }
+  ]
+}
