@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase for #39: vendored the upstream v1 parity corpus and added contract tests. Swift is not installed in this container; the generated OpenAPI dependency test is intentionally red until the implementation phase updates Package.swift.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientContractTests.swift:5",
+            "result": "not_run: intentionally fails until Package.swift declares swift-openapi-generator and swift-openapi-runtime"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:10",
+            "result": "not_run: existing request/authentication coverage; implementation phase must retain cache/offline behavior"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "not_run: existing per-server/profile disk-cache coverage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:13",
+            "result": "not_run: replays upstream v1 corpus score, exclusions, ties, and solver selections"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "vendored from viamin/color_matching priv/parity/v1/corpus.json, SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "skipped: README is outside the tests-only phase allowlist; implementation phase must document the canonical corpus location and refresh procedure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "PR description cannot be written in the tests-only phase; implementation/PR phase must record migration notes, API shape changes, and parity results"
+          }
+        ]
+      }
+    }
+  ]
+}
