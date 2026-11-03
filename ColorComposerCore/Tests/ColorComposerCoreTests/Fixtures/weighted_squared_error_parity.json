@@ -1,0 +1,56 @@
+{
+  "corpus": "issue-39 parity corpus seed",
+  "format_version": 1,
+  "cases": [
+    {
+      "name": "nearest weighted candidate is selected",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.25 },
+      "candidates": [
+        { "id": 101, "hex": "#111111", "responses": { "red": 0.10 } },
+        { "id": 102, "hex": "#222222", "responses": { "red": 0.30 } }
+      ],
+      "expected": { "selected_id": 102, "score": 0.0025, "excluded_ids": [] }
+    },
+    {
+      "name": "equal scores retain earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.50 },
+      "candidates": [
+        { "id": 201, "hex": "#111111", "responses": { "red": 0.40 } },
+        { "id": 202, "hex": "#222222", "responses": { "red": 0.60 } }
+      ],
+      "expected": { "selected_id": 201, "score": 0.01, "excluded_ids": [] }
+    },
+    {
+      "name": "candidate missing a positive-weight response is excluded",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.50, "green": 0.50 },
+      "candidates": [
+        { "id": 301, "hex": "#111111", "responses": { "red": 0.50 } },
+        { "id": 302, "hex": "#222222", "responses": { "red": 0.50, "green": 0.60 } }
+      ],
+      "expected": { "selected_id": 302, "score": 0.02, "excluded_ids": [301] }
+    },
+    {
+      "name": "zero-weight missing response does not exclude a candidate",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.80, "green": 0.20 },
+      "candidates": [
+        { "id": 401, "hex": "#111111", "responses": { "red": 0.80 } },
+        { "id": 402, "hex": "#222222", "responses": { "red": 0.70, "green": 0.20 } }
+      ],
+      "expected": { "selected_id": 401, "score": 0.0, "excluded_ids": [] }
+    },
+    {
+      "name": "channel weights change the winning candidate",
+      "weights": { "red": 3.0, "green": 1.0 },
+      "target": { "red": 0.50, "green": 0.50 },
+      "candidates": [
+        { "id": 501, "hex": "#111111", "responses": { "red": 0.60, "green": 0.20 } },
+        { "id": 502, "hex": "#222222", "responses": { "red": 0.25, "green": 0.50 } }
+      ],
+      "expected": { "selected_id": 501, "score": 0.12, "excluded_ids": [] }
+    }
+  ]
+}
