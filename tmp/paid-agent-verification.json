@@ -1,0 +1,211 @@
+{
+  "status": "passed",
+  "summary": "Test-writing phase for issue #39. Added the solver parity suite that replays the upstream color_matching golden-vector corpus (12 scenarios, exact scores/selection/ties/exclusions) against WeightedSquaredErrorScorer and CompositionSolver, added the OpenAPI contract suite that pins the vendored published document (currently red: the document is not vendored yet), pinned the PaletteAPIClient behavior the generated-client migration must preserve, pinned the disk-cache/offline-fallback data path, and documented both external artifacts under docs/. Fixed two pre-existing compile errors that made `swift test` unbuildable (PaletteAPIClientTests.swift: implicit self capture and a missing `await`). Local verification ran with Swift 6.1.2 on Linux: 228 tests executed, 3 failures (the red-phase OpenAPI contract tests), 225 passing.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-generated-openapi-client",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:15",
+            "result": "red_pending_implementation",
+            "note": "Fails with \"The published OpenAPI document is not vendored in the package\" - the document and the generated client are implementation work, not test work."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:44",
+            "result": "red_pending_implementation",
+            "note": "Pins PrinterProfilesResponse/PrinterProfile/ColorsResponse shapes the generated types must match."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:90",
+            "result": "red_pending_implementation",
+            "note": "Pins the bearerAuth security scheme the generated client must send."
+          }
+        ],
+        "notes": "swift-openapi-generator/swift-openapi-runtime adoption and the PaletteAPIClient migration are implementation-phase deliverables; this phase only specifies them."
+      }
+    },
+    {
+      "id": "AC-2-client-behavior-preserved",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:46",
+            "result": "passed",
+            "note": "GET /api/v1/printer_profiles, GET method, Accept: application/json."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:63",
+            "result": "passed",
+            "note": "GET /api/v1/colors?printer_profile_id=N."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:84",
+            "result": "passed",
+            "note": "ColorsResponse envelope (printer_profile + colors + responses) decodes unchanged."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:112",
+            "result": "passed",
+            "note": "503 -> PaletteAPIError.badStatus(503); the UI keeps telling failures apart."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:134",
+            "result": "passed",
+            "note": "Unreadable body -> PaletteAPIError.malformedResponse."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:19",
+            "result": "passed",
+            "note": "401 -> PaletteAPIError.unauthorized (re-authentication path preserved)."
+          }
+        ],
+        "notes": "swift test --filter PaletteAPIClientTests: 9 tests, 0 failures (Linux, Swift 6.1.2)."
+      }
+    },
+    {
+      "id": "AC-3-disk-cache-and-offline-fallback",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:863",
+            "result": "passed",
+            "note": "A fetch decoded from the server envelope stays servable offline: domain colors convert, unmeasured channels stay missing, and fetchedAt (the offline-stale badge date) survives the disk round-trip."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:139",
+            "result": "passed",
+            "note": "Per-server cache namespaces: allEntries(serverBaseUrl:) only returns the requesting server's profiles (the cached-profile fallback source)."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:131",
+            "result": "passed",
+            "note": "A profile cached from another server is a miss, so servers never share offline palettes."
+          }
+        ],
+        "notes": "swift test --filter ProfileColorCacheTests: 70 tests, 0 failures (Linux, Swift 6.1.2)."
+      }
+    },
+    {
+      "id": "AC-3b-offline-stale-badge-and-cached-profile-picker-ui",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:618",
+            "result": "not_run",
+            "note": "isServingFromCache (the stale badge) and the cached-profile picker live in the macOS app target; this container has no macOS/Xcode, so no runnable test could be written for them in this phase."
+          }
+        ],
+        "notes": "The data these UI paths consume (cached colors per server/profile, cached profile list, fetch date) is covered by AC-3; the app-level presentation and the 'serve cached profiles when the server is unreachable' decision remain unverified here and must be checked on macOS."
+      }
+    },
+    {
+      "id": "AC-4-solver-parity-corpus",
+      "status": "passed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json",
+            "result": "passed",
+            "note": "Committed copy of viamin/color_matching priv/parity/v1/corpus.json (upstream PR #112 for issue #111), 12 scenarios."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:78",
+            "result": "passed",
+            "note": "Every candidate of every scenario scores exactly like the server's scorer, .excluded included."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:96",
+            "result": "passed",
+            "note": "Selected index, selected hex color and error match the corpus exactly."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:125",
+            "result": "passed",
+            "note": "Tied-candidate set matches the corpus (tie evidence)."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:146",
+            "result": "passed",
+            "note": "Every tie scenario resolves to the earliest tied candidate."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:161",
+            "result": "passed",
+            "note": "The full CompositionSolver (fast path the app uses) lands on the corpus winner."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:219",
+            "result": "passed",
+            "note": "A fully excluded palette yields no selection and no error."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:29",
+            "result": "passed",
+            "note": "Committed bytes still match the upstream artifact (FNV-1a fingerprint d29f7eebb0aa8010)."
+          }
+        ],
+        "notes": "swift test --filter SolverParityCorpusTests: 9 tests, 0 failures (Linux, Swift 6.1.2). Mutation-checked: flipping the solver's tie-break to '<=' fails the tie scenarios; removing the scorer's exclusion rule fails the missing-measurement scenarios, so the suite is not vacuous."
+      }
+    },
+    {
+      "id": "AC-5-documentation",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "passed",
+            "note": "Where the corpus lives upstream and in this repo, the contract it pins, and the exact refresh steps (including the fingerprint recomputation)."
+          },
+          {
+            "locator": "docs/openapi-document.md",
+            "result": "passed",
+            "note": "Where the published OpenAPI document lives, how to refresh it, and the API shape notes the PR description has to carry."
+          }
+        ],
+        "notes": "README.md is outside the paths this test-writing phase may change, so the README section the issue asks for is deferred to the implementation phase; the docs above carry the same content."
+      }
+    },
+    {
+      "id": "AC-6-pr-description",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/openapi-document.md:52",
+            "result": "not_run",
+            "note": "Findings recorded for the PR description: the app keeps GET /api/v1/colors?printer_profile_id=N while the server also publishes the profile-scoped GET /api/v1/printer_profiles/{id}/colors; responses is an open map keyed by light source with unmeasured sources absent; errors use {\"errors\":{\"detail\":...}}."
+          }
+        ],
+        "notes": "The pull request itself is created by the implementation run that lands the generated client."
+      }
+    },
+    {
+      "id": "AC-7-swift-test-green",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIContractTests.swift:15",
+            "result": "red_pending_implementation",
+            "note": "3 expected red-phase failures: the published OpenAPI document is not vendored in the package yet."
+          }
+        ],
+        "notes": "swift test (Swift 6.1.2, Linux): 228 tests executed, 3 failures - all three are the red-phase OpenAPI contract tests; the other 225 pass. Two pre-existing compile errors that blocked `swift test` entirely (implicit self capture and a missing `await` in PaletteAPIClientTests.swift) are fixed. `bin/lint` passes in this container (no Swift toolchain on the default PATH, so it skips the build); note that bin/lint's Linux harness excludes PaletteAPIClient.swift while still compiling PaletteAPIClientTests.swift, which is a pre-existing harness bug the implementation phase must fix together with the new package dependencies."
+      }
+    }
+  ]
+}
