@@ -3,34 +3,90 @@ import XCTest
 @testable import ColorComposerCore
 
 final class SolverParityCorpusTests: XCTestCase {
-    func testWeightedSquaredErrorSelectionsMatchParityCorpus() throws {
+    func testWeightedSquaredErrorMatchesCanonicalParityCorpus() throws {
         let corpus = try loadCorpus()
-        XCTAssertEqual(corpus.schemaVersion, 1)
-        XCTAssertEqual(corpus.source, "viamin/color_matching#111")
+        XCTAssertEqual(corpus.algorithmVersion, 1)
+        XCTAssertEqual(corpus.missingPolicy, "excluded-when-any-positive-weight-channel-missing")
 
-        for testCase in corpus.cases {
-            let result = try CompositionSolver().solve(
-                palette: testCase.paletteColors,
-                sourceGrids: testCase.sourceGrids,
-                weights: testCase.channelWeights
-            )
+        for scenario in corpus.scenarios {
+            let target = TargetResponseVector(scenario.target.channels.lightingValues)
+            let weights = ChannelWeights(channels: scenario.weights)
+            let palette = try scenario.palette.map { try $0.makePaletteColor() }
+            let expectedScores = Dictionary(uniqueKeysWithValues: scenario.expected.scores.map { ($0.index, $0.score) })
+            let actual = select(palette: palette, target: target, weights: weights)
 
-            let selectedID = result.colorIndex(x: 0, y: 0).map { result.palette[$0].id }
-            XCTAssertEqual(selectedID, testCase.expectedPaletteID, testCase.name)
-            XCTAssertEqual(
-                result.excludedCandidateCount,
-                testCase.expectedExcludedCandidateCount,
-                testCase.name
-            )
-            assertError(result.error(x: 0, y: 0), expected: testCase.expectedError, named: testCase.name)
+            XCTAssertEqual(actual.excludedCount, scenario.expected.excludedCandidateCount, scenario.id)
+            XCTAssertEqual(actual.selectedIndex, scenario.expected.selectedIndex, scenario.id)
+            assertError(actual.error, equals: scenario.expected.error, named: scenario.id)
+
+            for (paletteIndex, score) in actual.scores.enumerated() {
+                XCTAssertEqual(palette[paletteIndex].id, scenario.palette[paletteIndex].index, scenario.id)
+                assertScore(score, equals: expectedScores[palette[paletteIndex].id], named: scenario.id)
+            }
+
+            assertTieBreak(scenario.expected, actual: actual, named: scenario.id)
         }
     }
 
-    private func assertError(_ actual: Double, expected: Double?, named testCase: String) {
-        guard let expected else {
-            return XCTAssertTrue(actual.isInfinite, testCase)
+    private func select(
+        palette: [PaletteColor],
+        target: TargetResponseVector,
+        weights: ChannelWeights
+    ) -> Selection {
+        let scorer = WeightedSquaredErrorScorer()
+        var selectedIndex: Int?
+        var error: Double?
+        var scores: [ParityScore] = []
+        var excludedCount = 0
+
+        for color in palette {
+            switch scorer.score(candidate: color, target: target, weights: weights) {
+            case .excluded:
+                scores.append(.excluded)
+                excludedCount += 1
+            case .score(let score):
+                scores.append(.value(score))
+                if error == nil || score < error! {
+                    selectedIndex = color.id
+                    error = score
+                }
+            }
         }
-        XCTAssertEqual(actual, expected, accuracy: 1e-12, testCase)
+
+        return Selection(
+            selectedIndex: selectedIndex,
+            error: error,
+            scores: scores,
+            excludedCount: excludedCount
+        )
+    }
+
+    private func assertTieBreak(_ expected: ParityExpected, actual: Selection, named scenario: String) {
+        guard expected.tieBroke == true else { return }
+        XCTAssertGreaterThan(expected.tiedIndices.count, 1, scenario)
+        XCTAssertEqual(actual.selectedIndex, expected.tiedIndices.first, scenario)
+    }
+
+    private func assertError(_ actual: Double?, equals expected: Double?, named scenario: String) {
+        switch (actual, expected) {
+        case (nil, nil):
+            break
+        case let (.some(actual), .some(expected)):
+            XCTAssertEqual(actual, expected, accuracy: 1e-12, scenario)
+        default:
+            XCTFail("Selection error mismatch for \(scenario)")
+        }
+    }
+
+    private func assertScore(_ actual: ParityScore, equals expected: ParityScore?, named scenario: String) {
+        switch (actual, expected) {
+        case (.excluded, .some(.excluded)):
+            break
+        case let (.value(actual), .some(.value(expected))):
+            XCTAssertEqual(actual, expected, accuracy: 1e-12, scenario)
+        default:
+            XCTFail("Score mismatch for \(scenario): actual \(actual), expected \(String(describing: expected))")
+        }
     }
 
     private func loadCorpus() throws -> ParityCorpus {
@@ -42,79 +98,142 @@ final class SolverParityCorpusTests: XCTestCase {
     }
 }
 
+private struct Selection {
+    let selectedIndex: Int?
+    let error: Double?
+    let scores: [ParityScore]
+    let excludedCount: Int
+}
+
 private struct ParityCorpus: Decodable {
-    let schemaVersion: Int
-    let source: String
-    let cases: [ParityCase]
+    let algorithmVersion: Int
+    let missingPolicy: String
+    let scenarios: [ParityScenario]
 
     enum CodingKeys: String, CodingKey {
-        case schemaVersion = "schema_version"
-        case source
-        case cases
+        case algorithmVersion = "algorithm_version"
+        case missingPolicy = "missing_policy"
+        case scenarios
     }
 }
 
-private struct ParityCase: Decodable {
-    let name: String
+private struct ParityScenario: Decodable {
+    let id: String
     let weights: [String: Double]
-    let target: [String: Double]
+    let target: ParityVector
     let palette: [ParityPaletteColor]
-    let expectedPaletteID: Int?
-    let expectedError: Double?
-    let expectedExcludedCandidateCount: Int
+    let expected: ParityExpected
+}
 
-    enum CodingKeys: String, CodingKey {
-        case name
-        case weights
-        case target
-        case palette
-        case expectedPaletteID = "expected_palette_id"
-        case expectedError = "expected_error"
-        case expectedExcludedCandidateCount = "expected_excluded_candidate_count"
-    }
-
-    var channelWeights: ChannelWeights {
-        ChannelWeights(
-            white: weights["white", default: 0],
-            red: weights["red", default: 0],
-            green: weights["green", default: 0],
-            blue: weights["blue", default: 0],
-            lps: weights["lps", default: 0]
-        )
-    }
-
-    var paletteColors: [PaletteColor] {
-        palette.map { entry in
-            PaletteColor(
-                id: entry.id,
-                hex: "#000000",
-                rgb: RGBColor(hex: "#000000")!,
-                responses: entry.responses.reduce(into: [:]) { result, response in
-                    result[lightingCondition(named: response.key)] = IlluminationResponse(brightness: response.value)
-                }
-            )
-        }
-    }
-
-    var sourceGrids: [LightingCondition: BrightnessGrid] {
-        target.reduce(into: [:]) { result, response in
-            result[lightingCondition(named: response.key)] = BrightnessGrid(width: 1, height: 1, values: [response.value])
-        }
-    }
+private struct ParityVector: Decodable {
+    let channels: [String: Double]
 }
 
 private struct ParityPaletteColor: Decodable {
-    let id: Int
-    let responses: [String: Double]
+    let index: Int
+    let hexColor: String
+    let channels: [String: Double]
+
+    enum CodingKeys: String, CodingKey {
+        case index
+        case hexColor = "hex_color"
+        case channels
+    }
+
 }
 
-private func lightingCondition(named name: String) -> LightingCondition {
-    switch name {
-    case "white": return .white
-    case "red": return .red
-    case "green": return .green
-    case "blue": return .blue
-    case "lps": return .lps
-    default: preconditionFailure("Unknown parity-corpus lighting condition: \(name)")
+private struct ParityExpected: Decodable {
+    let error: Double?
+    let scores: [ParityExpectedScore]
+    let selectedIndex: Int?
+    let tieBroke: Bool?
+    let tiedIndices: [Int]
+
+    enum CodingKeys: String, CodingKey {
+        case error
+        case scores
+        case selectedIndex = "selected_index"
+        case tieBroke = "tie_broke"
+        case tiedIndices = "tied_indices"
+    }
+
+    var excludedCandidateCount: Int {
+        scores.filter { $0.score == .excluded }.count
+    }
+}
+
+private struct ParityExpectedScore: Decodable {
+    let index: Int
+    let score: ParityScore
+}
+
+private enum ParityScore: Decodable, Equatable {
+    case excluded
+    case value(Double)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let value = try? container.decode(Double.self) {
+            self = .value(value)
+        } else if try container.decode(String.self) == "excluded" {
+            self = .excluded
+        } else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unknown parity score")
+        }
+    }
+}
+
+private enum ParityCorpusError: Error {
+    case invalidHexColor(String)
+}
+
+private extension ParityPaletteColor {
+    func makePaletteColor() throws -> PaletteColor {
+        guard let rgb = RGBColor(hex: hexColor) else {
+            throw ParityCorpusError.invalidHexColor(hexColor)
+        }
+        return PaletteColor(
+            id: index,
+            hex: hexColor,
+            rgb: rgb,
+            responses: channels.lightingValues.reduce(into: [:]) { result, response in
+                result[response.key] = IlluminationResponse(brightness: response.value)
+            }
+        )
+    }
+}
+
+private extension Dictionary where Key == String, Value == Double {
+    var lightingValues: [LightingCondition: Double] {
+        reduce(into: [:]) { result, entry in
+            if let condition = LightingCondition(parityName: entry.key) {
+                result[condition] = entry.value
+            }
+        }
+    }
+}
+
+private extension ChannelWeights {
+    init(channels: [String: Double]) {
+        self.init(
+            white: channels["white", default: 0],
+            red: channels["red", default: 0],
+            green: channels["green", default: 0],
+            blue: channels["blue", default: 0],
+            lps: channels["lps", default: 0]
+        )
+    }
+}
+
+private extension LightingCondition {
+    init?(parityName: String) {
+        switch parityName {
+        case "white": self = .white
+        case "red": self = .red
+        case "green": self = .green
+        case "blue": self = .blue
+        case "lps": self = .lps
+        default: return nil
+        }
     }
 }
