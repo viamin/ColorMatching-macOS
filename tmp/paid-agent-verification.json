@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Canonical solver parity tests and criterion-level verification plan were added, but this container has no Swift toolchain (`swift test` cannot run).",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API behavior tests retained; generated-client migration is implementation-phase work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing per-server/profile cache regression coverage retained; suite not runnable without Swift."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "Canonical 12-scenario corpus replay added; test not runnable without Swift."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json",
+            "result": "Exact upstream corpus blob 70e9999065c81334d1f2b5038a96c67cfd5d59d1."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification.md",
+            "result": "README edits are outside this test-writing run's permitted documentation allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification.md",
+            "result": "Implementation-run PR description remains required after generated-client migration and runnable parity results."
+          }
+        ]
+      }
+    }
+  ]
+}
