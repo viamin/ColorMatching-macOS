@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted channel chooses the lower total error",
+      "weights": { "white": 2, "red": 1 },
+      "target": { "white": 0.8, "red": 0.1 },
+      "candidates": [
+        { "id": 101, "hex": "#111111", "responses": { "white": 0.5, "red": 0.1 } },
+        { "id": 102, "hex": "#222222", "responses": { "white": 0.8, "red": 0.4 } }
+      ],
+      "expected": { "winner_id": 102, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "ties select the earliest candidate in corpus order",
+      "weights": { "red": 1 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "hex": "#333333", "responses": { "red": 0.4 } },
+        { "id": 202, "hex": "#444444", "responses": { "red": 0.6 } }
+      ],
+      "expected": { "winner_id": 201, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "candidate missing a required condition is excluded",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "hex": "#555555", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#666666", "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected": { "winner_id": 302, "excluded_candidate_count": 1 }
+    },
+    {
+      "name": "zero-weight missing response does not exclude a candidate",
+      "weights": { "red": 1, "blue": 0 },
+      "target": { "red": 0.25 },
+      "candidates": [
+        { "id": 401, "hex": "#777777", "responses": { "red": 0.25 } },
+        { "id": 402, "hex": "#888888", "responses": { "red": 0.75, "blue": 0.25 } }
+      ],
+      "expected": { "winner_id": 401, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "all candidates excluded leaves the cell unmatched",
+      "weights": { "lps": 1 },
+      "target": { "lps": 0.5 },
+      "candidates": [
+        { "id": 501, "hex": "#999999", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#AAAAAA", "responses": {} }
+      ],
+      "expected": { "winner_id": null, "excluded_candidate_count": 2 }
+    }
+  ]
+}
