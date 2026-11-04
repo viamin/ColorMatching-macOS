@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: parity corpus coverage was added, but Swift is unavailable in this container and upstream PRs #110/#111 are inaccessible from the repository-scoped GitHub proxy.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "existing API request/response regression coverage; generated-client implementation is pending"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "existing per-server/profile disk-cache coverage; macOS ColorCatalog fallback verification is pending"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "added corpus-driven solver selection, tie, exclusion, and weight assertions; not executed because Swift is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_corpus.json",
+            "result": "committed fixture format awaiting verbatim upstream #111 corpus refresh"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:16",
+            "result": "README update deferred because the test-writing hook permits docs/ but rejects root README.md changes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:17",
+            "result": "PR migration and upstream parity evidence remain pending implementation and external access"
+          }
+        ]
+      }
+    }
+  ]
+}
