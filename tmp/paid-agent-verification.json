@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: the committed parity fixture is JSON-valid; Swift is unavailable in this container, and the generated-client dependency test is intentionally red until implementation.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "intentionally failing until swift-openapi-generator and swift-openapi-runtime are added"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:131",
+            "result": "existing permanent cache scoping coverage; Swift test runner unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:5",
+            "result": "fixture syntax validated with jq; Swift test runner unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:9",
+            "result": "README update deferred by tests-only phase restrictions"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:10",
+            "result": "PR description is created in the implementation/publishing phase"
+          }
+        ]
+      }
+    }
+  ]
+}
