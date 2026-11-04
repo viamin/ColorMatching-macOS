@@ -1,0 +1,83 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase tests and verification plan added. Swift is unavailable in this container, so swift test could not run; the parity fixture is valid JSON and byte-identical to the upstream committed corpus.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "not_run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:10",
+            "result": "not_run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "skipped",
+      "verification": {
+        "kind": "permanent_system_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:8",
+            "result": "A permanent app-level offline-cache flow test is required in the implementation run."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "Existing focused cache coverage remains unexecuted because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:7",
+            "result": "not_run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "passed: valid JSON and SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604 matches viamin/color_matching commit 47057afd58f7d46b4d4b740ca7d2d08947774471"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:11",
+            "result": "README edits are reserved for the implementation run by the test-writing boundary."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:12",
+            "result": "PR description requires human review after the implementation run."
+          }
+        ]
+      }
+    }
+  ]
+}
