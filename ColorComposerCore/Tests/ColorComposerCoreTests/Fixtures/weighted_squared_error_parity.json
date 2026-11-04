@@ -1,0 +1,66 @@
+{
+  "source": "Contract harness for https://github.com/viamin/color_matching/pull/111; replace with the upstream corpus before implementation merge.",
+  "solver": "WeightedSquaredError",
+  "cases": [
+    {
+      "name": "weighted multichannel selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "lps": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "lps": 0.3 } },
+        { "id": 2, "responses": { "white": 0.7, "red": 0.2, "green": 0.6, "lps": 0.6 } }
+      ],
+      "expected_candidate_id": 2
+    },
+    {
+      "name": "earliest candidate wins an exact tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.4 } },
+        { "id": 10, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 20
+    },
+    {
+      "name": "candidates missing active measurements are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "red": 0.5 } },
+        { "id": 2, "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "expected_candidate_id": 2
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.3 },
+      "candidates": [
+        { "id": 7, "responses": { "red": 0.3 } },
+        { "id": 8, "responses": { "red": 0.4, "green": 0.3 } }
+      ],
+      "expected_candidate_id": 7
+    },
+    {
+      "name": "weights can change the winning candidate",
+      "weights": { "red": 10.0, "green": 1.0 },
+      "target": { "red": 0.0, "green": 0.0 },
+      "candidates": [
+        { "id": 3, "responses": { "red": 0.1, "green": 0.8 } },
+        { "id": 4, "responses": { "red": 0.4, "green": 0.1 } }
+      ],
+      "expected_candidate_id": 3
+    },
+    {
+      "name": "no eligible candidate yields no selection",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "red": 0.5 } },
+        { "id": 2, "responses": { "green": 0.5 } }
+      ],
+      "expected_candidate_id": null
+    }
+  ]
+}
