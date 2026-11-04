@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase tests and LID verification plan added. This container has no Swift toolchain, and the upstream color_matching PR endpoints are inaccessible through the GitHub proxy.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientManifestContractTests.swift:5",
+            "result": "expected red: Package.swift does not yet declare swift-openapi-runtime, swift-openapi-generator, or OpenAPIGenerator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "permanent_system_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:130",
+            "result": "per-server/profile cache coverage exists but was not run; app-level offline badge and fallback system coverage remains for implementation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "corpus loader and selection assertions added but not run; upstream #111 corpus could not be fetched"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json:1",
+            "result": "committed consumer fixture covers weighting, tie, exclusion, and zero-weight cases; not verified as upstream #111 corpus"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:17",
+            "result": "README update deferred by the tests-only phase allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:13",
+            "result": "PR-description inspection deferred until the implementation PR exists"
+          }
+        ]
+      }
+    }
+  ]
+}
