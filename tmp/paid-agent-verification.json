@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run added focused API and solver-parity coverage. Swift is not installed in the container, and the upstream parity-corpus PR endpoint returned HTTP 404.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: Swift toolchain unavailable; generated-client migration is implementation work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:132",
+            "result": "existing per-server disk-cache coverage; offline-stale UI fallback needs implementation-run evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: Swift toolchain unavailable; upstream corpus import pending access to viamin/color_matching#111"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "README edit is prohibited in the test-writing phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:10",
+            "result": "PR description does not exist in this no-push test-writing run"
+          }
+        ]
+      }
+    }
+  ]
+}
