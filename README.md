@@ -12,6 +12,14 @@ The classic use case: print one image that, viewed under red light, shows the re
 
 This mirrors the algorithm in the [`color_matching`](https://github.com/viamin/color_matching) backend (`WeightedSquaredError`), so client and server agree on selection. A color missing a measurement for any active channel is **excluded**, never treated as zero brightness.
 
+### Solver parity corpus
+
+`ColorComposerCoreTests` replays the committed v1 golden corpus at
+`ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_v1.json`.
+It is copied from [`color_matching`'s `priv/parity/v1/corpus.json`](https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json), which the backend regenerates with `mix parity.generate` whenever solver semantics change.
+
+To refresh the client fixture after an intentional backend algorithm-version update, regenerate and commit the backend corpus first, then replace the local fixture with that exact committed file and run `cd ColorComposerCore && swift test`. Do not edit individual expected scores: the corpus guards channel weighting, missing-measurement exclusion, and earliest-index tie-breaking as one shared contract.
+
 ## Requirements
 
 - macOS 14.0 (Sonoma) or later

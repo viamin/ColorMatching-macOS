@@ -37,6 +37,31 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    /// The generated client migration must preserve the legacy palette request
+    /// shape until the server declares the old endpoint unavailable. The cache
+    /// is keyed by this selected profile, so silently omitting its query value
+    /// would serve a different palette under an otherwise valid cache entry.
+    func testFetchColorsPreservesProfileScopedRequestAndResponse() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(
+                URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
+                    .queryItems?
+                    .first(where: { $0.name == "printer_profile_id" })?
+                    .value,
+                "42"
+            )
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertEqual(response.profile?.id, 42)
+        XCTAssertEqual(response.colors.map(\.id), [99])
+        XCTAssertEqual(response.colors.first?.responses["red"]?.brightness, 0.75)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +81,27 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 42,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 99,
+              "hex": "#112233",
+              "rgb": {"r": 17, "g": 34, "b": 51},
+              "responses": {"red": {"brightness": 0.75}}
             }
           ]
         }
