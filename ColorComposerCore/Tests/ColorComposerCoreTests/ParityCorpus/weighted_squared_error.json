@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "name": "exact match wins across active channels",
+      "target": { "red": 0.7, "green": 0.2 },
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.7, "green": 0.2 } },
+        { "id": 102, "responses": { "red": 0.6, "green": 0.2 } }
+      ],
+      "expected_selected_color_id": 101
+    },
+    {
+      "name": "ties retain the earliest palette candidate",
+      "target": { "red": 0.5 },
+      "weights": { "red": 1.0 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_selected_color_id": 201
+    },
+    {
+      "name": "missing active measurements exclude a candidate",
+      "target": { "red": 0.4, "green": 0.8 },
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.4 } },
+        { "id": 302, "responses": { "red": 0.4, "green": 0.8 } }
+      ],
+      "expected_selected_color_id": 302
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude",
+      "target": { "red": 0.6 },
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.6 } },
+        { "id": 402, "responses": { "red": 0.5, "blue": 1.0 } }
+      ],
+      "expected_selected_color_id": 401
+    },
+    {
+      "name": "channel weights change the selected candidate",
+      "target": { "red": 0.8, "green": 0.2 },
+      "weights": { "red": 10.0, "green": 1.0 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.6, "green": 0.2 } },
+        { "id": 502, "responses": { "red": 0.8, "green": 0.6 } }
+      ],
+      "expected_selected_color_id": 502
+    },
+    {
+      "name": "all excluded candidates leave the cell unselected",
+      "target": { "red": 0.5, "green": 0.5 },
+      "weights": { "red": 1.0, "green": 1.0 },
+      "palette": [
+        { "id": 601, "responses": { "red": 0.5 } },
+        { "id": 602, "responses": { "green": 0.5 } }
+      ],
+      "expected_selected_color_id": null
+    }
+  ]
+}
