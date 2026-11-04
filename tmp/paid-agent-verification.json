@@ -1,0 +1,66 @@
+{
+  "status": "not_run",
+  "summary": "Tests were added for the OpenAPI-consumed colors endpoint and the committed v1 solver parity corpus. Swift is unavailable in this container, so the suite could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsUsesV1ProfileQueryAndDecodesProfileEnvelope",
+            "result": "not_run: swift executable unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:testTwoServersKeepSeparateEntriesForTheSameProfileID",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:testStoreThenReadRoundTripsEntry",
+            "result": "not_run: swift executable unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:testV1CorpusMatchesScoresAndSelections",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Resources/weighted_squared_error_v1.json",
+            "result": "committed upstream corpus SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README update is reserved for the implementation phase by the test-writing file allowlist"
+          }
+        ]
+      }
+    }
+  ]
+}
