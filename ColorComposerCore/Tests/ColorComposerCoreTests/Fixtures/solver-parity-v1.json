@@ -1082,4 +1082,3 @@
   "scorer": "ColorMatching.WeightedSquaredError",
   "selection": "earliest-index-wins"
 }
-
