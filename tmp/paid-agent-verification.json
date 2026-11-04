@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run added the committed solver parity corpus and its replay test; Swift is not installed in this container, so the test could not be executed here.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/parity-corpus.md",
+            "result": "Generated-client migration test is planned for the implementation run; no implementation may be added in this test-writing run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline fallback coverage requires execution during the implementation run; Swift is unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift",
+            "result": "Added corpus-driven candidate score, selection, error, and tie assertions; not run because no Swift toolchain is installed."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed v1 fixture copied from viamin/color_matching/priv/parity/v1/corpus.json."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/parity-corpus.md",
+            "result": "Refresh procedure is documented here; the required README link is deferred because README is outside the red-phase allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/parity-corpus.md",
+            "result": "PR description evidence is planned for the implementation run."
+          }
+        ]
+      }
+    }
+  ]
+}
