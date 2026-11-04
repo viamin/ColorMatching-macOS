@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Added focused contract and parity tests in the test-writing phase. Swift tooling and the authoritative upstream artifacts are unavailable in this environment, so no runtime result is claimed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsUsesVersionedPathAndProfileQuery",
+            "result": "not_run: swift executable unavailable; generated client integration awaits viamin/color_matching#110 OpenAPI document"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: existing cache unit coverage was not executable; offline-stale UI behavior requires a server-backed human check after migration"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:testSelectionsMatchCommittedParityCorpus",
+            "result": "not_run: swift executable unavailable; viamin/color_matching#111 returned 404, so the fixture is a bootstrap contract rather than verified authoritative corpus"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README update deferred because this test-writing run may only commit test paths and LID documentation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR-description evidence is deferred to the implementation and publishing run"
+          }
+        ]
+      }
+    }
+  ]
+}
