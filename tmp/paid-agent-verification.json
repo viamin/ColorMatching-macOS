@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: the parity fixture and permanent replay test are committed, but this container has no swift executable, so Swift tests could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification.md",
+            "result": "Generated-client migration is deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache coverage is present; migration regression tests remain for the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityTests.swift:testWeightedSquaredErrorMatchesCommittedV1ParityCorpus",
+            "result": "Permanent corpus replay test added but not run because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Committed copy of viamin/color_matching priv/parity/v1/corpus.json at blob 70e9999065c81334d1f2b5038a96c67cfd5d59d1."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification.md",
+            "result": "README update is deferred because this test-writing phase permits only test paths and docs/."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification.md",
+            "result": "PR-body evidence is deferred until the implementation PR exists."
+          }
+        ]
+      }
+    }
+  ]
+}
