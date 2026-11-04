@@ -1,0 +1,58 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing plan for #39. The permanent parity test was added red; this container has no Swift toolchain, so it could not be compiled or executed. Production generated-client migration is deferred to the approved implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Add contract tests against the generated OpenAPI client after Package.swift is updated."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing focused cache tests cover server/profile scoping; implementation run must run them with the migration."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift",
+            "result": "Permanent upstream-corpus replay test added red; implementation must commit the fetched #111 corpus at Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json. Test not run: swift is unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "README is outside the test-writing allowlist and must be updated in the implementation phase."
+          }
+        ]
+      }
+    }
+  ]
+}
