@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added the committed solver parity corpus and its permanent replay test. Swift is unavailable in this container, so the focused test and suite could not be executed; generated-client implementation and README updates are intentionally deferred to the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:8",
+            "result": "Implementation-phase generated-client contract test planned; no generated client exists in this test-writing revision."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "Existing disk-cache/server-scope coverage identified but not run because the Swift toolchain is unavailable."
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "Offline badge and cached-profile fallback verification required in implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "Permanent corpus replay test added; not run because `swift` is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json:1",
+            "result": "Committed upstream v1 corpus fixture."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:17",
+            "result": "README refresh instructions are specified for the implementation phase; README is outside the test-writing allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:18",
+            "result": "PR description requirements recorded for implementation handoff."
+          }
+        ]
+      }
+    }
+  ]
+}
