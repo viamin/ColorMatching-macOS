@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase parity coverage and the backend v1 corpus are committed; implementation changes and executable verification are deferred to the approved implementation run. The container has no Swift toolchain.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift",
+            "result": "not_run: generated-client dependencies and target wiring are implementation-run work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: existing cache/offline behavior requires Swift verification in the implementation run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/SolverParityTests/SolverParityCorpusTests.swift",
+            "result": "not_run: dedicated red-phase test target source added; Package.swift wiring is prohibited in this run"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/SolverParityTests/Resources/ParityCorpus/v1/corpus.json",
+            "result": "matched upstream viamin/color_matching main corpus SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "refresh instructions added; README change is prohibited by the test-writing allowlist and must be completed in implementation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "https://github.com/viamin/color_matching/issues/110",
+            "result": "external OpenAPI dependency confirmed merged"
+          },
+          {
+            "locator": "https://github.com/viamin/color_matching/issues/111",
+            "result": "external parity-corpus dependency confirmed merged"
+          }
+        ]
+      }
+    }
+  ]
+}
