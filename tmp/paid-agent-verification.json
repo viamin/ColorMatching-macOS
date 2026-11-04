@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase tests and the backend v1 parity corpus were added. Lint/test commands have no configured runner in this checkout, and direct swift test execution is blocked because the Swift toolchain is absent.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not run; pins the documented /api/v1/colors query and response envelope for the generated-client migration"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:106",
+            "result": "not run; existing server-scoped cache coverage remains the focused regression suite"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:9",
+            "result": "not run; replays the committed backend v1 corpus exactly, including scores, exclusions, ties, selected index, selected hex, and solver fast path"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "committed v1 corpus copied from viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh procedure documented in an allowlisted documentation path; README edit is reserved for the implementation run by the test-writing phase boundary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "no pull request was opened in this tests-only, no-push run"
+          }
+        ]
+      }
+    }
+  ]
+}
