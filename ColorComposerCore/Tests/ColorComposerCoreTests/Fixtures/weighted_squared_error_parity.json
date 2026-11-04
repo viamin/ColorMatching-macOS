@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted channels select the lowest total error",
+      "weights": { "red": 2.0, "green": 1.0 },
+      "target": { "red": 0.8, "green": 0.3 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.75, "green": 0.4 } },
+        { "id": 102, "responses": { "red": 0.85, "green": 0.1 } }
+      ],
+      "expected_color_id": 101,
+      "expected_error": 0.015,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties retain the first palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_color_id": 201,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing required measurements exclude a candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_color_id": 302,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero-weight channels do not exclude an otherwise eligible candidate",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.2 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.2 } },
+        { "id": 402, "responses": { "red": 0.8, "blue": 0.2 } }
+      ],
+      "expected_color_id": 401,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    }
+  ]
+}
