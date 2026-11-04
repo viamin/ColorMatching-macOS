@@ -1,0 +1,77 @@
+{
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "algorithm": "WeightedSquaredError",
+  "cases": [
+    {
+      "name": "selects the nearest single-channel candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.6 },
+      "palette": [
+        { "id": 10, "responses": { "red": 0.2 } },
+        { "id": 11, "responses": { "red": 0.7 } }
+      ],
+      "expected_color_id": 11,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "preserves palette order for equal scores",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 20, "responses": { "red": 0.2 } },
+        { "id": 21, "responses": { "red": 0.8 } }
+      ],
+      "expected_color_id": 20,
+      "expected_error": 0.09,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "excludes candidates missing an active measurement",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected_color_id": 31,
+      "expected_error": 0.02,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "ignores channels whose weights are zero",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.4, "blue": 0.9 },
+      "palette": [
+        { "id": 40, "responses": { "red": 0.4 } },
+        { "id": 41, "responses": { "red": 0.5, "blue": 0.9 } }
+      ],
+      "expected_color_id": 40,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "applies channel weights to selection",
+      "weights": { "red": 10.0, "green": 1.0 },
+      "target": { "red": 0.0, "green": 0.0 },
+      "palette": [
+        { "id": 50, "responses": { "red": 0.1, "green": 0.9 } },
+        { "id": 51, "responses": { "red": 0.8, "green": 0.1 } }
+      ],
+      "expected_color_id": 50,
+      "expected_error": 0.91,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "leaves a cell unmatched when every candidate is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 60, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_error": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
