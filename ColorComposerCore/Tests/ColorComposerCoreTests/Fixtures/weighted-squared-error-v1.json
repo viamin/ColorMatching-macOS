@@ -1,0 +1,1084 @@
+{
+  "algorithm_version": 1,
+  "light_sources": [
+    "white",
+    "red",
+    "green",
+    "blue",
+    "lps"
+  ],
+  "missing_policy": "excluded-when-any-positive-weight-channel-missing",
+  "scenarios": [
+    {
+      "description": "Four fully-measured candidates with strictly distinct errors; the clear best wins outright.",
+      "expected": {
+        "error": 0.0234375,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.23046875
+          },
+          {
+            "index": 1,
+            "score": 0.08984375
+          },
+          {
+            "index": 2,
+            "score": 0.0234375
+          },
+          {
+            "index": 3,
+            "score": 0.59765625
+          }
+        ],
+        "selected_hex_color": "#708090",
+        "selected_index": 2,
+        "tie_broke": false,
+        "tied_indices": [
+          2
+        ]
+      },
+      "id": "distinct-errors",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.375,
+            "lps": 0.125,
+            "red": 0.5,
+            "white": 0.375
+          },
+          "hex_color": "#A0522D",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.75,
+            "lps": 0.5,
+            "red": 0.125,
+            "white": 0.75
+          },
+          "hex_color": "#556B2F",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.5,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#708090",
+          "index": 2
+        },
+        {
+          "channels": {
+            "blue": 0.5,
+            "green": 0.25,
+            "lps": 0.75,
+            "red": 0.625,
+            "white": 0.125
+          },
+          "hex_color": "#FFD700",
+          "index": 3
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#336699",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "Candidates at indices 1 and 2 sit exactly +/-0.125 from the target on white and match the target elsewhere, producing an exact tie; the earlier index wins.",
+      "expected": {
+        "error": 0.0078125,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.0703125
+          },
+          {
+            "index": 1,
+            "score": 0.0078125
+          },
+          {
+            "index": 2,
+            "score": 0.0078125
+          },
+          {
+            "index": 3,
+            "score": 0.03125
+          }
+        ],
+        "selected_hex_color": "#222222",
+        "selected_index": 1,
+        "tie_broke": true,
+        "tied_indices": [
+          1,
+          2
+        ]
+      },
+      "id": "tie-symmetric-around-target",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.875
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.375
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.625
+          },
+          "hex_color": "#333333",
+          "index": 2
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.25
+          },
+          "hex_color": "#444444",
+          "index": 3
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#204060",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "Candidates at indices 1 and 3 carry identical channel values (different hex colors), an exact tie; the earlier index wins.",
+      "expected": {
+        "error": 0.06640625,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.59765625
+          },
+          {
+            "index": 1,
+            "score": 0.06640625
+          },
+          {
+            "index": 2,
+            "score": 0.08984375
+          },
+          {
+            "index": 3,
+            "score": 0.06640625
+          },
+          {
+            "index": 4,
+            "score": 0.25390625
+          }
+        ],
+        "selected_hex_color": "#ABCDEF",
+        "selected_index": 1,
+        "tie_broke": true,
+        "tied_indices": [
+          1,
+          3
+        ]
+      },
+      "id": "tie-duplicate-vectors",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.5,
+            "green": 0.25,
+            "lps": 0.75,
+            "red": 0.625,
+            "white": 0.875
+          },
+          "hex_color": "#0B0B0B",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.5,
+            "lps": 0.5,
+            "red": 0.375,
+            "white": 0.375
+          },
+          "hex_color": "#ABCDEF",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.5,
+            "lps": 0.5,
+            "red": 0.375,
+            "white": 0.75
+          },
+          "hex_color": "#1E90FF",
+          "index": 2
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.5,
+            "lps": 0.5,
+            "red": 0.375,
+            "white": 0.375
+          },
+          "hex_color": "#FEDCBA",
+          "index": 3
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.375,
+            "lps": 0.125,
+            "red": 0.5,
+            "white": 0.25
+          },
+          "hex_color": "#98FB98",
+          "index": 4
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#000080",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "Only lps is weighted; three candidates sit +/-0.125 from the target on lps and tie exactly; the earliest index wins even though a later duplicate matches it bit-for-bit.",
+      "expected": {
+        "error": 0.0234375,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.09375
+          },
+          {
+            "index": 1,
+            "score": 0.0234375
+          },
+          {
+            "index": 2,
+            "score": 0.0234375
+          },
+          {
+            "index": 3,
+            "score": 0.0234375
+          },
+          {
+            "index": 4,
+            "score": 0.2109375
+          }
+        ],
+        "selected_hex_color": "#222222",
+        "selected_index": 1,
+        "tie_broke": true,
+        "tied_indices": [
+          1,
+          2,
+          3
+        ]
+      },
+      "id": "tie-three-way-on-lps",
+      "palette": [
+        {
+          "channels": {
+            "lps": 0.75
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "lps": 0.375
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "lps": 0.625
+          },
+          "hex_color": "#333333",
+          "index": 2
+        },
+        {
+          "channels": {
+            "lps": 0.375
+          },
+          "hex_color": "#444444",
+          "index": 3
+        },
+        {
+          "channels": {
+            "lps": 0.125
+          },
+          "hex_color": "#555555",
+          "index": 4
+        }
+      ],
+      "target": {
+        "channels": {
+          "lps": 0.5
+        },
+        "hex_color": "#5A5A5A",
+        "index": null
+      },
+      "weights": {
+        "lps": 1.5
+      }
+    },
+    {
+      "description": "The candidate at index 0 matches the target on every measured channel but is missing lps (positive weight), so it is excluded rather than treated as zero brightness; index 1 wins.",
+      "expected": {
+        "error": 0.06640625,
+        "scores": [
+          {
+            "index": 0,
+            "score": "excluded"
+          },
+          {
+            "index": 1,
+            "score": 0.06640625
+          },
+          {
+            "index": 2,
+            "score": 0.25390625
+          }
+        ],
+        "selected_hex_color": "#BFAFA0",
+        "selected_index": 1,
+        "tie_broke": false,
+        "tied_indices": [
+          1
+        ]
+      },
+      "id": "missing-candidate-excluded",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#DEDEDE",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.5,
+            "lps": 0.125,
+            "red": 0.375,
+            "white": 0.625
+          },
+          "hex_color": "#BFAFA0",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.375,
+            "lps": 0.25,
+            "red": 0.5,
+            "white": 0.75
+          },
+          "hex_color": "#AFC0BF",
+          "index": 2
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.0,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#C0C0C0",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "The target itself is missing white (positive weight), so every candidate is excluded and no selection exists.",
+      "expected": {
+        "error": null,
+        "scores": [
+          {
+            "index": 0,
+            "score": "excluded"
+          },
+          {
+            "index": 1,
+            "score": "excluded"
+          },
+          {
+            "index": 2,
+            "score": "excluded"
+          }
+        ],
+        "selected_hex_color": null,
+        "selected_index": null,
+        "tie_broke": null,
+        "tied_indices": []
+      },
+      "id": "missing-target-excluded",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.5,
+            "lps": 0.25,
+            "red": 0.125,
+            "white": 0.375
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.75,
+            "lps": 0.5,
+            "red": 0.375,
+            "white": 0.625
+          },
+          "hex_color": "#333333",
+          "index": 2
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25
+        },
+        "hex_color": "#010101",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "blue has zero weight, so a candidate missing blue and a candidate with wildly different blue tie exactly: missing data on unweighted channels neither excludes nor contributes.",
+      "expected": {
+        "error": 0.0625,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.0625
+          },
+          {
+            "index": 1,
+            "score": 0.0625
+          },
+          {
+            "index": 2,
+            "score": 0.25
+          }
+        ],
+        "selected_hex_color": "#111111",
+        "selected_index": 0,
+        "tie_broke": true,
+        "tied_indices": [
+          0,
+          1
+        ]
+      },
+      "id": "zero-weight-channel-missing",
+      "palette": [
+        {
+          "channels": {
+            "white": 0.75
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.9375,
+            "white": 0.75
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.0625,
+            "white": 1.0
+          },
+          "hex_color": "#333333",
+          "index": 2
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.5,
+          "white": 0.5
+        },
+        "hex_color": "#0F0F0F",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.0,
+        "white": 1.0
+      }
+    },
+    {
+      "description": "Every candidate is missing at least one positive-weight channel; all are excluded and no selection exists.",
+      "expected": {
+        "error": null,
+        "scores": [
+          {
+            "index": 0,
+            "score": "excluded"
+          },
+          {
+            "index": 1,
+            "score": "excluded"
+          },
+          {
+            "index": 2,
+            "score": "excluded"
+          },
+          {
+            "index": 3,
+            "score": "excluded"
+          }
+        ],
+        "selected_hex_color": null,
+        "selected_index": null,
+        "tie_broke": null,
+        "tied_indices": []
+      },
+      "id": "all-excluded",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "white": 0.5
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#333333",
+          "index": 2
+        },
+        {
+          "channels": {
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#444444",
+          "index": 3
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#242424",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "Only lps is weighted; index 1 matches the target exactly and scores 0.0 even though every other channel is unmeasured.",
+      "expected": {
+        "error": 0.0,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.0625
+          },
+          {
+            "index": 1,
+            "score": 0.0
+          },
+          {
+            "index": 2,
+            "score": 0.25
+          }
+        ],
+        "selected_hex_color": "#222222",
+        "selected_index": 1,
+        "tie_broke": false,
+        "tied_indices": [
+          1
+        ]
+      },
+      "id": "single-channel-lps",
+      "palette": [
+        {
+          "channels": {
+            "lps": 0.25
+          },
+          "hex_color": "#111111",
+          "index": 0
+        },
+        {
+          "channels": {
+            "lps": 0.5
+          },
+          "hex_color": "#222222",
+          "index": 1
+        },
+        {
+          "channels": {
+            "lps": 1.0
+          },
+          "hex_color": "#333333",
+          "index": 2
+        }
+      ],
+      "target": {
+        "channels": {
+          "lps": 0.5
+        },
+        "hex_color": "#0A0A0A",
+        "index": null
+      },
+      "weights": {
+        "lps": 1.0
+      }
+    },
+    {
+      "description": "Index 0 is a channel-for-channel clone of the target and scores exactly 0.0 with no tie.",
+      "expected": {
+        "error": 0.0,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.0
+          },
+          {
+            "index": 1,
+            "score": 0.06640625
+          }
+        ],
+        "selected_hex_color": "#008081",
+        "selected_index": 0,
+        "tie_broke": false,
+        "tied_indices": [
+          0
+        ]
+      },
+      "id": "exact-match-zero-error",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#008081",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.5,
+            "lps": 0.5,
+            "red": 0.375,
+            "white": 0.625
+          },
+          "hex_color": "#008082",
+          "index": 1
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#008080",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "The weights map carries an unknown light source (ultraviolet) that no vector can measure; it is ignored and the errors match the distinct-errors scenario verbatim.",
+      "expected": {
+        "error": 0.0234375,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.23046875
+          },
+          {
+            "index": 1,
+            "score": 0.08984375
+          },
+          {
+            "index": 2,
+            "score": 0.0234375
+          },
+          {
+            "index": 3,
+            "score": 0.59765625
+          }
+        ],
+        "selected_hex_color": "#708090",
+        "selected_index": 2,
+        "tie_broke": false,
+        "tied_indices": [
+          2
+        ]
+      },
+      "id": "unknown-weight-ignored",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.25,
+            "green": 0.375,
+            "lps": 0.125,
+            "red": 0.5,
+            "white": 0.375
+          },
+          "hex_color": "#A0522D",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.75,
+            "lps": 0.5,
+            "red": 0.125,
+            "white": 0.75
+          },
+          "hex_color": "#556B2F",
+          "index": 1
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.5,
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#708090",
+          "index": 2
+        },
+        {
+          "channels": {
+            "blue": 0.5,
+            "green": 0.25,
+            "lps": 0.75,
+            "red": 0.625,
+            "white": 0.125
+          },
+          "hex_color": "#FFD700",
+          "index": 3
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#336699",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "ultraviolet": 3.0,
+        "white": 0.5
+      }
+    },
+    {
+      "description": "Eight candidates mixing exact ties, missing-measurement exclusions, and unmeasured zero-weight channels; the earliest member of the tied best trio wins.",
+      "expected": {
+        "error": 0.0078125,
+        "scores": [
+          {
+            "index": 0,
+            "score": 0.0078125
+          },
+          {
+            "index": 1,
+            "score": 0.0078125
+          },
+          {
+            "index": 2,
+            "score": "excluded"
+          },
+          {
+            "index": 3,
+            "score": 0.25390625
+          },
+          {
+            "index": 4,
+            "score": 0.0078125
+          },
+          {
+            "index": 5,
+            "score": 1.0390625
+          },
+          {
+            "index": 6,
+            "score": 0.79296875
+          },
+          {
+            "index": 7,
+            "score": "excluded"
+          }
+        ],
+        "selected_hex_color": "#210021",
+        "selected_index": 0,
+        "tie_broke": true,
+        "tied_indices": [
+          0,
+          1,
+          4
+        ]
+      },
+      "id": "mixed-large-palette",
+      "palette": [
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.375
+          },
+          "hex_color": "#210021",
+          "index": 0
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.625
+          },
+          "hex_color": "#220022",
+          "index": 1
+        },
+        {
+          "channels": {
+            "green": 0.625,
+            "red": 0.125,
+            "white": 0.5
+          },
+          "hex_color": "#230023",
+          "index": 2
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.375,
+            "lps": 0.125,
+            "red": 0.5,
+            "white": 0.25
+          },
+          "hex_color": "#240024",
+          "index": 3
+        },
+        {
+          "channels": {
+            "blue": 0.125,
+            "green": 0.625,
+            "lps": 0.375,
+            "red": 0.25,
+            "white": 0.625
+          },
+          "hex_color": "#250025",
+          "index": 4
+        },
+        {
+          "channels": {
+            "blue": 0.875,
+            "green": 0.875,
+            "lps": 0.875,
+            "red": 0.875,
+            "white": 0.875
+          },
+          "hex_color": "#260026",
+          "index": 5
+        },
+        {
+          "channels": {
+            "blue": 0.0,
+            "green": 0.0,
+            "lps": 0.0,
+            "red": 0.0,
+            "white": 0.0
+          },
+          "hex_color": "#270027",
+          "index": 6
+        },
+        {
+          "channels": {
+            "red": 0.25,
+            "white": 0.5
+          },
+          "hex_color": "#280028",
+          "index": 7
+        }
+      ],
+      "target": {
+        "channels": {
+          "blue": 0.125,
+          "green": 0.625,
+          "lps": 0.375,
+          "red": 0.25,
+          "white": 0.5
+        },
+        "hex_color": "#100010",
+        "index": null
+      },
+      "weights": {
+        "blue": 0.25,
+        "green": 1.0,
+        "lps": 1.5,
+        "red": 1.0,
+        "white": 0.5
+      }
+    }
+  ],
+  "scorer": "ColorMatching.WeightedSquaredError",
+  "selection": "earliest-index-wins"
+}
