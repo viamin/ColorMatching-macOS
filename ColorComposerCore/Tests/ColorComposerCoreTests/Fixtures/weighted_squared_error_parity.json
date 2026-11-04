@@ -1,0 +1,45 @@
+{
+  "source": "viamin/color_matching solver parity corpus (#111)",
+  "cases": [
+    {
+      "name": "weighted channels select the lowest total squared error",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.0, "green": 0.8 } },
+        { "id": 102, "responses": { "red": 0.2, "green": 0.5 } }
+      ],
+      "expected": { "selected_id": 101, "score": 0.04, "excluded_ids": [] }
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_id": 201, "score": 0.01, "excluded_ids": [] }
+    },
+    {
+      "name": "candidates missing an active response are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "selected_id": 302, "score": 0.0, "excluded_ids": [301] }
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude candidates",
+      "weights": { "red": 2.0, "blue": 0.0 },
+      "target": { "red": 0.25, "blue": 1.0 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.25 } },
+        { "id": 402, "responses": { "red": 0.5, "blue": 1.0 } }
+      ],
+      "expected": { "selected_id": 401, "score": 0.0, "excluded_ids": [] }
+    }
+  ]
+}
