@@ -1,0 +1,58 @@
+{
+  "algorithm_version": 1,
+  "source": "https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json",
+  "selection": "earliest-index-wins",
+  "scenarios": [
+    {
+      "id": "tie-symmetric-around-target",
+      "weights": { "white": 0.5 },
+      "target": { "white": 0.5 },
+      "palette": [
+        { "hex": "#111111", "channels": { "white": 0.875 } },
+        { "hex": "#222222", "channels": { "white": 0.375 } },
+        { "hex": "#333333", "channels": { "white": 0.625 } }
+      ],
+      "expected": { "selected_index": 1, "error": 0.0078125, "scores": [0.0703125, 0.0078125, 0.0078125] }
+    },
+    {
+      "id": "missing-candidate-excluded",
+      "weights": { "white": 1.0, "lps": 1.5 },
+      "target": { "white": 0.5, "lps": 0.0 },
+      "palette": [
+        { "hex": "#DEDEDE", "channels": { "white": 0.5 } },
+        { "hex": "#BFAFA0", "channels": { "white": 0.625, "lps": 0.125 } }
+      ],
+      "expected": { "selected_index": 1, "error": 0.0390625, "scores": ["excluded", 0.0390625] }
+    },
+    {
+      "id": "zero-weight-channel-missing",
+      "weights": { "white": 1.0, "blue": 0.0 },
+      "target": { "white": 0.5, "blue": 0.5 },
+      "palette": [
+        { "hex": "#111111", "channels": { "white": 0.75 } },
+        { "hex": "#222222", "channels": { "white": 0.75, "blue": 0.9375 } }
+      ],
+      "expected": { "selected_index": 0, "error": 0.0625, "scores": [0.0625, 0.0625] }
+    },
+    {
+      "id": "all-excluded",
+      "weights": { "white": 1.0, "red": 1.0 },
+      "target": { "white": 0.5, "red": 0.25 },
+      "palette": [
+        { "hex": "#111111", "channels": { "white": 0.5 } },
+        { "hex": "#222222", "channels": { "red": 0.25 } }
+      ],
+      "expected": { "selected_index": null, "error": null, "scores": ["excluded", "excluded"] }
+    },
+    {
+      "id": "single-channel-lps",
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.5 },
+      "palette": [
+        { "hex": "#111111", "channels": { "lps": 0.25 } },
+        { "hex": "#222222", "channels": { "lps": 0.5 } }
+      ],
+      "expected": { "selected_index": 1, "error": 0.0, "scores": [0.0625, 0.0] }
+    }
+  ]
+}
