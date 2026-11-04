@@ -1,0 +1,58 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing plan for #39. The generated-client implementation and cache migration are deferred to the implementation phase; this phase adds the permanent solver parity contract test and corpus-consumption documentation. `swift test` could not run because the Swift executable is absent from this container.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API contract coverage; generated-client migration awaits implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline fallback coverage; migration regression verification awaits implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift",
+            "result": "Permanent corpus replay test added; not run because the Swift executable is unavailable in this container."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Corpus source and refresh procedure documented in permitted LID documentation; README change is deferred by the tests-only phase restriction."
+          }
+        ]
+      }
+    }
+  ]
+}
