@@ -1,0 +1,80 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase for #39: adds generated-client contract coverage and the committed upstream solver parity corpus. Swift is not installed in this container, so execution is not available.",
+  "verification_plan": [
+    {
+      "criterion": "Generated OpenAPI client preserves the consumed /api/v1 contract",
+      "smallest_credible_verification": "Focused API-client test of the versioned colors operation, query parameter, headers, and response envelope."
+    },
+    {
+      "criterion": "Disk cache and offline fallback behavior remain unchanged",
+      "smallest_credible_verification": "Existing focused ProfileColorCache tests plus an implementation-phase mocked client fallback test."
+    },
+    {
+      "criterion": "Solver selections exactly match the upstream parity corpus",
+      "smallest_credible_verification": "Permanent unit test replaying every committed golden vector through the scorer and one-cell solver path."
+    },
+    {
+      "criterion": "Corpus consumption is documented",
+      "smallest_credible_verification": "Inspectable README instructions naming the vendored fixture and refresh workflow."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:42",
+            "result": "not_run: Swift toolchain unavailable; test specifies the retained /api/v1 colors operation contract for the generated-client migration."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:67",
+            "result": "not_run: existing cache namespace and disk fallback coverage requires execution in a Swift-enabled implementation environment."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "not_run: replays all 12 upstream v1 scenarios, including exclusions and intentional ties."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "vendored from viamin/color_matching priv/parity/v1/corpus.json at source commit 47057afd58f7d46b4d4b740ca7d2d08947774471; SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "Skipped in the tests-only phase: README is outside the permitted test/LID documentation paths. The implementation phase must add the requested corpus-consumption documentation."
+          }
+        ]
+      }
+    }
+  ]
+}
