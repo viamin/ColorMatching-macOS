@@ -1,0 +1,58 @@
+{
+  "status": "failed",
+  "summary": "Test-writing run added API-shape coverage and a red parity-corpus replay harness. The committed upstream fixture and generated client are intentionally deferred to the implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "Added request/response contract coverage; generated-client migration is not permitted in this test-writing phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:96",
+            "result": "Existing permanent tests cover per-server/profile disk-cache isolation; Swift is unavailable in this container to execute them."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:10",
+            "result": "Red test added. It fails until color_matching#111 corpus is committed at the declared fixture path."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:16",
+            "result": "Refresh source and command recorded; README change is prohibited in this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
