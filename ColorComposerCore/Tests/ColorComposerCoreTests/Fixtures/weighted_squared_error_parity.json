@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "weighted multi-channel nearest candidate",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "hex": "#112233", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "hex": "#445566", "responses": { "white": 0.7, "red": 0.2, "green": 0.7, "blue": 0.9, "lps": 0.5 } }
+      ],
+      "expected": { "selected_candidate_id": 102, "score": 0.005, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.8, "green": 0.9 },
+      "candidates": [
+        { "id": 201, "hex": "#223344", "responses": { "red": 0.8 } },
+        { "id": 202, "hex": "#556677", "responses": { "red": 0.6, "green": 0.9 } }
+      ],
+      "expected": { "selected_candidate_id": 201, "score": 0.0, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "missing active response is excluded",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "hex": "#778899", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#99AABB", "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected": { "selected_candidate_id": 302, "score": 0.01, "excluded_candidate_count": 1 }
+    },
+    {
+      "name": "equal scores select the earliest candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 401, "hex": "#AABBCC", "responses": { "red": 0.4 } },
+        { "id": 402, "hex": "#CCDDEE", "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_candidate_id": 401, "score": 0.01, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "all candidates missing an active response leaves target unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 501, "hex": "#DDEEFF", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#102030", "responses": { "green": 0.5 } }
+      ],
+      "expected": { "selected_candidate_id": null, "score": null, "excluded_candidate_count": 2 }
+    }
+  ]
+}
