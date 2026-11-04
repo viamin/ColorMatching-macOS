@@ -1,0 +1,65 @@
+{
+  "source": "seeded contract cases; replace with viamin/color_matching#111 before implementation approval",
+  "contract": "WeightedSquaredError selection corpus scaffold",
+  "cases": [
+    {
+      "name": "lowest weighted squared error wins",
+      "weights": { "red": 1 },
+      "target": { "red": 0.2 },
+      "palette": [
+        { "id": 1, "responses": { "red": 0.0 } },
+        { "id": 2, "responses": { "red": 0.25 } }
+      ],
+      "expected_color_id": 2
+    },
+    {
+      "name": "ties select the earliest palette entry",
+      "weights": { "red": 1 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 11, "responses": { "red": 0.4 } },
+        { "id": 12, "responses": { "red": 0.6 } }
+      ],
+      "expected_color_id": 11
+    },
+    {
+      "name": "missing active response excludes candidate",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 21, "responses": { "red": 0.5 } },
+        { "id": 22, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_color_id": 22
+    },
+    {
+      "name": "zero weight ignores an absent response",
+      "weights": { "red": 1, "blue": 0 },
+      "target": { "red": 0.25, "blue": 0.8 },
+      "palette": [
+        { "id": 31, "responses": { "red": 0.25 } },
+        { "id": 32, "responses": { "red": 0.4, "blue": 0.8 } }
+      ],
+      "expected_color_id": 31
+    },
+    {
+      "name": "channel weights alter selection",
+      "weights": { "red": 3, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 41, "responses": { "red": 0.4, "green": 0.0 } },
+        { "id": 42, "responses": { "red": 0.6, "green": 0.9 } }
+      ],
+      "expected_color_id": 41
+    },
+    {
+      "name": "all candidates excluded leaves selection unmatched",
+      "weights": { "red": 1, "green": 1 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 51, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null
+    }
+  ]
+}
