@@ -10,8 +10,10 @@
 
 The parity fixture is committed at
 `ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json`.
-It is a local mirror of the corpus planned in
-[`viamin/color_matching#111`](https://github.com/viamin/color_matching/pull/111).
-Refresh it by replacing the file with the upstream corpus snapshot, retaining cases for
-ties, exclusions, and zero-weight channels, then run `swift test` from
+It establishes the repository-side schema and critical cases pending publication of the
+canonical corpus in [`viamin/color_matching#111`](https://github.com/viamin/color_matching/pull/111).
+The upstream pull-request artifact was not accessible from this environment (GitHub returned
+404), so it must be replaced with the published snapshot before the implementation PR lands.
+Refresh it by replacing the file with that snapshot, retaining cases for ties, exclusions,
+and zero-weight channels, then run `swift test` from
 `ColorComposerCore`.

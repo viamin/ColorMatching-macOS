@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source": "https://github.com/viamin/color_matching/pull/111",
+  "source": "bootstrap cases for viamin/color_matching#111; replace with the published corpus snapshot",
   "cases": [
     {
       "name": "weighted multi-channel nearest candidate",
