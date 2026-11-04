@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: added focused permanent tests and README corpus instructions. Swift is unavailable in this container, so SwiftPM resolution and tests could not run. The new OpenAPI adoption assertion is intentionally red until implementation adds the required packages; the parity fixture is intentionally red until the unavailable upstream #111 corpus is copied verbatim.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1-generated-openapi-client",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "intentionally red: Package.swift does not yet declare swift-openapi-generator or swift-openapi-runtime"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2-cache-and-offline-fallback",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "existing per-server/profile disk-cache coverage; not run because Swift is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "existing API authentication/transport coverage; not run because Swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3-solver-parity-corpus",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "intentionally red until viamin/color_matching#111 corpus replaces the unavailable staging fixture; tests ordered ties, exclusions, weights, and exact score"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error.json:1",
+            "result": "staging fixture only; upstream PR API returned 404 from this environment"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4-corpus-documentation",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:16",
+            "result": "documents corpus location, upstream source, refresh procedure, and current provenance block"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5-pr-description",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "no PR is opened during this tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
