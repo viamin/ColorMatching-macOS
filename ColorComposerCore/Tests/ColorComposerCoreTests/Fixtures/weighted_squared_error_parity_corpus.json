@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "viamin/color_matching",
+    "issue": 111,
+    "solver": "WeightedSquaredError"
+  },
+  "cases": [
+    {
+      "name": "nearest color across weighted channels",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.2, "green": 0.4 } },
+        { "id": 102, "responses": { "red": 0.3, "green": 0.8 } }
+      ],
+      "expected_selected_id": 102
+    },
+    {
+      "name": "ties choose the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_selected_id": 201
+    },
+    {
+      "name": "missing required response excludes a candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.4, "green": 0.5 } }
+      ],
+      "expected_selected_id": 302
+    },
+    {
+      "name": "zero-weight channels neither score nor exclude",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 1.0 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.5 } },
+        { "id": 402, "responses": { "red": 0.6, "blue": 1.0 } }
+      ],
+      "expected_selected_id": 401
+    },
+    {
+      "name": "all candidates missing a required response remain unmatched",
+      "weights": { "red": 1.0, "lps": 1.0 },
+      "target": { "red": 0.5, "lps": 0.5 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.5 } },
+        { "id": 502, "responses": { "lps": 0.5 } }
+      ],
+      "expected_selected_id": null
+    }
+  ]
+}
