@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Tests and documentation were added for the generated OpenAPI-client migration and solver corpus. The Swift toolchain is unavailable in this container, and the generated-client dependency assertion is intentionally red until the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientContractTests.swift:5",
+            "result": "not run: Swift toolchain unavailable; assertion is expected to fail before the implementation adds swift-openapi-runtime and swift-openapi-generator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "not run: Swift toolchain unavailable; existing permanent cache-isolation and fallback coverage remains unchanged"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:16",
+            "result": "not run: Swift toolchain unavailable; replays committed corpus against WeightedSquaredErrorScorer"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json:1",
+            "result": "committed copy of viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "not changed: README is outside the tests-only phase allowlist; implementation phase must document corpus origin and refresh workflow"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "No PR exists in this tests-only, no-push run",
+            "result": "PR description must be completed by the implementation/PR publication phase"
+          }
+        ]
+      }
+    }
+  ]
+}
