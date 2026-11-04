@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Added the permanent parity-corpus replay test and exact upstream fixture. Swift is unavailable in this container, so dependency resolution and swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "Generated-client contract coverage is deferred to the implementation phase because production changes are prohibited in this test-writing run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache coverage remains in place; it was not runnable because the Swift toolchain is absent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift",
+            "result": "Permanent replay test added for all 12 v1 scenarios; not executed because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_v1.json",
+            "result": "Fixture is valid JSON, algorithm_version 1, 12 scenarios, SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "Corpus source and refresh policy are documented for the implementation phase; the requested README update is prohibited by this tests-only phase."
+          }
+        ]
+      }
+    }
+  ]
+}
