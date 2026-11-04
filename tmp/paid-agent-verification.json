@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed a permanent corpus-driven solver parity test and verification plan. Swift is unavailable in this container, so the suite could not be executed. The upstream corpus PR is private/unavailable here (GitHub returned 404), so its canonical fixture must replace the bootstrap fixture during implementation.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "Focused API-contract tests added for both versioned operations, but not executed: swift executable is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "Existing cache tests are identified; app-level offline-stale badge needs implementation-PR UI inspection."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:5",
+            "result": "Permanent corpus-driven test added but not executed: swift executable is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json",
+            "result": "Committed fixture covers weighted selection, exact tie-breaking, exclusion, and zero-weight behavior; replace from viamin/color_matching#111 during implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "Refresh requirement recorded; README and final corpus-consumption document must be completed in the implementation phase."
+          }
+        ]
+      }
+    }
+  ]
+}
