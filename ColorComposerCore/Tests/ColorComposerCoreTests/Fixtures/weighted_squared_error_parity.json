@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "solver": "weighted_squared_error",
+  "cases": [
+    {
+      "id": "nearest-red-response",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.0 },
+      "palette": [
+        { "id": 10, "hex": "#111111", "responses": { "red": 0.1 } },
+        { "id": 11, "hex": "#eeeeee", "responses": { "red": 0.9 } }
+      ],
+      "expected_selected_color_id": 10,
+      "expected_score": 0.01
+    },
+    {
+      "id": "earliest-palette-entry-wins-exact-tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 20, "hex": "#aaaaaa", "responses": { "red": 0.5 } },
+        { "id": 21, "hex": "#bbbbbb", "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_color_id": 20,
+      "expected_score": 0.0
+    },
+    {
+      "id": "zero-weight-missing-channel-does-not-exclude",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5, "green": 0.1 },
+      "palette": [
+        { "id": 30, "hex": "#808080", "responses": { "red": 0.5 } },
+        { "id": 31, "hex": "#777777", "responses": { "red": 0.6, "green": 0.1 } }
+      ],
+      "expected_selected_color_id": 30,
+      "expected_score": 0.0
+    },
+    {
+      "id": "missing-positive-weight-channel-is-excluded",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 40, "hex": "#ff0000", "responses": { "red": 0.5 } },
+        { "id": 41, "hex": "#888888", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_selected_color_id": 41,
+      "expected_score": 0.0
+    },
+    {
+      "id": "weighting-changes-the-selection",
+      "weights": { "red": 4.0, "green": 1.0 },
+      "target": { "red": 0.0, "green": 0.0 },
+      "palette": [
+        { "id": 50, "hex": "#440000", "responses": { "red": 0.2, "green": 0.9 } },
+        { "id": 51, "hex": "#004400", "responses": { "red": 0.5, "green": 0.1 } }
+      ],
+      "expected_selected_color_id": 50,
+      "expected_score": 0.9700000000000001
+    },
+    {
+      "id": "all-candidates-excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 60, "hex": "#ff0000", "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_color_id": null,
+      "expected_score": null
+    }
+  ]
+}
