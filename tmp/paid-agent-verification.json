@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "summary": "Test-writing run added a permanent parity-corpus replay harness. Execution is blocked because the container has no swift executable; the committed upstream fixture is intentionally pending the implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift:4",
+            "result": "Current package has no swift-openapi-generator/runtime dependencies; implementation required."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:6",
+            "result": "Focused cache/offline fallback test is planned for the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:9",
+            "result": "Permanent corpus replay test added; fixture pending at Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json."
+          },
+          {
+            "locator": "https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json",
+            "result": "Verified upstream corpus source: algorithm_version 1, 12 scenarios."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:8",
+            "result": "README update is deferred because this test-writing phase permits docs/ but not README.md."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "No pull request is opened in this tests-only, no-push run."
+          }
+        ]
+      }
+    }
+  ]
+}
