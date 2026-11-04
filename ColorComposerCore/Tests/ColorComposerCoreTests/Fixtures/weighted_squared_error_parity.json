@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "nearest candidate wins",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.4 },
+      "palette": [
+        { "id": 201, "hex": "#110000", "responses": { "red": 0.1 } },
+        { "id": 202, "hex": "#880000", "responses": { "red": 0.5 } }
+      ],
+      "expected_palette_id": 202,
+      "expected_error": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties preserve palette order",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 301, "hex": "#330000", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#660000", "responses": { "red": 0.5 } }
+      ],
+      "expected_palette_id": 301,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "missing active measurement is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.6 },
+      "palette": [
+        { "id": 401, "hex": "#004400", "responses": { "red": 0.5 } },
+        { "id": 402, "hex": "#008800", "responses": { "red": 0.5, "green": 0.6 } }
+      ],
+      "expected_palette_id": 402,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero weight ignores missing measurement",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.4, "blue": 0.9 },
+      "palette": [
+        { "id": 501, "hex": "#440000", "responses": { "red": 0.4 } },
+        { "id": 502, "hex": "#990000", "responses": { "red": 0.9, "blue": 0.3 } }
+      ],
+      "expected_palette_id": 501,
+      "expected_error": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "weights change the preferred candidate",
+      "weights": { "red": 9.0, "green": 1.0 },
+      "target": { "red": 0.9, "green": 0.1 },
+      "palette": [
+        { "id": 601, "hex": "#aa2200", "responses": { "red": 0.8, "green": 0.9 } },
+        { "id": 602, "hex": "#22aa00", "responses": { "red": 0.2, "green": 0.2 } }
+      ],
+      "expected_palette_id": 601,
+      "expected_error": 1.45,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all candidates missing active measurements leave the cell unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 701, "hex": "#220000", "responses": { "red": 0.5 } },
+        { "id": 702, "hex": "#002200", "responses": { "green": 0.5 } }
+      ],
+      "expected_palette_id": null,
+      "expected_excluded_candidate_count": 2
+    }
+  ]
+}

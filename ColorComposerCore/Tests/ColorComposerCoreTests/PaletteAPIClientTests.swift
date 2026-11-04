@@ -37,6 +37,33 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    func testFetchPrinterProfilesPreservesVersionedEndpointAndDecodesEnvelope() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles")
+            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+        }
+
+        let profiles = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(profiles.map(\.id), [1])
+        XCTAssertEqual(profiles.first?.printerMakeModel, "Example Printer")
+    }
+
+    func testFetchColorsPreservesProfileQueryAndDecodesEnvelope() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems, [
+                URLQueryItem(name: "printer_profile_id", value: "7")
+            ])
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let result = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(result.colors.map(\.id), [11])
+        XCTAssertEqual(result.profile?.id, 7)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -58,6 +85,28 @@ final class PaletteAPIClientTests: XCTestCase {
               "ink_type": "Pigment"
             }
           ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "colors": [
+            {
+              "id": 11,
+              "hex": "#336699",
+              "responses": {
+                "red": { "brightness": 0.5 }
+              }
+            }
+          ],
+          "printer_profile": {
+            "id": 7,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          }
         }
         """.data(using: .utf8)!
     }
