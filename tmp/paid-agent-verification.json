@@ -1,0 +1,62 @@
+{
+  "status": "failed",
+  "summary": "Test-writing phase completed with focused migration and parity coverage. Swift is unavailable in this container, so no Swift test result is available; the generated-client migration and README change intentionally remain red/deferred for the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientAdoptionTests.swift:5",
+            "result": "red contract added; could not run because swift is not installed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:72",
+            "result": "existing permanent cache/fallback regression coverage; could not rerun because swift is not installed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "corpus replay contract added; could not run because swift is not installed"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "upstream corpus v1 vendored with SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "README update deferred by the explicit tests-only file allowlist"
+          }
+        ]
+      }
+    }
+  ]
+}
