@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "weighted channels select the lowest total error",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 101, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.9, "lps": 0.5 } }
+      ],
+      "expected_candidate_id": 102
+    },
+    {
+      "name": "ties preserve the first eligible candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 201
+    },
+    {
+      "name": "missing active measurements exclude otherwise closer candidates",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 302
+    },
+    {
+      "name": "zero-weight measurements neither exclude nor influence selection",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.2, "blue": 1.0 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.2 } },
+        { "id": 402, "responses": { "red": 0.3, "blue": 1.0 } }
+      ],
+      "expected_candidate_id": 401
+    }
+  ]
+}
