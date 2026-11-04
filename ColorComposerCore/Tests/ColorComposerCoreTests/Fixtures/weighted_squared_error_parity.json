@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "name": "weighted selection uses every active channel",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "palette": [
+        { "id": 1, "hex": "#110000", "responses": { "red": 0.7, "green": 0.8 } },
+        { "id": 2, "hex": "#001100", "responses": { "red": 0.7, "green": 0.2 } }
+      ],
+      "expected": { "selectedColorID": 2, "excludedCandidateIDs": [], "error": 0.010000000000000018 }
+    },
+    {
+      "name": "ties choose the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 10, "hex": "#101010", "responses": { "red": 0.5 } },
+        { "id": 11, "hex": "#111111", "responses": { "red": 0.5 } }
+      ],
+      "expected": { "selectedColorID": 10, "excludedCandidateIDs": [], "error": 0.0 }
+    },
+    {
+      "name": "missing active measurements are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.4, "green": 0.6 },
+      "palette": [
+        { "id": 20, "hex": "#200000", "responses": { "red": 0.4 } },
+        { "id": 21, "hex": "#002100", "responses": { "red": 0.4, "green": 0.6 } }
+      ],
+      "expected": { "selectedColorID": 21, "excludedCandidateIDs": [20], "error": 0.0 }
+    },
+    {
+      "name": "zero-weight channels do not exclude a candidate",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.3 },
+      "palette": [
+        { "id": 30, "hex": "#300000", "responses": { "red": 0.3 } },
+        { "id": 31, "hex": "#003100", "responses": { "red": 0.6, "green": 0.3 } }
+      ],
+      "expected": { "selectedColorID": 30, "excludedCandidateIDs": [], "error": 0.0 }
+    }
+  ]
+}
