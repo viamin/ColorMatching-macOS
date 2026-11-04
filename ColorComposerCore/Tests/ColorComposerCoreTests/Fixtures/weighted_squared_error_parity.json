@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "source": "viamin/color_matching#111 (pending import; upstream PR was inaccessible during this test-writing run)",
+  "cases": [
+    {
+      "name": "weighted squared error doctest",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } }
+      ],
+      "expected": { "candidate_id": 1, "score": 0.205, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "earliest candidate wins exact tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.4 } },
+        { "id": 20, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "candidate_id": 10, "score": 0.01, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "missing active response is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.5, "green": 0.6 } }
+      ],
+      "expected": { "candidate_id": 31, "score": 0.01, "excluded_candidate_ids": [30] }
+    },
+    {
+      "name": "zero weight does not require a response",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 40, "responses": { "red": 0.5 } }
+      ],
+      "expected": { "candidate_id": 40, "score": 0.0, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "channel weights choose the lower weighted error",
+      "weights": { "white": 10.0, "red": 1.0 },
+      "target": { "white": 0.0, "red": 0.0 },
+      "candidates": [
+        { "id": 50, "responses": { "white": 0.8, "red": 0.0 } },
+        { "id": 51, "responses": { "white": 0.0, "red": 0.7 } }
+      ],
+      "expected": { "candidate_id": 51, "score": 0.49, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "all candidates excluded leaves target unmatched",
+      "weights": { "blue": 1.0 },
+      "target": { "blue": 0.5 },
+      "candidates": [
+        { "id": 60, "responses": { "red": 0.5 } }
+      ],
+      "expected": { "candidate_id": null, "score": null, "excluded_candidate_ids": [60] }
+    }
+  ]
+}
