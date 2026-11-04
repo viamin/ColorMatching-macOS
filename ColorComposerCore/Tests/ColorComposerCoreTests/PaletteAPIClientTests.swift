@@ -37,6 +37,23 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    func testFetchColorsPreservesTheV1ContractShape() async throws {
+        let client = makeClient { request in
+            let components = try XCTUnwrap(URLComponents(url: try XCTUnwrap(request.url), resolvingAgainstBaseURL: false))
+            XCTAssertEqual(components.path, "/api/v1/colors")
+            XCTAssertEqual(components.queryItems, [URLQueryItem(name: "printer_profile_id", value: "17")])
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+            return (.init(statusCode: 200, url: request.url!), colorsResponse())
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 17)
+
+        XCTAssertEqual(response.profile?.id, 17)
+        XCTAssertEqual(response.colors.map(\.id), [9])
+        XCTAssertEqual(response.colors.first?.responses["red"]?.brightness, 0.8)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +73,27 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 17,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 9,
+              "hex": "#123456",
+              "rgb": {"r": 18, "g": 52, "b": 86},
+              "responses": {"red": {"brightness": 0.8}}
             }
           ]
         }

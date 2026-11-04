@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "path": "priv/solver_parity/weighted_squared_error.json"
+  },
+  "cases": [
+    {
+      "name": "weighted channels choose the lowest total squared error",
+      "tags": ["weights"],
+      "weights": {"red": 4.0, "green": 0.5},
+      "target": {"red": 0.1, "green": 0.9},
+      "candidates": [
+        {"id": 101, "hex": "#110000", "responses": {"red": 0.2, "green": 0.7}},
+        {"id": 102, "hex": "#001100", "responses": {"red": 0.0, "green": 0.5}}
+      ],
+      "expected": {"selected_candidate_id": 101, "error": 0.06, "excluded_candidate_count": 0}
+    },
+    {
+      "name": "equal scores retain the earliest palette candidate",
+      "tags": ["tie"],
+      "weights": {"red": 1.0},
+      "target": {"red": 0.5},
+      "candidates": [
+        {"id": 201, "hex": "#111111", "responses": {"red": 0.5}},
+        {"id": 202, "hex": "#222222", "responses": {"red": 0.5}}
+      ],
+      "expected": {"selected_candidate_id": 201, "error": 0.0, "excluded_candidate_count": 0}
+    },
+    {
+      "name": "candidates missing an active measurement are excluded",
+      "tags": ["exclusion"],
+      "weights": {"red": 1.0, "green": 1.0},
+      "target": {"red": 0.5, "green": 0.5},
+      "candidates": [
+        {"id": 301, "hex": "#330000", "responses": {"red": 0.5}},
+        {"id": 302, "hex": "#003300", "responses": {"red": 0.5, "green": 0.5}}
+      ],
+      "expected": {"selected_candidate_id": 302, "error": 0.0, "excluded_candidate_count": 1}
+    },
+    {
+      "name": "missing zero-weight measurements do not exclude a candidate",
+      "tags": ["zero_weight"],
+      "weights": {"red": 1.0, "green": 0.0},
+      "target": {"red": 0.25},
+      "candidates": [
+        {"id": 401, "hex": "#440000", "responses": {"red": 0.25}},
+        {"id": 402, "hex": "#004400", "responses": {"red": 0.5, "green": 0.5}}
+      ],
+      "expected": {"selected_candidate_id": 401, "error": 0.0, "excluded_candidate_count": 0}
+    }
+  ]
+}
