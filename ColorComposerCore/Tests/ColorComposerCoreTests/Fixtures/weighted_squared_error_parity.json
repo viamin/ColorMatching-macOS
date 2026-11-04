@@ -1,0 +1,66 @@
+{
+  "format_version": 1,
+  "upstream": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted multi-channel selection",
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "candidates": [
+        { "id": 101, "hex": "#101010", "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 102, "hex": "#202020", "responses": { "white": 0.8, "red": 0.9, "green": 0.1, "blue": 0.8, "lps": 0.9 } }
+      ],
+      "expected_winner_id": 101
+    },
+    {
+      "name": "earliest candidate wins an exact tie",
+      "target": { "red": 0.5 },
+      "weights": { "red": 1.0 },
+      "candidates": [
+        { "id": 201, "hex": "#111111", "responses": { "red": 0.4 } },
+        { "id": 202, "hex": "#222222", "responses": { "red": 0.6 } }
+      ],
+      "expected_winner_id": 201
+    },
+    {
+      "name": "missing active measurements are excluded",
+      "target": { "red": 0.4, "green": 0.7 },
+      "weights": { "red": 1.0, "green": 2.0 },
+      "candidates": [
+        { "id": 301, "hex": "#331111", "responses": { "red": 0.4 } },
+        { "id": 302, "hex": "#113311", "responses": { "red": 0.4, "green": 0.7 } }
+      ],
+      "expected_winner_id": 302
+    },
+    {
+      "name": "missing zero-weight measurements do not exclude",
+      "target": { "red": 0.25, "green": 0.9 },
+      "weights": { "red": 1.0, "green": 0.0 },
+      "candidates": [
+        { "id": 401, "hex": "#440000", "responses": { "red": 0.25 } },
+        { "id": 402, "hex": "#004400", "responses": { "red": 0.5, "green": 0.9 } }
+      ],
+      "expected_winner_id": 401
+    },
+    {
+      "name": "weights change the selected candidate",
+      "target": { "red": 0.0, "green": 0.0 },
+      "weights": { "red": 3.0, "green": 1.0 },
+      "candidates": [
+        { "id": 501, "hex": "#550000", "responses": { "red": 0.1, "green": 0.5 } },
+        { "id": 502, "hex": "#005500", "responses": { "red": 0.4, "green": 0.1 } }
+      ],
+      "expected_winner_id": 501
+    },
+    {
+      "name": "all candidates excluded has no selection",
+      "target": { "red": 0.5, "blue": 0.5 },
+      "weights": { "red": 1.0, "blue": 1.0 },
+      "candidates": [
+        { "id": 601, "hex": "#660000", "responses": { "red": 0.5 } },
+        { "id": 602, "hex": "#000066", "responses": { "blue": 0.5 } }
+      ],
+      "expected_winner_id": null
+    }
+  ]
+}
