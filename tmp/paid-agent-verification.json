@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: v1 parity corpus and red generated-client adoption contract were added. Swift is unavailable in this container, so SwiftPM tests could not be executed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "intentionally red: Package.swift does not yet declare swift-openapi-runtime or swift-openapi-generator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "not run: Swift toolchain unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6",
+            "result": "not run: Swift toolchain unavailable; fixture JSON schema validated with jq"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "upstream v1 corpus at color_matching commit 47057afd58f7d46b4d4b740ca7d2d08947774471; SHA-256 verified as 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:8",
+            "result": "deferred by tests-only phase restriction; implementation phase must update README"
+          }
+        ]
+      }
+    }
+  ]
+}
