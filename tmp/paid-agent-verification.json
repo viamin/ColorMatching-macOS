@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase: committed and externally validated the v1 solver fixture and added its permanent XCTest. Swift is unavailable in this container, so the suite could not be compiled or run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing request/auth behavior coverage; generated-client migration is deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing disk cache per-server/profile coverage was not runnable because Swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "Permanent v1 corpus test added; not run because `swift` is absent."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "Semantic JSON equality against viamin/color_matching main/priv/parity/v1/corpus.json verified locally; SHA-256 c2e0cbc67ca05fe1a65b8596c44d37f98bb7f7df4c37ff54320d1247b6cf4576."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "Corpus location and refresh procedure documented in the permitted LID-doc path; README edit is deferred by the tests-only phase restriction."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "Criterion-to-verification plan recorded; PR description requires implementation diff and test-run review."
+          }
+        ]
+      }
+    }
+  ]
+}
