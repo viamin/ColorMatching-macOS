@@ -1,0 +1,60 @@
+{
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "weighted multi-channel selection",
+      "weights": { "white": 0, "red": 2, "green": 0.5, "blue": 0, "lps": 0 },
+      "target": { "red": 0.6, "green": 0.3 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.4, "green": 0.3 } },
+        { "id": 102, "responses": { "red": 0.7, "green": 0.4 } },
+        { "id": 103, "responses": { "red": 0.9, "green": 0.3 } }
+      ],
+      "expected_color_id": 102,
+      "expected_score": 0.025
+    },
+    {
+      "name": "ties select the earliest palette entry",
+      "weights": { "white": 0, "red": 1, "green": 0, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.5 } },
+        { "id": 202, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": 201,
+      "expected_score": 0
+    },
+    {
+      "name": "missing required measurements are excluded",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.6, "green": 0.4 } }
+      ],
+      "expected_color_id": 302,
+      "expected_score": 0.02
+    },
+    {
+      "name": "zero-weight channels do not exclude candidates",
+      "weights": { "white": 0, "red": 1, "green": 0, "blue": 0, "lps": 0 },
+      "target": { "red": 0.7, "green": 0.1 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.7 } },
+        { "id": 402, "responses": { "red": 0.8, "green": 0.1 } }
+      ],
+      "expected_color_id": 401,
+      "expected_score": 0
+    },
+    {
+      "name": "all candidates missing a required measurement remain unmatched",
+      "weights": { "white": 0, "red": 1, "green": 1, "blue": 0, "lps": 0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_score": null
+    }
+  ]
+}
