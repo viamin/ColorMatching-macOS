@@ -1,0 +1,83 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run: lint could not execute Swift checks and swift is not installed in this container. The generated-client dependency test is intentionally red until the implementation run adds the required SwiftPM packages. The upstream parity corpus PR was inaccessible, so the committed fixture is explicitly provisional and requires replacement with the exact upstream artifact.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIGeneratedClientDependencyTests.swift:5",
+            "result": "not_run: swift executable unavailable; assertion intentionally fails until dependencies are declared"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "not_run: swift executable unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:92",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md:11",
+            "result": "offline-stale badge and cached-profile UI fallback require implementation-run app-layer evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: swift executable unavailable; fixture must be replaced with exact corpus from viamin/color_matching#111"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_corpus.json:1",
+            "result": "committed provisional corpus harness covers selection, ties, exclusions, and zero/nonzero weights"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:18",
+            "result": "README change deferred by test-writing path restrictions"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:19",
+            "result": "PR description must be completed by implementation/PR run"
+          }
+        ]
+      }
+    }
+  ]
+}
