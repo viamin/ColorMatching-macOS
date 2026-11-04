@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase tests and parity corpus are committed; Swift is unavailable in this container, so compilation and test execution could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientContractTests.swift:5",
+            "result": "expected red: Package.swift does not yet declare swift-openapi-runtime or swift-openapi-generator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:70",
+            "result": "existing cache isolation and disk round-trip coverage identified; Swift unavailable for execution"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:8",
+            "result": "permanent corpus replay added; Swift unavailable for execution"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpus.json",
+            "result": "pinned copy of color_matching issue #111 corpus, SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:1",
+            "result": "README change deferred because this red-phase run may modify only tests and allowlisted docs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:1",
+            "result": "PR evidence pending implementation and test execution"
+          }
+        ]
+      }
+    }
+  ]
+}
