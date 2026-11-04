@@ -1,0 +1,60 @@
+{
+  "source": "pending import from viamin/color_matching#111",
+  "format_version": 1,
+  "cases": [
+    {
+      "id": "weighted-selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 11, "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 } }
+      ],
+      "expected_selected_id": 11,
+      "expected_error": 0.0
+    },
+    {
+      "id": "earliest-candidate-wins-tie",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.5 } },
+        { "id": 21, "responses": { "red": 0.5 } }
+      ],
+      "expected_selected_id": 20,
+      "expected_error": 0.0
+    },
+    {
+      "id": "missing-active-measurement-is-excluded",
+      "weights": { "white": 0.0, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_selected_id": 31,
+      "expected_error": 0.01
+    },
+    {
+      "id": "zero-weight-measurement-is-not-required",
+      "weights": { "white": 0.0, "red": 1.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "red": 0.25, "green": 1.0 },
+      "candidates": [
+        { "id": 40, "responses": { "red": 0.25 } },
+        { "id": 41, "responses": { "red": 0.5, "green": 1.0 } }
+      ],
+      "expected_selected_id": 40,
+      "expected_error": 0.0
+    },
+    {
+      "id": "all-active-measurements-missing-leaves-unmatched",
+      "weights": { "white": 0.0, "red": 0.0, "green": 0.0, "blue": 1.0, "lps": 0.0 },
+      "target": { "blue": 0.4 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.4 } }
+      ],
+      "expected_selected_id": null,
+      "expected_error": null
+    }
+  ]
+}
