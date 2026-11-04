@@ -22,7 +22,9 @@ final class WeightedSquaredErrorParityTests: XCTestCase {
         let scores = candidates.map { scorer.score(candidate: $0, target: target, weights: weights) }
 
         XCTAssertEqual(scores.count, scenario.expected.scores.count, scenario.id)
-        for (actual, expected) in zip(scores, scenario.expected.scores) {
+        for (index, pair) in zip(scores, scenario.expected.scores).enumerated() {
+            let (actual, expected) = pair
+            XCTAssertEqual(expected.index, index, scenario.id + " corpus score index")
             XCTAssertEqual(actual, expected.scorerResult, scenario.id + " candidate " + String(expected.index))
         }
 
