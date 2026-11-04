@@ -1,0 +1,71 @@
+{
+  "status": "failed",
+  "summary": "Red-phase coverage added for generated-client configuration and the upstream solver corpus; implementation is intentionally deferred to the next run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:testPackageManifestDeclaresGeneratedOpenAPIClientDependencies",
+            "result": "planned red test: Package.swift does not yet declare swift-openapi-runtime or swift-openapi-generator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift",
+            "result": "implementation-phase inspection required to verify disk-cache, cached-profile fallback, and offline-stale UI behavior remain unchanged after migration"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:testWeightedSquaredErrorReplaysCommittedParityCorpus",
+            "result": "not run: the isolated container has no swift executable (rtk swift --version returned ENOENT)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "deferred: the tests-only phase allows only test paths and LID documentation, and README.md is outside that allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "PR description",
+            "result": "PR creation is outside this tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
