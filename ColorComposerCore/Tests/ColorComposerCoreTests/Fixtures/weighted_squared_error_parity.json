@@ -1,0 +1,55 @@
+{
+  "source": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "selects the lowest weighted squared error",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.7, "green": 0.3 },
+      "candidates": [
+        { "id": 101, "hex": "#111111", "responses": { "red": 0.1, "green": 0.9 } },
+        { "id": 102, "hex": "#222222", "responses": { "red": 0.8, "green": 0.2 } }
+      ],
+      "expected_color_id": 102
+    },
+    {
+      "name": "ties select the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "hex": "#333333", "responses": { "red": 0.5 } },
+        { "id": 202, "hex": "#444444", "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": 201
+    },
+    {
+      "name": "missing an active measurement excludes the candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "hex": "#555555", "responses": { "red": 0.5 } },
+        { "id": 302, "hex": "#666666", "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_color_id": 302
+    },
+    {
+      "name": "channel weights determine the selected candidate",
+      "weights": { "red": 3.0, "green": 1.0 },
+      "target": { "red": 0.8, "green": 0.8 },
+      "candidates": [
+        { "id": 401, "hex": "#777777", "responses": { "red": 0.0, "green": 1.0 } },
+        { "id": 402, "hex": "#888888", "responses": { "red": 1.0, "green": 0.0 } }
+      ],
+      "expected_color_id": 402
+    },
+    {
+      "name": "zero-weight channels do not exclude candidates",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5, "green": 0.0 },
+      "candidates": [
+        { "id": 501, "hex": "#999999", "responses": { "red": 0.5 } },
+        { "id": 502, "hex": "#aaaaaa", "responses": { "red": 0.8, "green": 0.0 } }
+      ],
+      "expected_color_id": 501
+    }
+  ]
+}

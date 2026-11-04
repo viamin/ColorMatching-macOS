@@ -37,6 +37,36 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    func testFetchPrinterProfilesUsesVersionedAPIPath() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles")
+            XCTAssertNil(request.url?.query)
+            return (.init(statusCode: 200, url: request.url!), self.printerProfilesResponse())
+        }
+
+        _ = try await client.fetchPrinterProfiles()
+    }
+
+    func testFetchColorsUsesProfileQueryOnVersionedAPIPath() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems, [
+                URLQueryItem(name: "printer_profile_id", value: "42")
+            ])
+            return (
+                .init(statusCode: 200, url: request.url!),
+                """
+                {"colors": [], "printer_profile": {"id": 42}}
+                """.data(using: .utf8)!
+            )
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertTrue(response.colors.isEmpty)
+        XCTAssertEqual(response.profile?.id, 42)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
