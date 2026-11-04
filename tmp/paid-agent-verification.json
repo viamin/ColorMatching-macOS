@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added executable OpenAPI-adoption and solver-parity coverage. The Swift toolchain is unavailable in this container, so no Swift test result is claimed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientAdoptionTests.swift:5",
+            "result": "not_run: Swift toolchain unavailable; assertions are intentionally red until the implementation adds swift-openapi-generator, swift-openapi-runtime, and generated client source"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:776",
+            "result": "not_run: existing cache coverage was not executable because Swift is unavailable"
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md:6",
+            "result": "offline-stale badge presentation requires implementation-run human inspection"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:5",
+            "result": "not_run: Swift toolchain unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "committed upstream corpus copied from viamin/color_matching@47057afd58f7d46b4d4b740ca7d2d08947774471"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:8",
+            "result": "README edits are prohibited during the test-writing phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "PR description must be inspected after the implementation run"
+          }
+        ]
+      }
+    }
+  ]
+}
