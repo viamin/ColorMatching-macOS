@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Added a permanent solver parity corpus test and documented corpus refresh. The Swift toolchain is unavailable in this container, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing API-client tests are present; generated-client migration is implementation-phase work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache server-scoping and disk fallback coverage is present; swift test could not run because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "Permanent corpus-driven selection test added; execution blocked because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json",
+            "result": "Committed fixture covers weighted selection, ties, exclusions, and zero-weight handling."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "Documents corpus location, upstream source, refresh procedure, and covered semantics."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "PR description is a publication-stage artifact and is not created in this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
