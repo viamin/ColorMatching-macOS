@@ -1,0 +1,50 @@
+{
+  "source": "unavailable: viamin/color_matching#111",
+  "algorithm": "weighted_squared_error",
+  "cases": [
+    {
+      "name": "weighted channels choose the lowest total error",
+      "weights": { "red": 2.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5, "green": 0.8 } },
+        { "id": 20, "responses": { "red": 0.4, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 20,
+      "expected_score": 0.02
+    },
+    {
+      "name": "ties preserve corpus candidate order",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.4 } },
+        { "id": 40, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 30,
+      "expected_score": 0.01
+    },
+    {
+      "name": "missing required responses are excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.5 } },
+        { "id": 60, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 60,
+      "expected_score": 0.01
+    },
+    {
+      "name": "zero-weight channels do not exclude a candidate",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 0.1 },
+      "candidates": [
+        { "id": 70, "responses": { "red": 0.5 } },
+        { "id": 80, "responses": { "red": 0.6, "blue": 0.1 } }
+      ],
+      "expected_candidate_id": 70,
+      "expected_score": 0.0
+    }
+  ]
+}
