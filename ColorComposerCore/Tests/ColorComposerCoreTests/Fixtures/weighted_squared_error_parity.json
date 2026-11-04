@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "nearest_candidate_by_weighted_squared_error",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.8 },
+      "palette": [
+        { "id": 1, "responses": { "red": 0.1 } },
+        { "id": 2, "responses": { "red": 0.9 } }
+      ],
+      "expected_color_id": 2,
+      "expected_score": 0.01,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "channel_weights_scale_squared_error",
+      "weights": { "white": 0.5, "red": 2.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "lps": 0.5 },
+      "palette": [
+        { "id": 10, "responses": { "white": 0.5, "red": 0.1, "lps": 0.3 } },
+        { "id": 11, "responses": { "white": 0.7, "red": 0.3, "lps": 0.4 } }
+      ],
+      "expected_color_id": 11,
+      "expected_score": 0.035,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "ties_select_the_earliest_palette_candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 20, "responses": { "red": 0.5 } },
+        { "id": 21, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": 20,
+      "expected_score": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "candidate_missing_an_active_measurement_is_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_color_id": 31,
+      "expected_score": 0.0,
+      "expected_excluded_candidate_count": 1
+    },
+    {
+      "name": "zero_weight_measurements_do_not_exclude_a_candidate",
+      "weights": { "red": 1.0, "green": 0.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 40, "responses": { "red": 0.5 } },
+        { "id": 41, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_color_id": 40,
+      "expected_score": 0.0,
+      "expected_excluded_candidate_count": 0
+    },
+    {
+      "name": "all_candidates_missing_an_active_measurement_leave_the_cell_unmatched",
+      "weights": { "red": 1.0, "blue": 1.0 },
+      "target": { "red": 0.5, "blue": 0.5 },
+      "palette": [
+        { "id": 50, "responses": { "red": 0.5 } }
+      ],
+      "expected_color_id": null,
+      "expected_excluded_candidate_count": 1
+    }
+  ]
+}
