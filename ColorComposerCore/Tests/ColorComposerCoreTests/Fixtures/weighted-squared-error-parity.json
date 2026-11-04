@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weighted_selection",
+      "weights": { "red": 2.0, "green": 1.0 },
+      "target": { "red": 0.7, "green": 0.2 },
+      "candidates": [
+        { "id": 1, "responses": { "red": 0.6, "green": 0.2 } },
+        { "id": 2, "responses": { "red": 0.7, "green": 0.5 } }
+      ],
+      "expected_color_id": 1
+    },
+    {
+      "name": "zero_weight_does_not_require_a_measurement",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.4, "blue": 1.0 },
+      "candidates": [
+        { "id": 3, "responses": { "red": 0.4 } },
+        { "id": 4, "responses": { "red": 0.6, "blue": 1.0 } }
+      ],
+      "expected_color_id": 3
+    },
+    {
+      "name": "missing_active_measurement_is_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "id": 5, "responses": { "red": 0.2 } },
+        { "id": 6, "responses": { "red": 0.3, "green": 0.8 } }
+      ],
+      "expected_color_id": 6
+    },
+    {
+      "name": "ties_choose_the_earliest_palette_color",
+      "weights": { "white": 1.0 },
+      "target": { "white": 0.5 },
+      "candidates": [
+        { "id": 7, "responses": { "white": 0.4 } },
+        { "id": 8, "responses": { "white": 0.6 } }
+      ],
+      "expected_color_id": 7
+    }
+  ]
+}
