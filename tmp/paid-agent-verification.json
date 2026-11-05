@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added permanent OpenAPI package and solver parity contracts. Swift is not installed in this container, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientPackageTests.swift:5",
+            "result": "not run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "not run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:1",
+            "result": "not run: swift executable is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:8",
+            "result": "not run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "byte-identical to upstream corpus at commit 47057afd58f7d46b4b740ca7d2d08947774471 (SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity.md:1",
+            "result": "Corpus consumption documented here; README update is deferred because this test-writing phase prohibits edits outside docs/ and test paths."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity.md:22",
+            "result": "No pull request was created in this local test-writing run."
+          }
+        ]
+      }
+    }
+  ]
+}
