@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "source": "viamin/color_matching#111 (vendored contract cases; replace with upstream artifact when dependency is available)",
+  "cases": [
+    {
+      "name": "weighted multi-channel selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "palette": [
+        { "id": 11, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 12, "responses": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.8, "lps": 0.5 } }
+      ],
+      "expected": { "selected_palette_id": 12, "error": 0.0, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "ties select earliest palette entry",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 21, "responses": { "red": 0.4 } },
+        { "id": 22, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_palette_id": 21, "error": 0.01, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "missing active response is excluded",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 31, "responses": { "red": 0.5 } },
+        { "id": 32, "responses": { "red": 0.5, "green": 0.6 } }
+      ],
+      "expected": { "selected_palette_id": 32, "error": 0.02, "excluded_candidate_count": 1 }
+    },
+    {
+      "name": "zero weight ignores absent response",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 1.0 },
+      "palette": [
+        { "id": 41, "responses": { "red": 0.5 } },
+        { "id": 42, "responses": { "red": 0.6, "blue": 1.0 } }
+      ],
+      "expected": { "selected_palette_id": 41, "error": 0.0, "excluded_candidate_count": 0 }
+    }
+  ]
+}
