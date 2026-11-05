@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "viamin/color_matching",
+    "pull_request": 111,
+    "purpose": "WeightedSquaredError selection parity corpus"
+  },
+  "cases": [
+    {
+      "name": "weighted_multi_channel_selection",
+      "weights": { "white": 0.5, "red": 1.0, "green": 1.0, "blue": 0.0, "lps": 1.5 },
+      "target": { "white": 0.8, "red": 0.2, "green": 0.7, "blue": 0.1, "lps": 0.5 },
+      "candidates": [
+        { "id": 1, "responses": { "white": 0.5, "red": 0.1, "green": 0.4, "blue": 0.0, "lps": 0.3 } },
+        { "id": 2, "responses": { "white": 0.75, "red": 0.3, "green": 0.65, "blue": 0.9, "lps": 0.45 } }
+      ],
+      "expected": { "color_id": 2, "score": 0.0175 }
+    },
+    {
+      "name": "zero_weight_missing_measurements_are_ignored",
+      "weights": { "white": 1.0, "red": 0.0, "green": 0.0, "blue": 0.0, "lps": 0.0 },
+      "target": { "white": 0.8 },
+      "candidates": [
+        { "id": 10, "responses": { "white": 0.5 } },
+        { "id": 11, "responses": { "white": 0.2, "red": 0.8 } }
+      ],
+      "expected": { "color_id": 10, "score": 0.09 }
+    },
+    {
+      "name": "missing_required_measurement_is_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.5 } },
+        { "id": 21, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected": { "color_id": 21, "score": 0.01 }
+    },
+    {
+      "name": "tie_selects_the_earliest_candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.4 } },
+        { "id": 31, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "color_id": 30, "score": 0.01 }
+    },
+    {
+      "name": "all_candidates_missing_required_measurements_leave_no_selection",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 40, "responses": { "red": 0.5 } },
+        { "id": 41, "responses": { "green": 0.5 } }
+      ],
+      "expected": { "color_id": null, "score": null }
+    }
+  ]
+}
