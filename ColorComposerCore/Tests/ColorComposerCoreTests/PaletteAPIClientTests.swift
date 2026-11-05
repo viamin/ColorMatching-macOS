@@ -29,12 +29,40 @@ final class PaletteAPIClientTests: XCTestCase {
             lock.lock()
             requests.append(request.value(forHTTPHeaderField: "Authorization"))
             lock.unlock()
-            return (.init(statusCode: 200, url: request.url!), printerProfilesResponse())
+            return (.init(statusCode: 200, url: request.url!), Self.printerProfilesResponse())
         }
 
         _ = try await client.fetchPrinterProfiles()
 
         XCTAssertEqual(requests, ["Bearer stale-token"])
+    }
+
+    func testFetchPrinterProfilesUsesVersionedOpenAPIEndpoint() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles")
+            XCTAssertNil(request.url?.query)
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            return (.init(statusCode: 200, url: request.url!), Self.printerProfilesResponse())
+        }
+
+        let profiles = try await client.fetchPrinterProfiles()
+
+        XCTAssertEqual(profiles.map(\.id), [1])
+    }
+
+    func testFetchColorsUsesVersionedOpenAPIEndpointAndProfileQuery() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/colors")
+            XCTAssertEqual(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems, [
+                URLQueryItem(name: "printer_profile_id", value: "7")
+            ])
+            return (.init(statusCode: 200, url: request.url!), Self.colorsResponse())
+        }
+
+        let response = try await client.fetchColors(printerProfileID: 7)
+
+        XCTAssertEqual(response.colors.map(\.id), [2])
+        XCTAssertEqual(response.profile?.id, 7)
     }
 
     private func makeClient(
@@ -47,7 +75,7 @@ final class PaletteAPIClientTests: XCTestCase {
         return PaletteAPIClient(baseURL: URL(string: "http://example.com")!, token: "  stale-token  ", session: session)
     }
 
-    private func printerProfilesResponse() -> Data {
+    private static func printerProfilesResponse() -> Data {
         """
         {
           "printer_profiles": [
@@ -58,6 +86,15 @@ final class PaletteAPIClientTests: XCTestCase {
               "ink_type": "Pigment"
             }
           ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private static func colorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {"id": 7, "printer_make_model": "Example Printer", "paper_type": "Matte", "ink_type": "Pigment"},
+          "colors": [{"id": 2, "hex": "#123456", "rgb": {"r": 18, "g": 52, "b": 86}, "responses": {}}]
         }
         """.data(using: .utf8)!
     }
