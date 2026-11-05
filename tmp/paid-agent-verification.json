@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run: added the upstream v1 solver parity corpus and contract tests. Swift is not installed in this container, so the suite could not be compiled or run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "not_run: Swift toolchain unavailable; red test requires swift-openapi-generator and swift-openapi-runtime package dependencies"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: validates /api/v1 colors endpoint, profile query, and bearer token contract"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:131",
+            "result": "not_run: existing permanent coverage for server-scoped disk cache behavior"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: replays committed upstream corpus scores, exclusions, selection, errors, and ties"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/WeightedSquaredErrorParity/corpus.json:1",
+            "result": "upstream fixture copied from viamin/color_matching priv/parity/v1/corpus.json at commit 47057afd58f7d46b4d740ca7d2d08947774471"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh procedure documented in permitted LID docs; README update is deferred to implementation phase because this test-writing run may not modify it"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json:1",
+            "result": "no pull request has been created in this tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
