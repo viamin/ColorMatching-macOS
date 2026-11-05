@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Red-phase tests and verification plan added. The container has no Swift executable, so swift test could not run; no unrun criterion is reported as passed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: swift executable unavailable; generated-client implementation is deferred to the next phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:49",
+            "result": "not_run: swift executable unavailable; existing disk cache coverage identified"
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md:6",
+            "result": "app-level offline-stale and cached-profile fallback require implementation-phase verification"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ParityCorpusTests.swift:5",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/parity/v1/corpus.json",
+            "result": "upstream fixture copied byte-for-byte from color_matching commit a82aec5441d2a7b0100e8c8ab81d573e11ace9b0; SHA-256 verified as 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:8",
+            "result": "README edit is prohibited in this tests-only phase; refresh instructions are recorded in the permitted verification document"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:9",
+            "result": "No implementation PR is created in this tests-only phase"
+          }
+        ]
+      }
+    }
+  ]
+}
