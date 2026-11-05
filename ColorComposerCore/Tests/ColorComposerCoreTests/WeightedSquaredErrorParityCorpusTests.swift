@@ -33,7 +33,9 @@ final class WeightedSquaredErrorParityCorpusTests: XCTestCase {
         let fixtureURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .appendingPathComponent("Fixtures/weighted_squared_error_parity.json")
-        return try JSONDecoder().decode(ParityCorpus.self, from: Data(contentsOf: fixtureURL))
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(ParityCorpus.self, from: Data(contentsOf: fixtureURL))
     }
 
     private func makePaletteColor(_ candidate: ParityVector) throws -> PaletteColor {
