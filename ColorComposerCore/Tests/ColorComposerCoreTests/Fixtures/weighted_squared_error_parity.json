@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "selects the lowest weighted squared error",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.6, "green": 0.2 },
+      "candidates": [
+        { "id": 101, "responses": { "red": 0.2, "green": 0.2 } },
+        { "id": 102, "responses": { "red": 0.6, "green": 0.1 } }
+      ],
+      "expected": { "selected_candidate_id": 102, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "keeps the first candidate for an exact tie",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "selected_candidate_id": 201, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "excludes a candidate missing an active measurement",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "selected_candidate_id": 302, "excluded_candidate_ids": [301] }
+    },
+    {
+      "name": "does not require measurements for zero-weight channels",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.25 },
+      "candidates": [
+        { "id": 401, "responses": { "red": 0.25 } },
+        { "id": 402, "responses": { "red": 0.5, "blue": 0.25 } }
+      ],
+      "expected": { "selected_candidate_id": 401, "excluded_candidate_ids": [] }
+    },
+    {
+      "name": "leaves a cell unmatched when every candidate is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 501, "responses": { "red": 0.5 } },
+        { "id": 502, "responses": { "green": 0.5 } }
+      ],
+      "expected": { "selected_candidate_id": null, "excluded_candidate_ids": [501, 502] }
+    }
+  ]
+}
