@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed parity fixture and regression tests were added, but this container has no Swift toolchain, so swift test could not run. The generated-client configuration assertion is intentionally red until the implementation phase adds the dependencies.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "failed",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientConfigurationTests.swift:5",
+            "result": "intentional red assertion: swift-openapi-generator and swift-openapi-runtime are not yet declared"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:12",
+            "result": "existing per-server cache and offline-fallback tests not run: swift executable unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "permanent published-corpus replay test not run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/color-matching-parity-v1.json:1",
+            "result": "committed v1 fixture copied from viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-acceptance-plan.md:1",
+            "result": "README change deferred because this test-writing phase permits only test paths and docs/"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-acceptance-plan.md:1",
+            "result": "implementation PR description remains required after migration and suite execution"
+          }
+        ]
+      }
+    }
+  ]
+}
