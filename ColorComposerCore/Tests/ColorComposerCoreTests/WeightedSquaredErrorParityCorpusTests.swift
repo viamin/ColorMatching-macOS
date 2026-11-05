@@ -34,7 +34,7 @@ final class WeightedSquaredErrorParityCorpusTests: XCTestCase {
                     target: target,
                     weights: weights
                 )
-                assert(actual, matches: expectedScore.score, scenarioID: scenario.id, candidateIndex: candidate.index)
+                assert(actual, matches: expectedScore.score, scenarioID: scenario.id, candidateIndex: candidate.index!)
             }
         }
     }
@@ -45,7 +45,7 @@ final class WeightedSquaredErrorParityCorpusTests: XCTestCase {
         for scenario in corpus.scenarios {
             let target = TargetResponseVector(responses(from: scenario.target.channels))
             let weights = channelWeights(from: scenario.weights)
-            let palette = scenario.palette.sorted { $0.index < $1.index }.map(paletteColor)
+            let palette = scenario.palette.sorted { $0.index! < $1.index! }.map(paletteColor)
             let scores = palette.map { scorer.score(candidate: $0, target: target, weights: weights) }
             let selected = earliestLowestScore(in: scores)
 
@@ -88,12 +88,14 @@ final class WeightedSquaredErrorParityCorpusTests: XCTestCase {
             .deletingLastPathComponent()
             .appendingPathComponent("Fixtures/weighted_squared_error_v1.json")
         let data = try Data(contentsOf: fixture)
-        return try JSONDecoder().decode(ParityCorpus.self, from: data)
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(ParityCorpus.self, from: data)
     }
 
     private func paletteColor(from candidate: ParityCandidate) -> PaletteColor {
         PaletteColor(
-            id: candidate.index,
+            id: candidate.index!,
             hex: candidate.hexColor,
             rgb: RGBColor(hex: candidate.hexColor)!,
             responses: responses(from: candidate.channels).mapValues(IlluminationResponse.init(brightness:))
@@ -180,7 +182,7 @@ private struct ParityScenario: Decodable {
 private struct ParityCandidate: Decodable {
     let channels: [String: Double]
     let hexColor: String
-    let index: Int
+    let index: Int?
 }
 
 private struct ParityExpected: Decodable {
