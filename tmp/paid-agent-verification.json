@@ -1,0 +1,62 @@
+{
+  "status": "failed",
+  "summary": "Tests-only red phase: the OpenAPI dependency contract is intentionally red. Swift is unavailable in this container, and the official upstream #111 corpus could not be fetched from the configured remote.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "red contract test; swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:55",
+            "result": "existing cache scoping coverage not run; swift is unavailable"
+          },
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:565",
+            "result": "offline-stale badge/fallback requires implementation-run UI evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "skipped",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "loader and known-case harness added; canonical #111 artifact unavailable and swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:16",
+            "result": "documents canonical corpus location and refresh procedure; README update is deferred to the implementation run by phase boundary"
+          }
+        ]
+      }
+    }
+  ]
+}
