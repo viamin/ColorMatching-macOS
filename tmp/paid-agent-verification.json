@@ -1,0 +1,66 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed parity fixture and permanent replay test added; Swift is unavailable in this container, so no Swift test result is claimed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/OpenAPIClientAdoptionTests.swift:5",
+            "result": "red-phase contract added; cannot run because swift is not installed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:71",
+            "result": "existing per-server/profile cache coverage; cannot run because swift is not installed"
+          },
+          {
+            "locator": "ColorMatching/Networking/ColorCatalog.swift:42",
+            "result": "offline-stale/profile-fallback behavior requires Xcode integration test coverage in the implementation phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "permanent corpus replay test added; cannot run because swift is not installed"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "12-scenario upstream corpus copied from viamin/color_matching priv/parity/v1/corpus.json; JSON syntax validated locally"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "documents corpus source and refresh procedure; README update is deferred to implementation phase by the test-writing file allowlist"
+          }
+        ]
+      }
+    }
+  ]
+}
