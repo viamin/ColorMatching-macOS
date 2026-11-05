@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase: parity corpus test and criterion-level verification plan added. Swift is unavailable in this container, and the committed upstream corpus fixture is intentionally left for the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing legacy-client coverage retained; generated-client migration is implementation-phase work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline fallback coverage was not run because swift is not installed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift",
+            "result": "Permanent v1 corpus replay test added; requires fixture and Swift tooling to run."
+          },
+          {
+            "locator": "https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json",
+            "result": "Upstream source verified: algorithm version 1, 12 scenarios, SHA 70e9999065c81334d1f2b5038a96c67cfd5d59d1."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README update is explicitly deferred by the tests-only file allowlist."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR description evidence awaits implementation and PR publication."
+          }
+        ]
+      }
+    }
+  ]
+}
