@@ -177,7 +177,7 @@ private struct ParityScore: Decodable {
                 throw DecodingError.dataCorruptedError(
                     forKey: .score,
                     in: container,
-                    debugDescription: "Expected a score number or \\"excluded\\"."
+                    debugDescription: "Expected a score number or \"excluded\"."
                 )
             }
             score = .excluded
