@@ -1,0 +1,46 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: parity replay test and committed v1 corpus fixture added; Swift toolchain is unavailable in this container.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift", "result": "generated-client migration is implementation-phase work"}]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift", "result": "existing cache contract; execution blocked by unavailable Swift toolchain"}]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:5", "result": "new corpus replay test added; execution blocked by unavailable Swift toolchain"}, {"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-parity-v1.json", "result": "committed projection of upstream corpus at commit 47057afd58f7d46b4d4b740ca7d2d08947774471"}]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [{"locator": "docs/solver-parity-corpus.md", "result": "tests-only phase cannot change README; implementation phase must move this note into README"}]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [{"locator": "tmp/paid-agent-verification.json", "result": "PR description is created by the publishing workflow after implementation"}]
+      }
+    }
+  ]
+}
