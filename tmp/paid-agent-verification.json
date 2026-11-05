@@ -1,0 +1,62 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: parity corpus fixture and replay tests are committed; Swift is unavailable in this container, so the suite could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "not_run: generated-client migration is implementation-phase work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: cache behavior coverage extension is implementation-phase work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift",
+            "result": "not_run: swift executable is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "SHA-256 verified against viamin/color_matching@a82aec5441d2a7b0100e8c8ab81d573e11ace9b0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "README and PR-body evidence deferred to implementation phase by test-writing boundary"
+          }
+        ]
+      }
+    }
+  ]
+}
