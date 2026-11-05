@@ -1,0 +1,45 @@
+{
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "weights change the winning color",
+      "weights": { "red": 1.0, "green": 4.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5, "green": 0.2 } },
+        { "id": 20, "responses": { "red": 0.2, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 20
+    },
+    {
+      "name": "zero-weight missing measurements are ignored",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 40, "responses": { "red": 0.7, "blue": 0.5 } }
+      ],
+      "expected_candidate_id": 30
+    },
+    {
+      "name": "missing active measurements exclude a closer candidate",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 50, "responses": { "red": 0.5 } },
+        { "id": 60, "responses": { "red": 0.6, "green": 0.6 } }
+      ],
+      "expected_candidate_id": 60
+    },
+    {
+      "name": "exact score ties retain the earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 70, "responses": { "red": 0.4 } },
+        { "id": 80, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 70
+    }
+  ]
+}
