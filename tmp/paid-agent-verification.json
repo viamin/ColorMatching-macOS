@@ -1,0 +1,46 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed parity fixture and tests. Swift is unavailable in this container, so tests could not execute; generated-client implementation and README change are deferred to the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/GeneratedOpenAPIClientContractTests.swift:5", "result": "not run: swift executable unavailable"}]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1", "result": "not run: swift executable unavailable"}]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [{"locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:6", "result": "not run: swift executable unavailable"}]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [{"locator": "docs/solver-parity-corpus.md:1", "result": "corpus refresh documentation added; root README modification deferred by test-writing guardrail"}]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [{"locator": "tmp/paid-agent-verification.json:1", "result": "no pull request is opened in this test-writing run"}]
+      }
+    }
+  ]
+}
