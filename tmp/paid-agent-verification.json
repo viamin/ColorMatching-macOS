@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase: parity test and refresh documentation are committed; this container has no Swift toolchain, and the implementation-phase corpus fixture/generated client are intentionally absent.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:8",
+            "result": "Existing client contract coverage only; generated-client migration awaits implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:62",
+            "result": "Existing per-server/profile cache coverage only; generated-client integration awaits implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:8",
+            "result": "Permanent corpus replay test added; it awaits the committed upstream v1 fixture and a Swift toolchain."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:3",
+            "result": "Permitted test-phase documentation records upstream corpus location, local destination, and refresh command; implementation must add the required README entry."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "https://github.com/viamin/color_matching/pull/112",
+            "result": "Upstream corpus source inspected; implementation PR description is not created in this tests-only phase."
+          }
+        ]
+      }
+    }
+  ]
+}
