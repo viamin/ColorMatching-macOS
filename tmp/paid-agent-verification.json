@@ -1,0 +1,79 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only phase added upstream solver-corpus coverage and API-contract coverage. The Swift toolchain is unavailable, so no Swift tests could execute; implementation, README, generated-client, and PR evidence remain intentionally deferred.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not_run: swift executable is unavailable in this container"
+          },
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "implementation run must inspect generated dependency and sources"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: focused cache/offline regression suite requires Swift"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: fixture replay requires Swift"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/WeightedSquaredError/v1/corpus.json",
+            "result": "committed upstream v1 corpus"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md",
+            "result": "refresh procedure drafted; README edit prohibited in this tests-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "PR description is deferred to the implementation PR"
+          }
+        ]
+      }
+    }
+  ]
+}
