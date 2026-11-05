@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed permanent solver-parity coverage and corpus-consumption documentation. Swift is not installed in this container, so the new suite could not execute; generated-client and cache integration are reserved for the approved implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:19",
+            "result": "Generated-client contract test plan recorded; implementation is disallowed in this test-writing phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:20",
+            "result": "Existing cache/offline fallback tests are identified for implementation-phase regression verification; they were not executed because swift is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:6",
+            "result": "Permanent corpus replay test added; execution blocked because `swift` is absent from PATH."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json:1",
+            "result": "Committed exact v1 corpus copied from viamin/color_matching#111."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "Refresh procedure documented. The requested README update is deferred because this run may only commit files under test paths or docs/."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:23",
+            "result": "Implementation PR-description review is planned; no implementation PR exists in this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
