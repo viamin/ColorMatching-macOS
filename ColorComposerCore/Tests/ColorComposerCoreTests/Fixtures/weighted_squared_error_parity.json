@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "source": "viamin/color_matching#111",
+  "cases": [
+    {
+      "name": "lowest weighted squared error wins",
+      "weights": { "red": 1.0, "green": 2.0 },
+      "target": { "red": 0.6, "green": 0.5 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.6, "green": 0.8 } },
+        { "id": 102, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_palette_id": 102
+    },
+    {
+      "name": "zero-weight measurements do not exclude a candidate",
+      "weights": { "white": 1.0, "blue": 0.0 },
+      "target": { "white": 0.5, "blue": 0.9 },
+      "palette": [
+        { "id": 201, "responses": { "white": 0.5 } },
+        { "id": 202, "responses": { "white": 0.4, "blue": 0.9 } }
+      ],
+      "expected_palette_id": 201
+    },
+    {
+      "name": "missing required response is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.6, "green": 0.5 } }
+      ],
+      "expected_palette_id": 302
+    },
+    {
+      "name": "ties retain the first palette candidate",
+      "weights": { "lps": 1.0 },
+      "target": { "lps": 0.5 },
+      "palette": [
+        { "id": 401, "responses": { "lps": 0.4 } },
+        { "id": 402, "responses": { "lps": 0.6 } }
+      ],
+      "expected_palette_id": 401
+    },
+    {
+      "name": "all excluded candidates leave the cell unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.5 } }
+      ],
+      "expected_palette_id": null
+    }
+  ]
+}
