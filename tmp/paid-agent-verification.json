@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Added the upstream v1 solver corpus and focused contract tests, but this container has no Swift executable, so compilation and tests could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsPreservesApiV1ProfileQueryAndEnvelope",
+            "result": "not_run: generated-client implementation and published OpenAPI document are pending; Swift is unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: existing disk-cache server/profile isolation suite could not execute without Swift"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testReplaysCommittedColorMatchingParityCorpusExactly",
+            "result": "not_run: fixture committed from color_matching priv/parity/v1/corpus.json; Swift is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/color-matching-parity-v1.json",
+            "result": "present: SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README update intentionally deferred by the test-writing boundary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "implementation PR description requirements recorded; no PR exists in this tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
