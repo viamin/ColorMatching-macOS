@@ -1,0 +1,68 @@
+{
+  "status": "not_run",
+  "summary": "Tests and documentation were added in the tests-only phase. swift is not installed in this container, so the Swift suite could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:testFetchColorsUsesV1QueryAndDecodesProfileAndResponses",
+            "result": "not_run: swift executable unavailable"
+          }
+        ],
+        "reason": "Generated-client wiring is implementation work and requires inspectable Package.swift/generated-source review."
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:testTwoServersKeepSeparateEntriesForTheSameProfileID",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:testAllEntriesOnlyReturnsTheRequestingServersEntries",
+            "result": "not_run: swift executable unavailable"
+          }
+        ],
+        "reason": "The app-level offline-stale badge and fallback paths require implementation review in the macOS target."
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:testWeightedSquaredErrorMatchesCommittedParityCorpus",
+            "result": "not_run: swift executable unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "validated as JSON with jq; copied from viamin/color_matching priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md",
+            "result": "README documentation is deferred to the implementation phase because this test-writing run cannot commit README.md."
+          }
+        ]
+      }
+    }
+  ]
+}
