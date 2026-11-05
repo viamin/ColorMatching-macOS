@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Added the committed v1 solver parity corpus and permanent replay test. Swift is unavailable in this container, so swift test could not run; generated-client implementation and README changes are deferred to the implementation phase.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "not_run: generated OpenAPI client migration is implementation-phase work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:1",
+            "result": "not_run: Swift toolchain unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:20",
+            "result": "not_run: fixture integrity verified with jq and cmp; swift test unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "passed: byte-identical to viamin/color_matching commit 47057afd58f7d46b4d4b740ca7d2d08947774471"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "passed: refresh instructions added; README update deferred by tests-only file allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "tmp/paid-agent-verification.json",
+            "result": "not_run: no pull request is opened in this tests-only run"
+          }
+        ]
+      }
+    }
+  ]
+}
