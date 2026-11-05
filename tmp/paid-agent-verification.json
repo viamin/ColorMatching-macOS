@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Added a committed upstream solver-parity corpus and XCTest replay coverage. Swift is unavailable in this container, so the focused test and full suite could not be executed.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/issue-39-parity-test-plan.md",
+            "result": "Generated OpenAPI client is absent in this tests-only run; transport contract tests are deferred to implementation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:129",
+            "result": "Existing server/profile cache-isolation coverage exists, but generated-transport fallback behavior needs implementation-run verification."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:16",
+            "result": "Committed corpus replay asserts exact per-candidate scores, selections, errors, and tie indices; not executed because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_v1.json",
+            "result": "Verbatim v1 corpus from viamin/color_matching priv/parity/v1/corpus.json."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-parity-test-plan.md",
+            "result": "Refresh procedure is recorded in permitted documentation; required README update is deferred because this run permits only docs/ changes."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-parity-test-plan.md",
+            "result": "PR migration notes and parity results require the implementation run and a PR, neither authorized in this tests-only phase."
+          }
+        ]
+      }
+    }
+  ]
+}
