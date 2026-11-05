@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase: committed upstream solver corpus, permanent parity test, and corpus refresh documentation. Swift is unavailable in this container, so the Swift suite and implementation-dependent criteria could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Generated-client migration is intentionally deferred to the implementation phase; no Swift toolchain is installed to execute the existing client contract tests."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing per-server cache and fallback tests are present but could not run because swift is absent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityTests.swift:5",
+            "result": "Permanent replay test added; it asserts each candidate score, exclusion, selection, exact tie set, and earliest winner against the committed v1 corpus. Execution blocked: swift is not installed."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted-squared-error-v1.json",
+            "result": "Canonical JSON semantic SHA-256 matched upstream viamin/color_matching main corpus: 55664355b741de2c982741708e4a0c64cdf46b616f2524f963407bdfdda3bfd2."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md",
+            "result": "README changes are outside the tests-and-LID-docs allowlist for this test-writing phase and are deferred to the implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "Git history at current HEAD",
+            "result": "No pull request is opened in this tests-only run; PR description is an implementation/publishing-phase artifact."
+          }
+        ]
+      }
+    }
+  ]
+}
