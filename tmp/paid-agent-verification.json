@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase added the committed upstream solver corpus and its permanent replay test. Swift is not installed in this container, so no Swift tests could execute.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:30",
+            "result": "planned: generated-client request and decoding coverage belongs to the implementation run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "permanent_system_test",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:31",
+            "result": "planned: disk-backed ColorCatalog offline-fallback integration test belongs to the implementation run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:17",
+            "result": "not run: swift executable is unavailable in this container"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Resources/Parity/v1/corpus.json:1",
+            "result": "committed verbatim upstream parity corpus v1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:1",
+            "result": "refresh procedure documented; README update is prohibited during this tests-and-docs-only phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/solver-parity-corpus.md:35",
+            "result": "PR-description evidence plan recorded; this run does not create or publish a PR"
+          }
+        ]
+      }
+    }
+  ]
+}
