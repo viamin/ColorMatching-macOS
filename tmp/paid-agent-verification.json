@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing phase committed corpus-driven parity coverage and an acceptance-criterion plan. Swift is unavailable in this container, so no XCTest target could execute; generated-client implementation, README update, and PR description are deferred to the implementation run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "not_run: Swift toolchain is unavailable; generated OpenAPI client is intentionally outside this test-writing phase"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "not_run: Swift toolchain is unavailable; implementation run must add app-shell fallback or inspectable UI evidence for stale badges"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/WeightedSquaredErrorParityCorpusTests.swift:6",
+            "result": "not_run: fixture-driven selection, score, tie, exclusion, and weight assertions committed; Swift toolchain is unavailable"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity_corpus.json",
+            "result": "committed fixture; upstream revision confirmation remains required because pull request 111 was inaccessible"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:9",
+            "result": "not_run: README edits are outside the test-writing allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md:10",
+            "result": "not_run: no pull request is opened in this run"
+          }
+        ]
+      }
+    }
+  ]
+}
