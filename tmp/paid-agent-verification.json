@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red-phase change: added a permanent corpus-driven solver parity harness and criterion map. Swift is unavailable in the container, and the dependent backend pull requests are not accessible from this environment.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:14",
+            "result": "Existing request/authentication coverage; generated-client adapter coverage is implementation-phase work because the OpenAPI document is unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:78",
+            "result": "Existing permanent cache scoping/fallback coverage was not executable because Swift is unavailable. Offline-stale badge requires app-layer inspection."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:5",
+            "result": "Permanent production-solver corpus test added; fixture JSON was syntax-validated with jq, but swift test could not run because swift is unavailable."
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/weighted_squared_error_parity.json",
+            "result": "Committed seed fixture covers weighted selection, ties, exclusions, zero weights, and all-excluded output; replace verbatim from viamin/color_matching#111 when accessible."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:12",
+            "result": "README update is explicitly deferred to the implementation phase; the test-writing allowlist does not permit README changes."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "skipped",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-verification-plan.md:10",
+            "result": "PR description is human/external evidence and cannot be produced in this tests-only run."
+          }
+        ]
+      }
+    }
+  ]
+}
