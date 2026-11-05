@@ -1,0 +1,75 @@
+{
+  "status": "not_run",
+  "summary": "Test-writing run: permanent API-contract and solver-parity tests plus the upstream v1 corpus fixture were added. The fixture SHA-256 matches color_matching main, but Swift is not installed in this container, so swift test could not run.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift:40",
+            "result": "not run: establishes the /api/v1 colors request and response-envelope contract; generated-client migration is implementation-phase work"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift:132",
+            "result": "not run: existing permanent coverage verifies server/profile cache isolation; Swift toolchain unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:10",
+            "result": "not run: replays every v1 scenario, candidate score, selection, error, and tie index"
+          },
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures/solver-parity-v1.json",
+            "result": "SHA-256 7b7b4d904ff369e1f5be0ec3a994d96cc996056e856d86a2b764b83c050f8604 matches https://raw.githubusercontent.com/viamin/color_matching/main/priv/parity/v1/corpus.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "passed",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "README.md:93",
+            "result": "documents upstream corpus location, verbatim refresh path, algorithm-version review, and focused test command"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "N/A",
+            "result": "No pull request was opened in this tests-only, no-push run. PR description is implementation/handoff work."
+          }
+        ]
+      }
+    }
+  ]
+}
