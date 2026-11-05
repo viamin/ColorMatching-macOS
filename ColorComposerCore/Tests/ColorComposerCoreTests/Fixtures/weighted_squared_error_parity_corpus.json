@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "upstream_pull_request": "https://github.com/viamin/color_matching/pull/111",
+  "cases": [
+    {
+      "name": "weights_change_the_winning_candidate",
+      "weights": { "red": 4.0, "green": 1.0 },
+      "target": { "red": 0.2, "green": 0.8 },
+      "candidates": [
+        { "id": 1, "responses": { "red": 0.2, "green": 0.2 } },
+        { "id": 2, "responses": { "red": 0.8, "green": 0.8 } }
+      ],
+      "expected_candidate_id": 1,
+      "expected_score": 0.36
+    },
+    {
+      "name": "zero_weight_channels_do_not_require_measurements",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.5, "blue": 0.9 },
+      "candidates": [
+        { "id": 10, "responses": { "red": 0.5 } },
+        { "id": 11, "responses": { "red": 0.6, "blue": 0.9 } }
+      ],
+      "expected_candidate_id": 10,
+      "expected_score": 0.0
+    },
+    {
+      "name": "ties_select_the_earliest_palette_candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "candidates": [
+        { "id": 20, "responses": { "red": 0.4 } },
+        { "id": 21, "responses": { "red": 0.6 } }
+      ],
+      "expected_candidate_id": 20,
+      "expected_score": 0.01
+    },
+    {
+      "name": "missing_required_measurements_are_excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 30, "responses": { "red": 0.5 } },
+        { "id": 31, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected_candidate_id": 31,
+      "expected_score": 0.0
+    },
+    {
+      "name": "all_missing_required_measurements_leave_a_cell_unmatched",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "candidates": [
+        { "id": 40, "responses": { "red": 0.5 } },
+        { "id": 41, "responses": { "green": 0.5 } }
+      ],
+      "expected_candidate_id": null,
+      "expected_score": null
+    }
+  ]
+}
