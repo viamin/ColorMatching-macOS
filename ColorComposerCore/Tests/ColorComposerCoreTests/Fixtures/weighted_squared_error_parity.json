@@ -1,0 +1,56 @@
+{
+  "source": "viamin/color_matching#111",
+  "description": "Selection corpus for ColorMatching.WeightedSquaredError. Candidate order is semantically significant for ties.",
+  "cases": [
+    {
+      "name": "weighted two-channel selection",
+      "weights": { "red": 2.0, "green": 0.5 },
+      "target": { "red": 0.8, "green": 0.2 },
+      "palette": [
+        { "id": 101, "responses": { "red": 0.6, "green": 0.2 } },
+        { "id": 102, "responses": { "red": 0.8, "green": 0.7 } }
+      ],
+      "expected": { "color_id": 102, "error": 0.12499999999999997, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "tie chooses earliest palette candidate",
+      "weights": { "red": 1.0 },
+      "target": { "red": 0.5 },
+      "palette": [
+        { "id": 201, "responses": { "red": 0.4 } },
+        { "id": 202, "responses": { "red": 0.6 } }
+      ],
+      "expected": { "color_id": 201, "error": 0.009999999999999995, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "missing active measurement is excluded",
+      "weights": { "red": 1.0, "green": 1.0 },
+      "target": { "red": 0.5, "green": 0.5 },
+      "palette": [
+        { "id": 301, "responses": { "red": 0.5 } },
+        { "id": 302, "responses": { "red": 0.5, "green": 0.5 } }
+      ],
+      "expected": { "color_id": 302, "error": 0.0, "excluded_candidate_count": 1 }
+    },
+    {
+      "name": "zero weight does not require a measurement",
+      "weights": { "red": 1.0, "blue": 0.0 },
+      "target": { "red": 0.25, "blue": 0.9 },
+      "palette": [
+        { "id": 401, "responses": { "red": 0.25 } },
+        { "id": 402, "responses": { "red": 0.5, "blue": 0.9 } }
+      ],
+      "expected": { "color_id": 401, "error": 0.0, "excluded_candidate_count": 0 }
+    },
+    {
+      "name": "all candidates excluded leaves target unmatched",
+      "weights": { "lps": 1.5 },
+      "target": { "lps": 0.4 },
+      "palette": [
+        { "id": 501, "responses": { "red": 0.4 } },
+        { "id": 502, "responses": { "green": 0.4 } }
+      ],
+      "expected": { "color_id": null, "error": "infinity", "excluded_candidate_count": 2 }
+    }
+  ]
+}
