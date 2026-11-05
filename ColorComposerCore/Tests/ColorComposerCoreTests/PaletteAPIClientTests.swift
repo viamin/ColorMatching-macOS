@@ -37,6 +37,26 @@ final class PaletteAPIClientTests: XCTestCase {
         XCTAssertEqual(requests, ["Bearer stale-token"])
     }
 
+    /// The OpenAPI contract exposes the composer-facing color operation under
+    /// the profile resource, rather than the legacy `/colors` query endpoint.
+    /// Keep this assertion at the URLSession boundary so the generated client
+    /// may be wrapped without changing the cache-facing public API.
+    func testFetchColorsUsesProfileScopedOpenAPIOperation() async throws {
+        let client = makeClient { request in
+            XCTAssertEqual(request.url?.path, "/api/v1/printer_profiles/42/colors")
+            XCTAssertNil(request.url?.query)
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer stale-token")
+            return (.init(statusCode: 200, url: request.url!), profileColorsResponse())
+        }
+
+        let result = try await client.fetchColors(printerProfileID: 42)
+
+        XCTAssertEqual(result.profile?.id, 42)
+        XCTAssertEqual(result.colors.map(\.id), [7])
+        XCTAssertEqual(result.colors.first?.responses[.red]?.brightness, 0.5)
+    }
+
     private func makeClient(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> PaletteAPIClient {
@@ -56,6 +76,28 @@ final class PaletteAPIClientTests: XCTestCase {
               "printer_make_model": "Example Printer",
               "paper_type": "Matte",
               "ink_type": "Pigment"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+    }
+
+    private func profileColorsResponse() -> Data {
+        """
+        {
+          "printer_profile": {
+            "id": 42,
+            "printer_make_model": "Example Printer",
+            "paper_type": "Matte",
+            "ink_type": "Pigment"
+          },
+          "colors": [
+            {
+              "id": 7,
+              "name": "Example Red",
+              "hex": "#AA0000",
+              "rgb": { "r": 170, "g": 0, "b": 0 },
+              "responses": { "red": { "brightness": 0.5 } }
             }
           ]
         }

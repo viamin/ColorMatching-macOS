@@ -86,9 +86,16 @@ The Xcode project is **generated, not committed** — `project.yml` is the sourc
 Colors and their measured illuminant responses are fetched from `color_matching`'s versioned API:
 
 - `GET /api/v1/printer_profiles`
-- `GET /api/v1/colors?printer_profile_id=N`
+- `GET /api/v1/printer_profiles/:printer_profile_id/colors`
+- `GET /api/v1/openapi.json` (the generated client's source contract)
 
 Response vectors merge human-entered responses (priority) and instrument measurements, and clearly separate normalized brightness (the solver value) from raw instrument readings. See [`color_matching` PR #84](https://github.com/viamin/color_matching/pull/84).
+
+### Solver parity corpus
+
+`ColorComposerCore` replays the server's committed weighted-squared-error corpus from [`viamin/color_matching` `priv/parity/v1/corpus.json`](https://github.com/viamin/color_matching/blob/main/priv/parity/v1/corpus.json). The vendored copy lives at `ColorComposerCore/Tests/ColorComposerCoreTests/Fixtures-parity-corpus-v1.json`, so `swift test` remains deterministic and covers candidate exclusions, positive/zero channel weights, exact scores, and earliest-wins ties.
+
+To refresh it after an upstream solver-contract change, run `mix parity.generate --check` in `color_matching`, copy its `priv/parity/v<algorithm_version>/corpus.json` over the fixture, review the corpus diff and algorithm version, then run `cd ColorComposerCore && swift test`. A new corpus version is an intentional compatibility change and should be committed together with the client update.
 
 ## Development
 
