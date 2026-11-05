@@ -1,0 +1,71 @@
+{
+  "status": "not_run",
+  "summary": "Tests-only red phase for issue #39. Added a permanent corpus-replay test and acceptance-criterion verification plan; Swift is unavailable in this container and the implementation phase must commit the upstream fixture.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/PaletteAPIClientTests.swift",
+            "result": "Existing transport-contract coverage; generated-client migration is blocked by tests-only phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-2",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/ProfileColorCacheTests.swift",
+            "result": "Existing cache/offline fallback coverage must be rerun after transport migration; Swift toolchain unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Tests/ColorComposerCoreTests/SolverParityCorpusTests.swift:10",
+            "result": "Permanent corpus replay is added but cannot run until priv/parity/v1/corpus.json from viamin/color_matching#111 is committed as Fixtures/weighted-squared-error-v1.json; Swift is also unavailable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-4",
+      "status": "not_run",
+      "verification": {
+        "kind": "human_or_external_evidence",
+        "references": [
+          {
+            "locator": "docs/issue-39-test-plan.md",
+            "result": "README update is blocked by the test-writing allowlist and belongs to implementation phase."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "status": "not_run",
+      "verification": {
+        "kind": "unit_or_service_test",
+        "references": [
+          {
+            "locator": "ColorComposerCore/Package.swift",
+            "result": "swift test could not execute because swift is not installed in the container."
+          }
+        ]
+      }
+    }
+  ]
+}
